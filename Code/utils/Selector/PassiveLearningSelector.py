@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 class PassiveLearningSelector:
-    def __init__(self, BatchSize: int = 5, Seed: int = None, **kwargs):
+    def __init__(self, BatchSize: int = 1, Seed: int = None, **kwargs):
         self.BatchSize = BatchSize
         self.Seed = Seed
 
