@@ -1,9 +1,0 @@
-,Mean (minutes),Max (minutes)
-RF with PL,2.84,3.04
-RF with QBC,12.59,14.51
-GPC with PL,76.3,83.32
-GPC with BALD,77.28,84.53
-BNN with PL,46.04,51.05
-BNN with BALD,45.93,50.7
-UNREAL (TreeFarms with QBC and LFR),18.39,38.62
-DUREAL (TreeFarms with QBC and LFR),23.73,83.22

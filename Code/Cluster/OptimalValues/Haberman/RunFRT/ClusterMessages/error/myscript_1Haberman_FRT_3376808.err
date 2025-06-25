@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "/mnt/beegfs/homes/simondn/RashomonActiveLearning/Code/OptimalThresholdSimulation.py", line 102, in <module>
-    ModelIndices = EpsilonVec[EpsilonVec <= Threshold].index.tolist()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'numpy.ndarray' object has no attribute 'index'

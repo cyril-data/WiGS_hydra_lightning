@@ -1,2 +1,0 @@
-/var/spool/slurmd/job3377529/slurm_script: line 22: 2382191 Killed                  python Code/OptimalThresholdSimulation.py --JobName 39FICO_FRT --Data FICO --Seed 39 --TestProportion 0.25 --regularization 0.01 --RashomonThresholdType Adder --RashomonThreshold 0.05 --Output 39FICO_FRT.pkl
-slurmstepd: error: Detected 1 oom_kill event in StepId=3377529.batch. Some of the step tasks have been OOM Killed.
