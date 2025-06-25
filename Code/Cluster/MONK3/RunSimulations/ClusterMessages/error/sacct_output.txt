@@ -1,0 +1,671 @@
+JobID           JobName  Partition      State  Timelimit               Start                 End    Elapsed     ReqMem     MaxRSS  MaxVMSize   NNodes      NCPUS        NodeList ExitCode 
+------------ ---------- ---------- ---------- ---------- ------------------- ------------------- ---------- ---------- ---------- ---------- -------- ---------- --------------- -------- 
+2188148      10BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-2      0:0 
+2188148.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-2      0:0 
+2188148.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-2      0:0 
+2188150      10BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-2      0:0 
+2188150.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-2      0:0 
+2188150.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-2      0:0 
+2188152      11BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-1      0:0 
+2188152.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188152.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188154      11BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-1      0:0 
+2188154.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188154.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188156      12BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-1      0:0 
+2188156.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188156.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188158      12BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-1      0:0 
+2188158.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188158.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-1      0:0 
+2188160      13BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-3      0:0 
+2188160.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-3      0:0 
+2188160.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-3      0:0 
+2188162      13BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-3      0:0 
+2188162.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-3      0:0 
+2188162.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-3      0:0 
+2188168      15BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-4      0:0 
+2188168.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-4      0:0 
+2188168.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-4      0:0 
+2188172      16BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-4      0:0 
+2188172.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-4      0:0 
+2188172.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-4      0:0 
+2188174      16BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:32             Unknown 1-09:35:23     30000M                              1          1    cls-cmp-e3-4      0:0 
+2188174.bat+      batch               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-4      0:0 
+2188174.ext+     extern               RUNNING            2025-01-21T19:21:32             Unknown 1-09:35:23                                         1          1    cls-cmp-e3-4      0:0 
+2188184      19BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e3-5      0:0 
+2188184.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-5      0:0 
+2188184.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-5      0:0 
+2188186      19BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e3-6      0:0 
+2188186.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-6      0:0 
+2188186.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-6      0:0 
+2188188      1BC_DA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e3-6      0:0 
+2188188.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-6      0:0 
+2188188.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-6      0:0 
+2188190      1BC_UA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e3-6      0:0 
+2188190.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-6      0:0 
+2188190.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e3-6      0:0 
+2188204      23BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-5      0:0 
+2188204.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-5      0:0 
+2188204.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-5      0:0 
+2188206      23BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-5      0:0 
+2188206.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-5      0:0 
+2188206.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-5      0:0 
+2188208      24BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-5      0:0 
+2188208.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-5      0:0 
+2188208.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-5      0:0 
+2188210      24BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-6      0:0 
+2188210.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-6      0:0 
+2188210.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-6      0:0 
+2188216      26BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-6      0:0 
+2188216.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-6      0:0 
+2188216.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-6      0:0 
+2188218      26BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-6      0:0 
+2188218.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-6      0:0 
+2188218.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-6      0:0 
+2188220      27BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-1      0:0 
+2188220.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-1      0:0 
+2188220.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-1      0:0 
+2188222      27BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:35 2025-01-23T01:50:23 1-06:28:48     30000M                              1          1    cls-cmp-e2-1      0:0 
+2188222.bat+      batch             COMPLETED            2025-01-21T19:21:35 2025-01-23T01:50:23 1-06:28:48             10368200K  10625684K        1          1    cls-cmp-e2-1      0:0 
+2188222.ext+     extern             COMPLETED            2025-01-21T19:21:35 2025-01-23T01:50:23 1-06:28:48                  988K    484996K        1          1    cls-cmp-e2-1      0:0 
+2188228      29BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-2      0:0 
+2188228.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188228.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188230      29BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-2      0:0 
+2188230.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188230.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188232      2BC_DA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-2      0:0 
+2188232.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188232.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188234      2BC_UA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-2      0:0 
+2188234.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188234.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188236      30BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-2      0:0 
+2188236.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188236.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-2      0:0 
+2188238      30BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-3      0:0 
+2188238.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188238.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188240      31BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-3      0:0 
+2188240.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188240.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188242      31BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-3      0:0 
+2188242.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188242.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188244      32BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-e2-3      0:0 
+2188244.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188244.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-e2-3      0:0 
+2188246      32BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-9      0:0 
+2188246.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-9      0:0 
+2188246.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-9      0:0 
+2188252      34BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-8      0:0 
+2188252.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-8      0:0 
+2188252.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-8      0:0 
+2188254      34BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-5      0:0 
+2188254.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-5      0:0 
+2188254.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-5      0:0 
+2188260      36BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-6      0:0 
+2188260.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-6      0:0 
+2188260.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-6      0:0 
+2188262      36BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-6      0:0 
+2188262.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-6      0:0 
+2188262.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-6      0:0 
+2188264      37BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-6      0:0 
+2188264.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-6      0:0 
+2188264.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-6      0:0 
+2188266      37BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-7      0:0 
+2188266.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-7      0:0 
+2188266.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-7      0:0 
+2188268      38BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-7      0:0 
+2188268.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-7      0:0 
+2188268.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-7      0:0 
+2188270      38BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:35             Unknown 1-09:35:20     30000M                              1          1    cls-cmp-c1-7      0:0 
+2188270.bat+      batch               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-7      0:0 
+2188270.ext+     extern               RUNNING            2025-01-21T19:21:35             Unknown 1-09:35:20                                         1          1    cls-cmp-c1-7      0:0 
+2188276      3BC_DA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-15      0:0 
+2188276.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-15      0:0 
+2188276.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-15      0:0 
+2188278      3BC_UA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-15      0:0 
+2188278.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-15      0:0 
+2188278.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-15      0:0 
+2188288      42BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-11      0:0 
+2188288.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-11      0:0 
+2188288.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-11      0:0 
+2188290      42BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-11      0:0 
+2188290.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-11      0:0 
+2188290.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-11      0:0 
+2188296      44BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-12      0:0 
+2188296.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-12      0:0 
+2188296.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-12      0:0 
+2188298      44BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-13      0:0 
+2188298.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-13      0:0 
+2188298.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-13      0:0 
+2188300      45BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-13      0:0 
+2188300.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-13      0:0 
+2188300.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-13      0:0 
+2188302      45BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-13      0:0 
+2188302.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-13      0:0 
+2188302.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-13      0:0 
+2188308      47BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1   cls-cmp-c1-14      0:0 
+2188308.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-14      0:0 
+2188308.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1   cls-cmp-c1-14      0:0 
+2188310      47BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-2      0:0 
+2188310.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-2      0:0 
+2188310.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-2      0:0 
+2188316      49BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T01:23:40 1-06:02:02     30000M                              1          1    cls-cmp-a1-2      0:0 
+2188316.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T01:23:40 1-06:02:02              3374672K   3654736K        1          1    cls-cmp-a1-2      0:0 
+2188316.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T01:23:40 1-06:02:02                  980K    419448K        1          1    cls-cmp-a1-2      0:0 
+2188318      49BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T01:26:33 1-06:04:55     30000M                              1          1    cls-cmp-a1-2      0:0 
+2188318.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T01:26:33 1-06:04:55              2839304K   3119032K        1          1    cls-cmp-a1-2      0:0 
+2188318.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T01:26:33 1-06:04:55                  980K    419448K        1          1    cls-cmp-a1-2      0:0 
+2188320      4BC_DA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-2      0:0 
+2188320.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-2      0:0 
+2188320.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-2      0:0 
+2188322      4BC_UA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-1      0:0 
+2188322.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-1      0:0 
+2188322.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-1      0:0 
+2188328      51BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-1      0:0 
+2188328.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-1      0:0 
+2188328.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-1      0:0 
+2188330      51BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T04:31:15 1-09:09:37     30000M                              1          1    cls-cmp-a1-1      0:0 
+2188330.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T04:31:15 1-09:09:37              4318820K   4589164K        1          1    cls-cmp-a1-1      0:0 
+2188330.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T04:31:15 1-09:09:37                  980K    419448K        1          1    cls-cmp-a1-1      0:0 
+2188334      52BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T02:46:08 1-07:24:30     30000M                              1          1    cls-cmp-a1-4      0:0 
+2188334.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T02:46:08 1-07:24:30             11997720K  12279044K        1          1    cls-cmp-a1-4      0:0 
+2188334.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T02:46:08 1-07:24:30                  980K      5584K        1          1    cls-cmp-a1-4      0:0 
+2188340      54BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-4      0:0 
+2188340.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-4      0:0 
+2188340.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-4      0:0 
+2188342      54BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-4      0:0 
+2188342.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-4      0:0 
+2188342.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-4      0:0 
+2188344      55BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T00:11:12 1-04:49:34     30000M                              1          1    cls-cmp-a1-3      0:0 
+2188344.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T00:11:12 1-04:49:34             10307916K  10564736K        1          1    cls-cmp-a1-3      0:0 
+2188344.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T00:11:12 1-04:49:34                  984K    484984K        1          1    cls-cmp-a1-3      0:0 
+2188348      56BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T04:00:48 1-08:39:10     30000M                              1          1    cls-cmp-a1-3      0:0 
+2188348.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T04:00:48 1-08:39:10              8594076K   8868548K        1          1    cls-cmp-a1-3      0:0 
+2188348.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T04:00:48 1-08:39:10                  984K      5584K        1          1    cls-cmp-a1-3      0:0 
+2188350      56BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T04:39:31 1-09:17:53     30000M                              1          1    cls-cmp-a1-3      0:0 
+2188350.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T04:39:31 1-09:17:53             12106448K  12379848K        1          1    cls-cmp-a1-3      0:0 
+2188350.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T04:39:31 1-09:17:53                  980K    484984K        1          1    cls-cmp-a1-3      0:0 
+2188352      57BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-3      0:0 
+2188352.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-3      0:0 
+2188352.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-3      0:0 
+2188354      57BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T03:31:56 1-08:10:18     30000M                              1          1    cls-cmp-a1-3      0:0 
+2188354.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T03:31:56 1-08:10:18              5331152K   5606172K        1          1    cls-cmp-a1-3      0:0 
+2188354.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T03:31:57 1-08:10:19                  980K      5584K        1          1    cls-cmp-a1-3      0:0 
+2188360      59BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T03:12:02 1-07:50:24     30000M                              1          1    cls-cmp-a1-5      0:0 
+2188360.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T03:12:02 1-07:50:24             14626284K  14889200K        1          1    cls-cmp-a1-5      0:0 
+2188360.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T03:12:02 1-07:50:24                  980K    353908K        1          1    cls-cmp-a1-5      0:0 
+2188362      59BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:38 2025-01-23T02:04:14 1-06:42:36     30000M                              1          1    cls-cmp-a1-5      0:0 
+2188362.bat+      batch             COMPLETED            2025-01-21T19:21:38 2025-01-23T02:04:14 1-06:42:36              2908456K   3181024K        1          1    cls-cmp-a1-5      0:0 
+2188362.ext+     extern             COMPLETED            2025-01-21T19:21:38 2025-01-23T02:04:15 1-06:42:37                  984K      5584K        1          1    cls-cmp-a1-5      0:0 
+2188366      5BC_UA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-5      0:0 
+2188366.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-5      0:0 
+2188366.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-5      0:0 
+2188368      60BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-6      0:0 
+2188368.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-6      0:0 
+2188368.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-6      0:0 
+2188370      60BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:38             Unknown 1-09:35:17     30000M                              1          1    cls-cmp-a1-6      0:0 
+2188370.bat+      batch               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-6      0:0 
+2188370.ext+     extern               RUNNING            2025-01-21T19:21:38             Unknown 1-09:35:17                                         1          1    cls-cmp-a1-6      0:0 
+2188376      62BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-6      0:0 
+2188376.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-6      0:0 
+2188376.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-6      0:0 
+2188378      62BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-6      0:0 
+2188378.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-6      0:0 
+2188378.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-6      0:0 
+2188380      63BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-7      0:0 
+2188380.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188380.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188382      63BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-7      0:0 
+2188382.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188382.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188384      64BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-7      0:0 
+2188384.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188384.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188386      64BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-7      0:0 
+2188386.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188386.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188388      65BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-7      0:0 
+2188388.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188388.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188390      65BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-7      0:0 
+2188390.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188390.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-7      0:0 
+2188392      66BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-8      0:0 
+2188392.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188392.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188394      66BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-8      0:0 
+2188394.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188394.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188400      68BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-8      0:0 
+2188400.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188400.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188402      68BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-a1-8      0:0 
+2188402.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188402.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-a1-8      0:0 
+2188404      69BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:41 2025-01-23T02:07:44 1-06:46:03     30000M                              1          1    cls-cmp-e6-6      0:0 
+2188404.bat+      batch             COMPLETED            2025-01-21T19:21:41 2025-01-23T02:07:44 1-06:46:03              3215524K   3485180K        1          1    cls-cmp-e6-6      0:0 
+2188404.ext+     extern             COMPLETED            2025-01-21T19:21:41 2025-01-23T02:07:44 1-06:46:03                  956K      5584K        1          1    cls-cmp-e6-6      0:0 
+2188406      69BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:41 2025-01-23T03:27:26 1-08:05:45     30000M                              1          1    cls-cmp-e6-6      0:0 
+2188406.bat+      batch             COMPLETED            2025-01-21T19:21:41 2025-01-23T03:27:26 1-08:05:45              5577564K   5854592K        1          1    cls-cmp-e6-6      0:0 
+2188406.ext+     extern             COMPLETED            2025-01-21T19:21:41 2025-01-23T03:27:26 1-08:05:45                  988K    485000K        1          1    cls-cmp-e6-6      0:0 
+2188424      73BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:41 2025-01-23T04:46:12 1-09:24:31     30000M                              1          1    cls-cmp-e6-7      0:0 
+2188424.bat+      batch             COMPLETED            2025-01-21T19:21:41 2025-01-23T04:46:12 1-09:24:31              2246596K   2602412K        1          1    cls-cmp-e6-7      0:0 
+2188424.ext+     extern             COMPLETED            2025-01-21T19:21:41 2025-01-23T04:46:12 1-09:24:31                  992K    485000K        1          1    cls-cmp-e6-7      0:0 
+2188426      73BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:41 2025-01-23T04:46:39 1-09:24:58     30000M                              1          1    cls-cmp-e6-8      0:0 
+2188426.bat+      batch             COMPLETED            2025-01-21T19:21:41 2025-01-23T04:46:39 1-09:24:58              4019648K   4298192K        1          1    cls-cmp-e6-8      0:0 
+2188426.ext+     extern             COMPLETED            2025-01-21T19:21:41 2025-01-23T04:46:39 1-09:24:58                  992K    550536K        1          1    cls-cmp-e6-8      0:0 
+2188428      74BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-8      0:0 
+2188428.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-8      0:0 
+2188428.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-8      0:0 
+2188430      74BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-8      0:0 
+2188430.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-8      0:0 
+2188430.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-8      0:0 
+2188436      76BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-8      0:0 
+2188436.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-8      0:0 
+2188436.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-8      0:0 
+2188438      76BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-1      0:0 
+2188438.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188438.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188440      77BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-1      0:0 
+2188440.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188440.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188442      77BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-1      0:0 
+2188442.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188442.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188444      78BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-1      0:0 
+2188444.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188444.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188446      78BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-1      0:0 
+2188446.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188446.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188448      79BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-1      0:0 
+2188448.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188448.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-1      0:0 
+2188450      79BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-2      0:0 
+2188450.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-2      0:0 
+2188450.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-2      0:0 
+2188452      7BC_DA0.03     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:41 2025-01-23T03:45:48 1-08:24:07     30000M                              1          1    cls-cmp-e6-2      0:0 
+2188452.bat+      batch             COMPLETED            2025-01-21T19:21:41 2025-01-23T03:45:48 1-08:24:07              6628636K   6903112K        1          1    cls-cmp-e6-2      0:0 
+2188452.ext+     extern             COMPLETED            2025-01-21T19:21:41 2025-01-23T03:45:48 1-08:24:07                  972K      5584K        1          1    cls-cmp-e6-2      0:0 
+2188456      80BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-2      0:0 
+2188456.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-2      0:0 
+2188456.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-2      0:0 
+2188458      80BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-2      0:0 
+2188458.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-2      0:0 
+2188458.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-2      0:0 
+2188464      82BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-3      0:0 
+2188464.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-3      0:0 
+2188464.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-3      0:0 
+2188466      82BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:41             Unknown 1-09:35:14     30000M                              1          1    cls-cmp-e6-3      0:0 
+2188466.bat+      batch               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-3      0:0 
+2188466.ext+     extern               RUNNING            2025-01-21T19:21:41             Unknown 1-09:35:14                                         1          1    cls-cmp-e6-3      0:0 
+2188472      84BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e6-3      0:0 
+2188472.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-3      0:0 
+2188472.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-3      0:0 
+2188474      84BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e6-4      0:0 
+2188474.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-4      0:0 
+2188474.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-4      0:0 
+2188484      87BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e6-4      0:0 
+2188484.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-4      0:0 
+2188484.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-4      0:0 
+2188486      87BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e6-5      0:0 
+2188486.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-5      0:0 
+2188486.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-5      0:0 
+2188488      88BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e6-5      0:0 
+2188488.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-5      0:0 
+2188488.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-5      0:0 
+2188490      88BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e6-5      0:0 
+2188490.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-5      0:0 
+2188490.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e6-5      0:0 
+2188498      8BC_UA0.03     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-2      0:0 
+2188498.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188498.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188500      90BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-2      0:0 
+2188500.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188500.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188502      90BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-2      0:0 
+2188502.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188502.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188504      91BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-2      0:0 
+2188504.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188504.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-2      0:0 
+2188506      91BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-1      0:0 
+2188506.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188506.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188508      92BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-1      0:0 
+2188508.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188508.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188510      92BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-1      0:0 
+2188510.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188510.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188512      93BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-1      0:0 
+2188512.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188512.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188514      93BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-1      0:0 
+2188514.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188514.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-1      0:0 
+2188516      94BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:44             Unknown 1-09:35:11     30000M                              1          1    cls-cmp-e4-3      0:0 
+2188516.bat+      batch               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-3      0:0 
+2188516.ext+     extern               RUNNING            2025-01-21T19:21:44             Unknown 1-09:35:11                                         1          1    cls-cmp-e4-3      0:0 
+2188518      94BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:45             Unknown 1-09:35:10     30000M                              1          1    cls-cmp-e4-3      0:0 
+2188518.bat+      batch               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-3      0:0 
+2188518.ext+     extern               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-3      0:0 
+2188520      95BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:45             Unknown 1-09:35:10     30000M                              1          1    cls-cmp-e4-3      0:0 
+2188520.bat+      batch               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-3      0:0 
+2188520.ext+     extern               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-3      0:0 
+2188522      95BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:45             Unknown 1-09:35:10     30000M                              1          1    cls-cmp-e4-3      0:0 
+2188522.bat+      batch               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-3      0:0 
+2188522.ext+     extern               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-3      0:0 
+2188524      96BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:45             Unknown 1-09:35:10     30000M                              1          1    cls-cmp-e4-4      0:0 
+2188524.bat+      batch               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-4      0:0 
+2188524.ext+     extern               RUNNING            2025-01-21T19:21:45             Unknown 1-09:35:10                                         1          1    cls-cmp-e4-4      0:0 
+2188526      96BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:47             Unknown 1-09:35:08     30000M                              1          1    cls-cmp-e4-4      0:0 
+2188526.bat+      batch               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-4      0:0 
+2188526.ext+     extern               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-4      0:0 
+2188528      97BC_DA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:47 2025-01-23T02:20:05 1-06:58:18     30000M                              1          1    cls-cmp-e4-4      0:0 
+2188528.bat+      batch             COMPLETED            2025-01-21T19:21:47 2025-01-23T02:20:05 1-06:58:18              5267048K   5650948K        1          1    cls-cmp-e4-4      0:0 
+2188528.ext+     extern             COMPLETED            2025-01-21T19:21:47 2025-01-23T02:20:05 1-06:58:18                  988K    485000K        1          1    cls-cmp-e4-4      0:0 
+2188530      97BC_UA0.+     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:47 2025-01-23T04:08:50 1-08:47:03     30000M                              1          1    cls-cmp-e4-4      0:0 
+2188530.bat+      batch             COMPLETED            2025-01-21T19:21:47 2025-01-23T04:08:50 1-08:47:03             11510716K  11779028K        1          1    cls-cmp-e4-4      0:0 
+2188530.ext+     extern             COMPLETED            2025-01-21T19:21:47 2025-01-23T04:08:50 1-08:47:03                  992K    485000K        1          1    cls-cmp-e4-4      0:0 
+2188532      98BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:47             Unknown 1-09:35:08     30000M                              1          1    cls-cmp-e4-4      0:0 
+2188532.bat+      batch               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-4      0:0 
+2188532.ext+     extern               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-4      0:0 
+2188534      98BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:47             Unknown 1-09:35:08     30000M                              1          1    cls-cmp-e4-5      0:0 
+2188534.bat+      batch               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-5      0:0 
+2188534.ext+     extern               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-5      0:0 
+2188536      99BC_DA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:47             Unknown 1-09:35:08     30000M                              1          1    cls-cmp-e4-5      0:0 
+2188536.bat+      batch               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-5      0:0 
+2188536.ext+     extern               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-5      0:0 
+2188538      99BC_UA0.+     medium    RUNNING 6-23:59:00 2025-01-21T19:21:47             Unknown 1-09:35:08     30000M                              1          1    cls-cmp-e4-5      0:0 
+2188538.bat+      batch               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-5      0:0 
+2188538.ext+     extern               RUNNING            2025-01-21T19:21:47             Unknown 1-09:35:08                                         1          1    cls-cmp-e4-5      0:0 
+2188540      9BC_DA0.03     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:47 2025-01-23T01:16:55 1-05:55:08     30000M                              1          1    cls-cmp-e4-5      0:0 
+2188540.bat+      batch             COMPLETED            2025-01-21T19:21:47 2025-01-23T01:16:55 1-05:55:08              5942912K   6211760K        1          1    cls-cmp-e4-5      0:0 
+2188540.ext+     extern             COMPLETED            2025-01-21T19:21:47 2025-01-23T01:16:55 1-05:55:08                  988K    485000K        1          1    cls-cmp-e4-5      0:0 
+2188542      9BC_UA0.03     medium  COMPLETED 6-23:59:00 2025-01-21T19:21:47 2025-01-23T01:37:39 1-06:15:52     30000M                              1          1    cls-cmp-e4-6      0:0 
+2188542.bat+      batch             COMPLETED            2025-01-21T19:21:47 2025-01-23T01:37:39 1-06:15:52              7094840K   7331308K        1          1    cls-cmp-e4-6      0:0 
+2188542.ext+     extern             COMPLETED            2025-01-21T19:21:47 2025-01-23T01:37:39 1-06:15:52                  984K    485000K        1          1    cls-cmp-e4-6      0:0 
+2188548      0BC_DA0.04   largemem    RUNNING 6-23:59:00 2025-01-21T21:07:27             Unknown 1-07:49:28    100000M                              1          1   cls-cmp-a1-10      0:0 
+2188548.bat+      batch               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-10      0:0 
+2188548.ext+     extern               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-10      0:0 
+2188549      0BC_UA0.04   largemem    RUNNING 6-23:59:00 2025-01-21T21:07:27             Unknown 1-07:49:28    100000M                              1          1   cls-cmp-a1-11      0:0 
+2188549.bat+      batch               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-11      0:0 
+2188549.ext+     extern               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-11      0:0 
+2188550      10BC_DA0.+   largemem OUT_OF_ME+ 6-23:59:00 2025-01-21T21:07:27 2025-01-23T03:51:36 1-06:44:09    100000M                              1          1   cls-cmp-a1-12    0:125 
+2188550.bat+      batch            OUT_OF_ME+            2025-01-21T21:07:27 2025-01-23T03:51:36 1-06:44:09             79042892K 109965896K        1          1   cls-cmp-a1-12    0:125 
+2188550.ext+     extern             COMPLETED            2025-01-21T21:07:27 2025-01-23T03:51:36 1-06:44:09                  992K    484980K        1          1   cls-cmp-a1-12      0:0 
+2188551      10BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-21T21:07:27             Unknown 1-07:49:28    100000M                              1          1   cls-cmp-a1-13      0:0 
+2188551.bat+      batch               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-13      0:0 
+2188551.ext+     extern               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-13      0:0 
+2188552      11BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-21T21:07:27             Unknown 1-07:49:28    100000M                              1          1   cls-cmp-a1-14      0:0 
+2188552.bat+      batch               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-14      0:0 
+2188552.ext+     extern               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-14      0:0 
+2188553      11BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-21T21:07:27             Unknown 1-07:49:28    100000M                              1          1   cls-cmp-a1-15      0:0 
+2188553.bat+      batch               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-15      0:0 
+2188553.ext+     extern               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-15      0:0 
+2188554      12BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-21T21:07:27             Unknown 1-07:49:28    100000M                              1          1   cls-cmp-a1-16      0:0 
+2188554.bat+      batch               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-16      0:0 
+2188554.ext+     extern               RUNNING            2025-01-21T21:07:27             Unknown 1-07:49:28                                         1          1   cls-cmp-a1-16      0:0 
+2188555      12BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-21T22:22:55             Unknown 1-06:34:00    100000M                              1          1    cls-cmp-c1-9      0:0 
+2188555.bat+      batch               RUNNING            2025-01-21T22:22:55             Unknown 1-06:34:00                                         1          1    cls-cmp-c1-9      0:0 
+2188555.ext+     extern               RUNNING            2025-01-21T22:22:55             Unknown 1-06:34:00                                         1          1    cls-cmp-c1-9      0:0 
+2188558      14BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T02:18:30             Unknown 1-02:38:25    100000M                              1          1    cls-cmp-c1-5      0:0 
+2188558.bat+      batch               RUNNING            2025-01-22T02:18:30             Unknown 1-02:38:25                                         1          1    cls-cmp-c1-5      0:0 
+2188558.ext+     extern               RUNNING            2025-01-22T02:18:30             Unknown 1-02:38:25                                         1          1    cls-cmp-c1-5      0:0 
+2188559      14BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T02:54:02             Unknown 1-02:02:53    100000M                              1          1    cls-cmp-a1-4      0:0 
+2188559.bat+      batch               RUNNING            2025-01-22T02:54:02             Unknown 1-02:02:53                                         1          1    cls-cmp-a1-4      0:0 
+2188559.ext+     extern               RUNNING            2025-01-22T02:54:02             Unknown 1-02:02:53                                         1          1    cls-cmp-a1-4      0:0 
+2188561      15BC_UA0.+   largemem OUT_OF_ME+ 6-23:59:00 2025-01-22T04:54:44 2025-01-23T02:07:00   21:12:16    100000M                              1          1   cls-cmp-c1-15    0:125 
+2188561.bat+      batch            OUT_OF_ME+            2025-01-22T04:54:44 2025-01-23T02:07:00   21:12:16             79204848K  79443324K        1          1   cls-cmp-c1-15    0:125 
+2188561.ext+     extern             COMPLETED            2025-01-22T04:54:44 2025-01-23T02:07:00   21:12:16                  996K    484980K        1          1   cls-cmp-c1-15      0:0 
+2188562      16BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T05:09:11             Unknown   23:47:44    100000M                              1          1    cls-cmp-a1-5      0:0 
+2188562.bat+      batch               RUNNING            2025-01-22T05:09:11             Unknown   23:47:44                                         1          1    cls-cmp-a1-5      0:0 
+2188562.ext+     extern               RUNNING            2025-01-22T05:09:11             Unknown   23:47:44                                         1          1    cls-cmp-a1-5      0:0 
+2188563      16BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T05:49:43             Unknown   23:07:12    100000M                              1          1    cls-cmp-a1-3      0:0 
+2188563.bat+      batch               RUNNING            2025-01-22T05:49:43             Unknown   23:07:12                                         1          1    cls-cmp-a1-3      0:0 
+2188563.ext+     extern               RUNNING            2025-01-22T05:49:43             Unknown   23:07:12                                         1          1    cls-cmp-a1-3      0:0 
+2188564      17BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T06:09:18             Unknown   22:47:37    100000M                              1          1   cls-cmp-c1-10      0:0 
+2188564.bat+      batch               RUNNING            2025-01-22T06:09:18             Unknown   22:47:37                                         1          1   cls-cmp-c1-10      0:0 
+2188564.ext+     extern               RUNNING            2025-01-22T06:09:18             Unknown   22:47:37                                         1          1   cls-cmp-c1-10      0:0 
+2188565      17BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T06:45:00             Unknown   22:11:55    100000M                              1          1    cls-cmp-c1-8      0:0 
+2188565.bat+      batch               RUNNING            2025-01-22T06:45:00             Unknown   22:11:55                                         1          1    cls-cmp-c1-8      0:0 
+2188565.ext+     extern               RUNNING            2025-01-22T06:45:00             Unknown   22:11:55                                         1          1    cls-cmp-c1-8      0:0 
+2188566      18BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T08:17:52             Unknown   20:39:03    100000M                              1          1   cls-cmp-c1-14      0:0 
+2188566.bat+      batch               RUNNING            2025-01-22T08:17:52             Unknown   20:39:03                                         1          1   cls-cmp-c1-14      0:0 
+2188566.ext+     extern               RUNNING            2025-01-22T08:17:52             Unknown   20:39:03                                         1          1   cls-cmp-c1-14      0:0 
+2188567      18BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T08:33:30             Unknown   20:23:25    100000M                              1          1   cls-cmp-c1-11      0:0 
+2188567.bat+      batch               RUNNING            2025-01-22T08:33:30             Unknown   20:23:25                                         1          1   cls-cmp-c1-11      0:0 
+2188567.ext+     extern               RUNNING            2025-01-22T08:33:30             Unknown   20:23:25                                         1          1   cls-cmp-c1-11      0:0 
+2188568      19BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1   cls-cmp-c1-12      0:0 
+2188568.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1   cls-cmp-c1-12      0:0 
+2188568.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1   cls-cmp-c1-12      0:0 
+2188569      19BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1   cls-cmp-c1-16      0:0 
+2188569.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1   cls-cmp-c1-16      0:0 
+2188569.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1   cls-cmp-c1-16      0:0 
+2188570      1BC_DA0.04   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-c1-6      0:0 
+2188570.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-c1-6      0:0 
+2188570.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-c1-6      0:0 
+2188571      1BC_UA0.04   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-c1-7      0:0 
+2188571.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-c1-7      0:0 
+2188571.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-c1-7      0:0 
+2188572      20BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-1      0:0 
+2188572.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-1      0:0 
+2188572.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-1      0:0 
+2188573      20BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-2      0:0 
+2188573.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-2      0:0 
+2188573.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-2      0:0 
+2188574      21BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-3      0:0 
+2188574.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-3      0:0 
+2188574.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-3      0:0 
+2188575      21BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-6      0:0 
+2188575.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-6      0:0 
+2188575.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-6      0:0 
+2188576      22BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-6      0:0 
+2188576.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-6      0:0 
+2188576.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-6      0:0 
+2188577      22BC_UA0.+   largemem OUT_OF_ME+ 6-23:59:00 2025-01-22T12:55:46 2025-01-23T02:33:18   13:37:32    100000M                              1          1    cls-cmp-a1-7    0:125 
+2188577.bat+      batch            OUT_OF_ME+            2025-01-22T12:55:46 2025-01-23T02:33:18   13:37:32             35227816K  35547764K        1          1    cls-cmp-a1-7    0:125 
+2188577.ext+     extern             COMPLETED            2025-01-22T12:55:46 2025-01-23T02:33:18   13:37:32                  984K    484984K        1          1    cls-cmp-a1-7      0:0 
+2188578      23BC_DA0.+   largemem OUT_OF_ME+ 6-23:59:00 2025-01-22T12:55:46 2025-01-23T00:21:16   11:25:30    100000M                              1          1    cls-cmp-a1-7    0:125 
+2188578.bat+      batch            OUT_OF_ME+            2025-01-22T12:55:46 2025-01-23T00:21:16   11:25:30             40992272K  41259148K        1          1    cls-cmp-a1-7    0:125 
+2188578.ext+     extern             COMPLETED            2025-01-22T12:55:46 2025-01-23T00:21:16   11:25:30                  984K    484984K        1          1    cls-cmp-a1-7      0:0 
+2188579      23BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-8      0:0 
+2188579.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-8      0:0 
+2188579.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-8      0:0 
+2188580      24BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:55:46             Unknown   16:01:09    100000M                              1          1    cls-cmp-a1-8      0:0 
+2188580.bat+      batch               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-8      0:0 
+2188580.ext+     extern               RUNNING            2025-01-22T12:55:46             Unknown   16:01:09                                         1          1    cls-cmp-a1-8      0:0 
+2188581      24BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T12:57:39             Unknown   15:59:16    100000M                              1          1    cls-cmp-a1-1      0:0 
+2188581.bat+      batch               RUNNING            2025-01-22T12:57:39             Unknown   15:59:16                                         1          1    cls-cmp-a1-1      0:0 
+2188581.ext+     extern               RUNNING            2025-01-22T12:57:39             Unknown   15:59:16                                         1          1    cls-cmp-a1-1      0:0 
+2188582      25BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T15:59:58             Unknown   12:56:57    100000M                              1          1    cls-cmp-a1-4      0:0 
+2188582.bat+      batch               RUNNING            2025-01-22T15:59:58             Unknown   12:56:57                                         1          1    cls-cmp-a1-4      0:0 
+2188582.ext+     extern               RUNNING            2025-01-22T15:59:58             Unknown   12:56:57                                         1          1    cls-cmp-a1-4      0:0 
+2188583      25BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T16:18:43             Unknown   12:38:12    100000M                              1          1    cls-cmp-a1-5      0:0 
+2188583.bat+      batch               RUNNING            2025-01-22T16:18:43             Unknown   12:38:12                                         1          1    cls-cmp-a1-5      0:0 
+2188583.ext+     extern               RUNNING            2025-01-22T16:18:43             Unknown   12:38:12                                         1          1    cls-cmp-a1-5      0:0 
+2188584      26BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-22T23:18:16             Unknown   05:38:39    100000M                              1          1    cls-cmp-a1-2      0:0 
+2188584.bat+      batch               RUNNING            2025-01-22T23:18:16             Unknown   05:38:39                                         1          1    cls-cmp-a1-2      0:0 
+2188584.ext+     extern               RUNNING            2025-01-22T23:18:16             Unknown   05:38:39                                         1          1    cls-cmp-a1-2      0:0 
+2188585      26BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T00:21:17             Unknown   04:35:38    100000M                              1          1    cls-cmp-a1-7      0:0 
+2188585.bat+      batch               RUNNING            2025-01-23T00:21:17             Unknown   04:35:38                                         1          1    cls-cmp-a1-7      0:0 
+2188585.ext+     extern               RUNNING            2025-01-23T00:21:17             Unknown   04:35:38                                         1          1    cls-cmp-a1-7      0:0 
+2188586      27BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T02:07:01             Unknown   02:49:54    100000M                              1          1   cls-cmp-c1-15      0:0 
+2188586.bat+      batch               RUNNING            2025-01-23T02:07:01             Unknown   02:49:54                                         1          1   cls-cmp-c1-15      0:0 
+2188586.ext+     extern               RUNNING            2025-01-23T02:07:01             Unknown   02:49:54                                         1          1   cls-cmp-c1-15      0:0 
+2188587      27BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T02:33:19             Unknown   02:23:36    100000M                              1          1    cls-cmp-a1-7      0:0 
+2188587.bat+      batch               RUNNING            2025-01-23T02:33:19             Unknown   02:23:36                                         1          1    cls-cmp-a1-7      0:0 
+2188587.ext+     extern               RUNNING            2025-01-23T02:33:19             Unknown   02:23:36                                         1          1    cls-cmp-a1-7      0:0 
+2188588      28BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T03:12:03             Unknown   01:44:52    100000M                              1          1    cls-cmp-a1-5      0:0 
+2188588.bat+      batch               RUNNING            2025-01-23T03:12:03             Unknown   01:44:52                                         1          1    cls-cmp-a1-5      0:0 
+2188588.ext+     extern               RUNNING            2025-01-23T03:12:03             Unknown   01:44:52                                         1          1    cls-cmp-a1-5      0:0 
+2188589      28BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T03:51:37             Unknown   01:05:18    100000M                              1          1   cls-cmp-a1-12      0:0 
+2188589.bat+      batch               RUNNING            2025-01-23T03:51:37             Unknown   01:05:18                                         1          1   cls-cmp-a1-12      0:0 
+2188589.ext+     extern               RUNNING            2025-01-23T03:51:37             Unknown   01:05:18                                         1          1   cls-cmp-a1-12      0:0 
+2188590      29BC_DA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T04:00:49             Unknown   00:56:06    100000M                              1          1    cls-cmp-a1-3      0:0 
+2188590.bat+      batch               RUNNING            2025-01-23T04:00:49             Unknown   00:56:06                                         1          1    cls-cmp-a1-3      0:0 
+2188590.ext+     extern               RUNNING            2025-01-23T04:00:49             Unknown   00:56:06                                         1          1    cls-cmp-a1-3      0:0 
+2188591      29BC_UA0.+   largemem    RUNNING 6-23:59:00 2025-01-23T04:31:16             Unknown   00:25:39    100000M                              1          1    cls-cmp-a1-1      0:0 
+2188591.bat+      batch               RUNNING            2025-01-23T04:31:16             Unknown   00:25:39                                         1          1    cls-cmp-a1-1      0:0 
+2188591.ext+     extern               RUNNING            2025-01-23T04:31:16             Unknown   00:25:39                                         1          1    cls-cmp-a1-1      0:0 
+2188592      2BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188593      2BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188594      30BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188595      30BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188596      31BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188597      31BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188598      32BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188599      32BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188600      33BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188601      33BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188602      34BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188603      34BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188604      35BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188605      35BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188606      36BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188607      36BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188608      37BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188609      37BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188610      38BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188611      38BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188612      39BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188613      39BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188614      3BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188615      3BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188616      40BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188617      40BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188618      41BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188619      41BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188620      42BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188621      42BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188622      43BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188623      43BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188624      44BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188625      44BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188626      45BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188627      45BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188628      46BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188629      46BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188630      47BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188631      47BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188632      48BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188633      48BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188634      49BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188635      49BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188636      4BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188637      4BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188638      50BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188639      50BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188640      51BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188641      51BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188642      52BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188643      52BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188644      53BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188645      53BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188646      54BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188647      54BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188648      55BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188649      55BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188650      56BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188651      56BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188652      57BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188653      57BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188654      58BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188655      58BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188656      59BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188657      59BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188658      5BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188659      5BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188660      60BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188661      60BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188662      61BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188663      61BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188664      62BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188665      62BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188666      63BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188667      63BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188668      64BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188669      64BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188670      65BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188671      65BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188672      66BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188673      66BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188674      67BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188675      67BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188676      68BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188677      68BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188678      69BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188679      69BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188680      6BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188681      6BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188682      70BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188683      70BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188684      71BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188685      71BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188686      72BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188687      72BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188688      73BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188689      73BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188690      74BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188691      74BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188692      75BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188693      75BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188694      76BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188695      76BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188696      77BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188697      77BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188698      78BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188699      78BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188700      79BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188701      79BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188702      7BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188703      7BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188704      80BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188705      80BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188706      81BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188707      81BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188708      82BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188709      82BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188710      83BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188711      83BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188712      84BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188713      84BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188714      85BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188715      85BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188716      86BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188717      86BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188718      87BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188719      87BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188720      88BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188721      88BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188722      89BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188723      89BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188724      8BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188725      8BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188726      90BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188727      90BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188728      91BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188729      91BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188730      92BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188731      92BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188732      93BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188733      93BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188734      94BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188735      94BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188736      95BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188737      95BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188738      96BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188739      96BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188740      97BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188741      97BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188742      98BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188743      98BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188744      99BC_DA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188745      99BC_UA0.+   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188746      9BC_DA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
+2188747      9BC_UA0.04   largemem    PENDING 6-23:59:00             Unknown             Unknown   00:00:00    100000M                              1          0   None assigned      0:0 
