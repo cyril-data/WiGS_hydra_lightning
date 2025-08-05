@@ -23,7 +23,7 @@ def TestErrorFunction(InputModel, df_Test):
     
     ### RMSE ###
     Prediction = InputModel.predict(X_test_df)
-    ErrorVal = np.mean((Prediction - y_test_series)**2)
+    ErrorVal = np.sqrt(np.mean((Prediction - y_test_series)**2))
     Output = {"ErrorVal": ErrorVal.tolist()}
 
     ### Return ###

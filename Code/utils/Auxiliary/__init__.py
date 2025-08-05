@@ -3,7 +3,6 @@ from .LoadDataSet import *
 from .MakeSavePlots import *
 from .MeanVariancePlot import *
 from .SelectionHistoryRank import *
-from .StoppingCriteria import *
 from .WilcoxonRankSignedTest import *
 from .CreateParameterVector import *
 from .AnalyzeResultsFunction import *

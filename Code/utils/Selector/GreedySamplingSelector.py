@@ -10,12 +10,11 @@ from utils.Auxiliary.DataFrameUtils import get_features_and_target # Ensure this
 class GreedySamplingSelector:
 
     ### Initialize ###
-    def __init__(self, strategy: str, distance: str = "euclidean", BatchSize: int = 1, Seed: int = None, **kwargs):
+    def __init__(self, strategy: str, distance: str = "euclidean", Seed: int = None, **kwargs):
         if strategy not in ['GSx', 'GSy', 'iGS']:
             raise ValueError(f"Invalid greedy sampling strategy: {strategy}. Must be 'GSx', 'GSy', or 'iGS'.")
         self.strategy = strategy
         self.distance = distance
-        self.BatchSize = BatchSize
         self.Seed = Seed 
 
     ### Select Observation ###
@@ -53,9 +52,10 @@ class GreedySamplingSelector:
         elif self.strategy == 'GSy':
             MaxRowNumber = np.argmax(d_nY)
         elif self.strategy == 'iGS':
-            if d_nX is None or d_nY is None:
-                raise RuntimeError("iGS strategy requires both GSx and GSy components, but one was not computed.")
-            d_nXY = d_nX * d_nY
+            if d_nmX is None or d_nmY is None: 
+                raise RuntimeError("iGS strategy requires both GSx and GSy components.")
+            d_nXY_matrix = d_nmX * d_nmY
+            d_nXY = d_nXY_matrix.min(axis=1) # Now d_nXY correctly implements the paper's formula
             MaxRowNumber = np.argmax(d_nXY)
 
         ## Output ##
