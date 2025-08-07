@@ -14,16 +14,13 @@ def create_sbatch_files(
     time_limit='01:00:00',
     memory='4G'
 ):
-    """
-    Generates a .sbatch file for each dataset in the data directory.
-    """
-    # --- Create Output Directories ---
+    ### Create Output Directories ###
     os.makedirs(sbatch_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(os.path.join(log_dir, 'out'), exist_ok=True)
     os.makedirs(os.path.join(log_dir, 'error'), exist_ok=True)
     
-    # --- Get Data Files ---
+    ### Get Data Files ###
     try:
         data_files = [f for f in os.listdir(data_dir) if f.endswith('.pkl')]
         if not data_files:
@@ -33,29 +30,29 @@ def create_sbatch_files(
         print(f"Error: Data directory not found at '{data_dir}'")
         return
 
-    # --- Loop and Generate Scripts ---
+    ### Loop and Generate Scripts ###
     for data_file in data_files:
         data_name = os.path.splitext(data_file)[0]
         
-        job_name = f"AL_{data_name}_{model_type}"
+        job_name = f"{data_name}_{model_type}"
         output_filename = f"{data_name}_results.pkl"
         
-        # Define log file paths
+        ## Define log file paths ##
         log_out_path = os.path.join(log_dir, 'out', f"{job_name}_%j.out")
         log_err_path = os.path.join(log_dir, 'error', f"{job_name}_%j.err")
-        
-        # Define the content of the .sbatch file
+
+        ## Define the content of the .sbatch file ##
         sbatch_content = f"""#!/bin/bash
 #SBATCH --job-name={job_name}
+#SBATCH --partition=short
+#SBATCH --ntasks=1
 #SBATCH --output={log_out_path}
 #SBATCH --error={log_err_path}
 #SBATCH --time={time_limit}
-#SBATCH --mem={memory}
+#SBATCH --mem-per-cpu={memory}
 #SBATCH --cpus-per-task=1
-
-# This assumes your python environment is available.
-# If you use modules or conda, you would load them here.
-# e.g., source activate my_env
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=simondn@uw.edu
 
 # Command to execute your main Python simulation script
 python {python_script_path} \\
@@ -67,38 +64,36 @@ python {python_script_path} \\
     --Output "{output_filename}"
 """
         
-        # Write the content to a .sbatch file in the specified directory
+        ## Save ##
         sbatch_file_path = os.path.join(sbatch_dir, f"run_{data_name}_{model_type}.sbatch")
         with open(sbatch_file_path, 'w') as f:
             f.write(sbatch_content)
             
-        # Make the script executable
+        ## Make the script executable ##
         os.chmod(sbatch_file_path, stat.S_IRWXU)
 
     print(f"Successfully generated {len(data_files)} .sbatch files for model '{model_type}' in '{sbatch_dir}'")
 
-# --- Main execution block ---
+### Execute ###
 if __name__ == "__main__":
     
-    # Define project paths based on your tree structure
-    # This script should be run from the 'Code/' directory
+    ## Set up ##
     DATA_DIRECTORY = '../Data/processed/'
     SBATCH_DIRECTORY = 'Cluster/RunSimulations/'
     RESULTS_DIRECTORY = '../Results/simulation_results/'
     LOG_DIRECTORY = 'Cluster/RunSimulations/ClusterMessages/'
     PYTHON_SCRIPT = 'RunSimulation.py'
     
-    # --- Define Simulation Parameters ---
-    N_SIMULATIONS = 50
+    ## Define Simulation Parameters ##
+    N_SIMULATIONS = 100
     TEST_PROPORTION = 0.2
     CANDIDATE_PROPORTION = 0.8
     
-    # Define the models you want to run
-    # The script will generate a set of jobs for each model
+    ## Models ##
     models_to_run = [
-        'LinearRegressionPredictor',
-        'RidgeRegressionPredictor',
-        'RandomForestRegressorPredictor'
+        'LinearRegressionPredictor'
+        # 'RidgeRegressionPredictor',
+        # 'RandomForestRegressorPredictor'
     ]
 
     print("--- Starting sbatch file generation ---")
