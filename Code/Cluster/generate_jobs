@@ -21,27 +21,20 @@ def create_sbatch_files(
     os.makedirs(os.path.join(log_dir, 'error'), exist_ok=True)
     
     ### Get Data Files ###
-    try:
-        data_files = [f for f in os.listdir(data_dir) if f.endswith('.pkl')]
-        if not data_files:
-            print(f"Warning: No .pkl files found in '{data_dir}'")
-            return
-    except FileNotFoundError:
-        print(f"Error: Data directory not found at '{data_dir}'")
-        return
+    data_files = [f for f in os.listdir(data_dir) if f.endswith('.pkl')]
 
     ### Loop and Generate Scripts ###
     for data_file in data_files:
         data_name = os.path.splitext(data_file)[0]
-        
         job_name = f"{data_name}_{model_type}"
         output_filename = f"{data_name}_results.pkl"
         
-        ## Define log file paths ##
+        ## Define log file paths (using absolute paths) ##
         log_out_path = os.path.join(log_dir, 'out', f"{job_name}_%j.out")
         log_err_path = os.path.join(log_dir, 'error', f"{job_name}_%j.err")
 
         ## Define the content of the .sbatch file ##
+        # The key change is adding the `cd` command to set the correct directory
         sbatch_content = f"""#!/bin/bash
 #SBATCH --job-name={job_name}
 #SBATCH --partition=short
@@ -54,8 +47,12 @@ def create_sbatch_files(
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=simondn@uw.edu
 
+# --- Set the correct working directory ---
+cd {os.path.dirname(python_script_path)}
+
 # Command to execute your main Python simulation script
-python {python_script_path} \\
+# Now we can just use the script's filename
+python {os.path.basename(python_script_path)} \\
     --Data "{data_name}" \\
     --NSim {n_sim} \\
     --ModelType "{model_type}" \\
@@ -68,8 +65,6 @@ python {python_script_path} \\
         sbatch_file_path = os.path.join(sbatch_dir, f"run_{data_name}_{model_type}.sbatch")
         with open(sbatch_file_path, 'w') as f:
             f.write(sbatch_content)
-            
-        ## Make the script executable ##
         os.chmod(sbatch_file_path, stat.S_IRWXU)
 
     print(f"Successfully generated {len(data_files)} .sbatch files for model '{model_type}' in '{sbatch_dir}'")
@@ -77,12 +72,18 @@ python {python_script_path} \\
 ### Execute ###
 if __name__ == "__main__":
     
-    ## Set up ##
-    DATA_DIRECTORY = '../Data/processed/'
-    SBATCH_DIRECTORY = 'Cluster/RunSimulations/'
-    RESULTS_DIRECTORY = '../Results/simulation_results/'
-    LOG_DIRECTORY = 'Cluster/RunSimulations/ClusterMessages/'
-    PYTHON_SCRIPT = 'RunSimulation.py'
+    # --- Dynamically Define Absolute Paths ---
+    # This makes the script runnable from anywhere
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) # This is Code/Cluster
+    CODE_DIR = os.path.dirname(SCRIPT_DIR) # This is Code/
+    PROJECT_ROOT = os.path.dirname(CODE_DIR) # This is WeightedGreedySampling/
+
+    # Define all paths based on the project structure
+    DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'Data', 'processed')
+    SBATCH_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations')
+    RESULTS_DIRECTORY = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results')
+    LOG_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations', 'ClusterMessages')
+    PYTHON_SCRIPT = os.path.join(CODE_DIR, 'RunSimulation.py')
     
     ## Define Simulation Parameters ##
     N_SIMULATIONS = 100
@@ -90,11 +91,7 @@ if __name__ == "__main__":
     CANDIDATE_PROPORTION = 0.8
     
     ## Models ##
-    models_to_run = [
-        'LinearRegressionPredictor'
-        # 'RidgeRegressionPredictor',
-        # 'RandomForestRegressorPredictor'
-    ]
+    models_to_run = ['LinearRegressionPredictor']
 
     print("--- Starting sbatch file generation ---")
     for model in models_to_run:
