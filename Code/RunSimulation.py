@@ -28,8 +28,8 @@ args = parser.parse_args()
 SimulationResults = RunSimulationFunction(DataFileInput = args.Data,
                                           NSim = int(args.NSim),
                                           machine_learning_model = str(args.ModelType),
-                                          test_proportion = float(args.test_proportion),
-                                          candidate_proportion = float(args.candidate_proportion))
+                                          test_proportion = float(args.TestProportion),
+                                          candidate_proportion = float(args.CandidateProportion))
 
 ### Save Simulation Results ###
 with open(os.path.join(SaveDirectory, str(args.Output)), 'wb') as f:
