@@ -32,5 +32,7 @@ SimulationResults = RunSimulationFunction(DataFileInput = args.Data,
                                           candidate_proportion = float(args.CandidateProportion))
 
 ### Save Simulation Results ###
+os.makedirs(SaveDirectory, exist_ok=True)
 with open(os.path.join(SaveDirectory, str(args.Output)), 'wb') as f:
     pickle.dump(SimulationResults, f)
+
