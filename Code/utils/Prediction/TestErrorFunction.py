@@ -6,11 +6,7 @@
 # Output:
 
 ### Libraries ###
-import torch
 import numpy as np
-import pandas as pd
-from scipy import stats
-from sklearn.metrics import f1_score
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 
 ### Function ###
