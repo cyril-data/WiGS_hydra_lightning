@@ -50,10 +50,10 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ErrorVec.append(TestErrorOutput["ErrorVal"] )
 
         ## Sampling Procedure ##
-        SelectorFuncOutput = selector_model.select(
-            df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
-            df_Train=SimulationConfigInputUpdated["df_Train"],
-            Model=predictor_model)
+        SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
+                                                   df_Train=SimulationConfigInputUpdated["df_Train"],
+                                                   Model=predictor_model,
+                                                   current_rmse=TestErrorOutput["ErrorVal"])
 
         ## Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]

@@ -18,7 +18,7 @@ class GreedySamplingSelector:
         self.Seed = Seed 
 
     ### Select Observation ###
-    def select(self, df_Candidate: pd.DataFrame, Model=None, df_Train: pd.DataFrame = None, auxiliary_columns: list = None) -> dict:
+    def select(self, df_Candidate: pd.DataFrame, Model=None, df_Train: pd.DataFrame = None, auxiliary_columns: list = None, **kwargs) -> dict:
         if df_Candidate.empty:
             return {"IndexRecommendation": []}
 
