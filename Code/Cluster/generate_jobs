@@ -11,7 +11,7 @@ def create_sbatch_files(
     model_type,
     test_prop,
     candidate_prop,
-    time_limit='01:00:00',
+    time_limit='03:00:00',
     memory='4G'
 ):
     ### Create Output Directories ###
