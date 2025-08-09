@@ -15,9 +15,9 @@ def RunSimulationFunction(DataFileInput,
     ### Set Up ###
     all_error_vectors = {}
     strategies_to_run = {
-        # 'Passive Learning': {'SelectorType': 'PassiveLearningSelector'},
-        # 'GSx': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'GSx'},
-        # 'GSy': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'GSy'},
+        'Passive Learning': {'SelectorType': 'PassiveLearningSelector'},
+        'GSx': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'GSx'},
+        'GSy': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'GSy'},
         'iGS': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'iGS'},
         'WiGS (Static w_x=0.25)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                    'weight_strategy': 'static',

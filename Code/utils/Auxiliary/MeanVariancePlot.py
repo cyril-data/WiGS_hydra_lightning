@@ -29,11 +29,10 @@ def MeanVariancePlot(Subtitle=None,
 
     ### Extract ###
     for Label, Results in SimulationErrorResults.items():
-        # CORRECTED: Calculate stats across simulations (axis=1)
         MeanVector[Label] = np.mean(Results, axis=1)
+        # MeanVector[Label] = np.median(Results, axis=1)
         VarianceVector[Label] = np.var(Results, axis=1)
         
-        # CORRECTED: Use number of simulations (Results.shape[1]) for n
         n_simulations = Results.shape[1]
         StdErrorVector[Label] = np.std(Results, axis=1) / np.sqrt(n_simulations)
         
@@ -48,13 +47,11 @@ def MeanVariancePlot(Subtitle=None,
     ### Normalize to Relative Error if specified ###
     if RelativeError:
         if RelativeError in MeanVector:
-            # UPDATED: Y-label for new normalization
             Y_Label = f"Normalized Error (Baseline: {RelativeError}=1.0)"
             BaselineMean = MeanVector[RelativeError].copy()
             BaselineVariance = VarianceVector[RelativeError].copy()
             
             for Label in MeanVector:
-                # UPDATED: Normalization to match paper's style (Value / Baseline)
                 MeanVector[Label] = MeanVector[Label] / BaselineMean
                 StdErrorVector[Label] = StdErrorVector[Label] / BaselineMean
                 VarianceVector[Label] = VarianceVector[Label] / BaselineVariance
@@ -66,12 +63,11 @@ def MeanVariancePlot(Subtitle=None,
     for Label, MeanValues in MeanVector.items():
         StdErrorValues = StdErrorVector[Label]
         
-        # CORRECTED: Robust x-axis calculation
         num_iterations = len(MeanValues)
         if num_iterations > 1:
             iterations_array = np.arange(num_iterations)
             x = (initial_train_proportion + (iterations_array / (num_iterations - 1)) * candidate_pool_proportion) * 100
-        else: # Handle edge case of a single data point
+        else: 
             x = [initial_train_proportion * 100]
 
         color = Colors.get(Label, None) if Colors else None
@@ -91,13 +87,12 @@ def MeanVariancePlot(Subtitle=None,
         plt.xlim(xlim)
     
     MeanPlot = plt.gcf()
-    plt.show() # Display the plot
+    plt.show() 
 
     # Variance Plot
     if VarInput:
         plt.figure(figsize=FigSize)
         for Label, VarianceValues in VarianceVector.items():
-            # Use the same corrected x-axis
             num_iterations = len(VarianceValues)
             if num_iterations > 1:
                 iterations_array = np.arange(num_iterations)
@@ -124,7 +119,7 @@ def MeanVariancePlot(Subtitle=None,
             plt.xlim(xlim)
         
         VariancePlot = plt.gcf()
-        plt.show() # Display the plot
+        plt.show() 
     else:
         VariancePlot = None
 

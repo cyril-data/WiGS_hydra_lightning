@@ -13,8 +13,8 @@ class WiGS_MAB_Selector:
                  **kwargs):
         
         ## Set up MAB ##
-        self.arms = mab_arms if mab_arms is not None else [0.0, 0.25, 0.5, 0.75, 1.0]
-        self.mab_c = mab_c # UCB1 exploration constant
+        self.arms = mab_arms if mab_arms is not None else [0.25, 0.5, 0.75]
+        self.mab_c = mab_c 
         
         # MAB state variables
         self.arm_counts = np.zeros(len(self.arms))
