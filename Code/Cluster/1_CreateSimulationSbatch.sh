@@ -4,5 +4,5 @@
 CURRENT_DIR=$(basename "$PWD")
 echo "Processing results for dataset: $CURRENT_DIR"
 
-cd ~/RashomonActiveLearning
+cd ~/WeightedGreedySampling
 python Code/utils/Auxiliary/GenerateJobs.py
