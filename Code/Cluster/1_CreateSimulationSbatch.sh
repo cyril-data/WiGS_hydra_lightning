@@ -5,5 +5,4 @@ CURRENT_DIR=$(basename "$PWD")
 echo "Processing results for dataset: $CURRENT_DIR"
 
 cd ~/RashomonActiveLearning
-python Code/utils/Auxiliary/CreateRunSimSbatch.py \
-    --DataType "$CURRENT_DIR" \
+python Code/utils/Auxiliary/GenerateJobs.py
