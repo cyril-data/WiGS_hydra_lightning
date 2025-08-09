@@ -34,7 +34,6 @@ def create_sbatch_files(
         log_err_path = os.path.join(log_dir, 'error', f"{job_name}_%j.err")
 
         ## Define the content of the .sbatch file ##
-        # The key change is adding the `cd` command to set the correct directory
         sbatch_content = f"""#!/bin/bash
 #SBATCH --job-name={job_name}
 #SBATCH --partition=short
@@ -72,17 +71,15 @@ python {os.path.basename(python_script_path)} \\
 ### Execute ###
 if __name__ == "__main__":
     
-    # --- Dynamically Define Absolute Paths ---
-    # This makes the script runnable from anywhere
+    ## Dynamically Define Absolute Paths ##
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) # .../Code/utils/Auxiliary
     UTILS_DIR = os.path.dirname(SCRIPT_DIR)                 # .../Code/utils
     CODE_DIR = os.path.dirname(UTILS_DIR)                   # .../Code
     PROJECT_ROOT = os.path.dirname(CODE_DIR)                # Correctly gets .../WeightedGreedySampling
 
-    # Define all paths based on the project structure
+    ## Define all paths based on the project structure
     DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'Data', 'processed')
     SBATCH_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations')
-    # CORRECTED: Results are inside the 'Code' directory based on your tree
     RESULTS_DIRECTORY = os.path.join(CODE_DIR, 'Results', 'simulation_results') 
     LOG_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations', 'ClusterMessages')
     PYTHON_SCRIPT = os.path.join(CODE_DIR, 'RunSimulation.py')

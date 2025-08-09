@@ -27,7 +27,7 @@ class WiGS_MAB_Selector:
     def select(self, df_Candidate: pd.DataFrame, Model=None, df_Train: pd.DataFrame = None, 
                auxiliary_columns: list = None, current_rmse: float = None) -> dict:
         
-        # --- MAB Part 1: Update values based on the reward from the LAST step ---
+        ## MAB Part 1: Update values based on the reward from the LAST step ##
         if self.last_arm_pulled is not None and self.last_rmse is not None:
             if current_rmse is None:
                 raise ValueError("MAB strategy requires 'current_rmse' to be passed.")
@@ -40,7 +40,7 @@ class WiGS_MAB_Selector:
 
         self.last_rmse = current_rmse
 
-        # --- Shared Logic: Calculate distances and normalize ---
+        ## Shared Logic: Calculate distances and normalize ##
         if df_Candidate.empty:
             return {"IndexRecommendation": []}
         
@@ -54,7 +54,7 @@ class WiGS_MAB_Selector:
         d_prime_nmX = (d_nmX - d_nmX.min()) / (d_nmX.max() - d_nmX.min() + epsilon)
         d_prime_nmY = (d_nmY - d_nmY.min()) / (d_nmY.max() - d_nmY.min() + epsilon)
 
-        # --- MAB Part 2: Select an arm for the CURRENT step using UCB1 ---
+        ## MAB Part 2: Select an arm for the CURRENT step using UCB1 ##
         arm_to_pull = -1
         if self.iteration < len(self.arms):
             arm_to_pull = self.iteration
@@ -71,7 +71,7 @@ class WiGS_MAB_Selector:
         self.last_arm_pulled = arm_to_pull
         self.arm_counts[arm_to_pull] += 1
 
-        # --- Final Score and Selection ---
+        ## Final Score and Selection ##
         score_matrix = (w_x * d_prime_nmX) + (w_y * d_prime_nmY)
         final_scores = score_matrix.min(axis=1)
         best_candidate_iloc = np.argmax(final_scores)
