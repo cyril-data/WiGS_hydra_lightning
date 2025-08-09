@@ -68,20 +68,22 @@ python {os.path.basename(python_script_path)} \\
         os.chmod(sbatch_file_path, stat.S_IRWXU)
 
     print(f"Successfully generated {len(data_files)} .sbatch files for model '{model_type}' in '{sbatch_dir}'")
-
+    
 ### Execute ###
 if __name__ == "__main__":
     
     # --- Dynamically Define Absolute Paths ---
     # This makes the script runnable from anywhere
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) # This is Code/Cluster
-    CODE_DIR = os.path.dirname(SCRIPT_DIR) # This is Code/
-    PROJECT_ROOT = os.path.dirname(CODE_DIR) # This is WeightedGreedySampling/
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) # .../Code/utils/Auxiliary
+    UTILS_DIR = os.path.dirname(SCRIPT_DIR)                 # .../Code/utils
+    CODE_DIR = os.path.dirname(UTILS_DIR)                   # .../Code
+    PROJECT_ROOT = os.path.dirname(CODE_DIR)                # Correctly gets .../WeightedGreedySampling
 
     # Define all paths based on the project structure
     DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'Data', 'processed')
     SBATCH_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations')
-    RESULTS_DIRECTORY = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results')
+    # CORRECTED: Results are inside the 'Code' directory based on your tree
+    RESULTS_DIRECTORY = os.path.join(CODE_DIR, 'Results', 'simulation_results') 
     LOG_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations', 'ClusterMessages')
     PYTHON_SCRIPT = os.path.join(CODE_DIR, 'RunSimulation.py')
     
