@@ -11,8 +11,8 @@ def create_sbatch_files(
     model_type,
     test_prop,
     candidate_prop,
-    time_limit='01:00:00',
-    memory='4G'
+    time_limit='11:59:59',
+    memory='30000MB'
 ):
     ### Create Output Directories ###
     os.makedirs(sbatch_dir, exist_ok=True)
@@ -68,7 +68,7 @@ python {os.path.basename(python_script_path)} \\
         os.chmod(sbatch_file_path, stat.S_IRWXU)
 
     print(f"Successfully generated {len(data_files)} .sbatch files for model '{model_type}' in '{sbatch_dir}'")
-    
+
 ### Execute ###
 if __name__ == "__main__":
     
