@@ -13,7 +13,7 @@ def RunSimulationFunction(DataFileInput,
                           candidate_proportion):
 
     ### Set Up ###
-    all_error_vectors = {}
+    all_results_by_strategy = {}
     strategies_to_run = {
         'Passive Learning': {'SelectorType': 'PassiveLearningSelector'},
         'GSx': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'GSx'},
@@ -21,13 +21,13 @@ def RunSimulationFunction(DataFileInput,
         'iGS': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'iGS'},
         'WiGS (Static w_x=0.25)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                    'weight_strategy': 'static',
-                                   'w_x': 0.25},                                     # Exploitation-focused
+                                   'w_x': 0.25},
         'WiGS (Static w_x=0.5)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                   'weight_strategy': 'static',
                                   'w_x': 0.5},
-        'WiGS (Static w_x=0.75)': {'SelectorType': 'WeightedGreedySamplingSelector', # Balanced
+        'WiGS (Static w_x=0.75)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                    'weight_strategy': 'static',
-                                   'w_x': 0.75},                                     # Exploration-focused
+                                   'w_x': 0.75},
         'WiGS (Time-Decay, Linear)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                       'weight_strategy': 'time_decay',
                                       'decay_type': 'linear'},
@@ -38,40 +38,41 @@ def RunSimulationFunction(DataFileInput,
         'WiGS (MAB-UCB1, c=0.5)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 0.5},
         'WiGS (MAB-UCB1, c=2.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 2.0},
         'WiGS (MAB-UCB1, c=5.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 5.0}
-                        }
+    }
     
-    
-
     ### Main Simulation Loop ###
     for strategy_name, strategy_params in strategies_to_run.items():
+
+        ## Set up ##
         print(f"\n--- Running Simulations for: {strategy_name} ---")
-        current_error_vector = []
+        metrics_collector = {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
         
         ## Run one iteration NSim times ##
         for i in tqdm(range(NSim), desc="Simulations"):
             
-            # Base configuration
+            # Base configuration #
             SimulationConfigInput = {
-                'DataFileInput': DataFileInput,
-                'Seed': i,
-                'TestProportion': test_proportion,
-                'CandidateProportion': candidate_proportion,
+                'DataFileInput': DataFileInput, 'Seed': i,
+                'TestProportion': test_proportion, 'CandidateProportion': candidate_proportion,
                 'ModelType': machine_learning_model
             }
-            
-            # Add the specific strategy parameters
             SimulationConfigInput.update(strategy_params)
             
-            # Run the simulation
+            # Run the simulation #
             results = OneIterationFunction(SimulationConfigInput)
-            
-            # Extract and store errors
-            results_df = results["ErrorVec"].copy()
-            results_df.rename(columns={'Error': f'Sim_{i}_Error'}, inplace=True)
-            current_error_vector.append(results_df)
-            
-        # Consolidate results for the current strategy
-        all_error_vectors[strategy_name] = pd.concat(current_error_vector, axis=1)
 
-    ### Return the collected results ###
-    return all_error_vectors
+            # Extract Results #
+            results_df = results["ErrorVec"]
+            for metric in metrics_collector.keys():
+                metric_series = results_df[metric].copy()
+                metric_series.name = f'Sim_{i}'
+                metrics_collector[metric].append(metric_series)
+            
+        # Store results #
+        strategy_metric_dfs = {}
+        for metric, series_list in metrics_collector.items():
+            strategy_metric_dfs[metric] = pd.concat(series_list, axis=1)
+        all_results_by_strategy[strategy_name] = strategy_metric_dfs
+
+    ### Return the nested dictionary ###
+    return all_results_by_strategy

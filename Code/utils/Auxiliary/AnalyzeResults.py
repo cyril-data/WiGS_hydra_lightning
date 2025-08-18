@@ -77,13 +77,13 @@ def ProcessAllResults(results_dir, image_dir):
 
         # Plot #
         TracePlotMean, TracePlotVariance = MeanVariancePlot(
-            RelativeError="iGS",
+            RelativeError=None,
             Colors=master_colors,
             LegendMapping=master_legend,
             Linestyles=master_linestyles,
             Y_Label="Normalized RMSE (iGS = 1.0)",
             Subtitle=f"Active Learning Performance on {data_name.upper()} Dataset",
-            TransparencyVal=0.1,
+            TransparencyVal=0,
             VarInput=True,
             CriticalValue=1.96,
             initial_train_proportion=0.16,

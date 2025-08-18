@@ -1,22 +1,6 @@
-# Summary: Runs one full iteration of the active learning process.
-# Input: A dictionary SimulationConfigInput with the following keys and values:
-#   DataFileInput: A string that indicates the name of the DataFrame in the Data folder.
-#   Seed: Seed for reproducability.
-#   TestProportion: Proportion of the data that is reserved for testing.
-#   CandidateProportion: Proportion of the data that is initially unlabelled and later added to the training set.
-#   SelectorType: Selector mechanism in the active learning framework.
-#   ModelType: Predictive model.
-# Output: A dictionary SimulationResults with the following keys and values:
-#   ErrorVec: Vector of errors at each iteration of the learning process.
-#   SelectionHistory: Vector of recommended index for query at each iteration of the learning process.
-#   SimulationParameters: Parameters used in the simulation.
-#   ElapsedTime: Time for the entire learning process.
-
-
 ### Import packages ###
 import time
 import numpy as np
-import math as math
 import pandas as pd
 import random as random
 
@@ -63,7 +47,9 @@ def OneIterationFunction(SimulationConfigInput):
     ElapsedTime = time.time() - StartTime
 
     ### Return Dictionary ###
-    SimulationResults = {"ErrorVec" : pd.DataFrame(LearningProcedureOutput["ErrorVec"], columns =["Error"]),
+    ErrorVec = pd.DataFrame(LearningProcedureOutput["ErrorVec"])
+
+    SimulationResults = {"ErrorVec" : ErrorVec,
                          "SelectionHistory" : LearningProcedureOutput["SelectedObservationHistory"],
                          "SimulationParameters" : SimulationParameters,
                          "ElapsedTime" : ElapsedTime}

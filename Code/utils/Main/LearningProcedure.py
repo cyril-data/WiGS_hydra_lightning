@@ -12,7 +12,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
     ### Set Up ###
     i = 0
-    ErrorVec = []
+    ErrorVec = {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
     SelectedObservationHistory = []
 
     ### Initialize Model ###
@@ -47,13 +47,14 @@ def LearningProcedure(SimulationConfigInputUpdated):
                                             df_Test=SimulationConfigInputUpdated["df_Test"])
         
         ## Store Errors ##
-        ErrorVec.append(TestErrorOutput["ErrorVal"] )
+        for metric_name, value in TestErrorOutput.items():
+            ErrorVec[metric_name].append(value)
 
         ## Sampling Procedure ##
         SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
                                                    df_Train=SimulationConfigInputUpdated["df_Train"],
                                                    Model=predictor_model,
-                                                   current_rmse=TestErrorOutput["ErrorVal"])
+                                                   current_rmse=TestErrorOutput["RMSE"])
 
         ## Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
