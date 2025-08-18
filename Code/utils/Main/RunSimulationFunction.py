@@ -1,13 +1,11 @@
-### Import standard libraries ###
+### Import ###
 import pandas as pd
 from tqdm import tqdm
-
-### Import custom functions ###
 from utils.Main.OneIterationFunction import OneIterationFunction
 
 ### Function Definition ###
 def RunSimulationFunction(DataFileInput,
-                          NSim,
+                          Seed,
                           machine_learning_model,
                           test_proportion,
                           candidate_proportion):
@@ -40,39 +38,24 @@ def RunSimulationFunction(DataFileInput,
         'WiGS (MAB-UCB1, c=5.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 5.0}
     }
     
-    ### Main Simulation Loop ###
+    ### Loop Through Strategies ###
     for strategy_name, strategy_params in strategies_to_run.items():
-
-        ## Set up ##
-        print(f"\n--- Running Simulations for: {strategy_name} ---")
-        metrics_collector = {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
         
-        ## Run one iteration NSim times ##
-        for i in tqdm(range(NSim), desc="Simulations"):
-            
-            # Base configuration #
-            SimulationConfigInput = {
-                'DataFileInput': DataFileInput, 'Seed': i,
-                'TestProportion': test_proportion, 'CandidateProportion': candidate_proportion,
-                'ModelType': machine_learning_model
-            }
-            SimulationConfigInput.update(strategy_params)
-            
-            # Run the simulation #
-            results = OneIterationFunction(SimulationConfigInput)
+        ## Base configuration ##
+        SimulationConfigInput = {
+            'DataFileInput': DataFileInput, 
+            'Seed': Seed,
+            'TestProportion': test_proportion, 
+            'CandidateProportion': candidate_proportion,
+            'ModelType': machine_learning_model
+        }
+        SimulationConfigInput.update(strategy_params)
+        
+        # Run simulation #
+        results = OneIterationFunction(SimulationConfigInput)
 
-            # Extract Results #
-            results_df = results["ErrorVec"]
-            for metric in metrics_collector.keys():
-                metric_series = results_df[metric].copy()
-                metric_series.name = f'Sim_{i}'
-                metrics_collector[metric].append(metric_series)
-            
         # Store results #
-        strategy_metric_dfs = {}
-        for metric, series_list in metrics_collector.items():
-            strategy_metric_dfs[metric] = pd.concat(series_list, axis=1)
-        all_results_by_strategy[strategy_name] = strategy_metric_dfs
+        all_results_by_strategy[strategy_name] = results["ErrorVec"]
 
-    ### Return the nested dictionary ###
+    ### Return the nested dictionary for this single seed ###
     return all_results_by_strategy
