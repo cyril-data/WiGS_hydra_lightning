@@ -1,38 +1,57 @@
-### Import Packages ###
+### Import packages ###
 import argparse
 import os
 import pickle
-
-### Import functions ###
 from utils.Main.RunSimulationFunction import RunSimulationFunction
 
-### Get Directory ###
+### Models ###
+MODEL_LIST = [
+    'LinearRegressionPredictor'
+]
+
+### Get Directory Paths ###
 CWD = os.getcwd() 
 PROJECT_ROOT = os.path.dirname(CWD) 
-SAVE_DIRECTORY = os.path.join(PROJECT_ROOT, "Results", "simulation_results")
+BASE_SAVE_DIRECTORY = os.path.join(PROJECT_ROOT, "Results", "simulation_results", "raw")
 
 ### Set up argument parser ###
-parser = argparse.ArgumentParser(description="Parse command line arguments for job parameters")
-parser.add_argument("--JobName", type=str, help="Job name.")
-parser.add_argument("--Data", type=str, help="Data type.")
-parser.add_argument("--NSim", type=int, help="Number of simulations to run.")
-parser.add_argument("--ModelType", type=str, help="Predictive model.")
-parser.add_argument("--TestProportion", type=float, help="Percent for validation set.")
-parser.add_argument("--CandidateProportion", type=float, help="Percent for candidate dataset.")
-parser.add_argument("--Output", type=str, help="Output filename.")
+parser = argparse.ArgumentParser(description="Parse command line arguments for a single job task.")
+parser.add_argument("--Data", type=str, required=True, help="Data type for this job array.")
+parser.add_argument("--TaskID", type=int, required=True, help="SLURM Array Task ID (1-based).")
+parser.add_argument("--NReplications", type=int, required=True, help="Total number of simulations per model.")
+parser.add_argument("--TestProportion", type=float, required=True, help="Percent for validation set.")
+parser.add_argument("--CandidateProportion", type=float, required=True, help="Percent for candidate dataset.")
 args = parser.parse_args()
 
-### Run Code ###
+### Map Task ID to Model and Seed ###
+task_id_zero_based = args.TaskID - 1
+model_index = task_id_zero_based // args.NReplications
+replication_seed = task_id_zero_based % args.NReplications
+
+try:
+    model_type = MODEL_LIST[model_index]
+except IndexError:
+    print(f"Error: TaskID {args.TaskID} resulted in an invalid model index.")
+    exit(1)
+
+### Create new nested save directory and unique filename ###
+data_save_dir = os.path.join(BASE_SAVE_DIRECTORY, args.Data)
+os.makedirs(data_save_dir, exist_ok=True) 
+output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}.pkl"
+output_path = os.path.join(data_save_dir, output_filename)
+print(f"--- Starting Task {args.TaskID}: Dataset={args.Data}, Model={model_type}, Seed={replication_seed} ---")
+
+### Run the Simulation for a Single Seed and Model ###
 SimulationResults = RunSimulationFunction(
     DataFileInput=args.Data,
-    NSim=int(args.NSim),
-    machine_learning_model=str(args.ModelType),
+    Seed=replication_seed,
+    machine_learning_model=model_type,
     test_proportion=float(args.TestProportion),
     candidate_proportion=float(args.CandidateProportion)
 )
 
-### Save Simulation Results ###
-os.makedirs(SAVE_DIRECTORY, exist_ok=True) 
-output_path = os.path.join(SAVE_DIRECTORY, str(args.Output))
+### Save Simulation Results to the new nested directory ###
 with open(output_path, 'wb') as f:
     pickle.dump(SimulationResults, f)
+
+print(f"--- Task {args.TaskID} Finished: Saved results to {output_path} ---")

@@ -1,108 +1,43 @@
 import os
 import stat
 
-def create_sbatch_files(
-    data_dir,
-    sbatch_dir,
-    results_dir,
-    log_dir,
-    python_script_path,
-    n_sim,
-    model_type,
+def create_master_sbatch(
+    sbatch_path,
+    n_replications,
+    n_models,
+    dataset_name,
     test_prop,
     candidate_prop,
+    code_dir,
     time_limit='11:59:59',
     memory='30000MB'
 ):
-    ### Create Output Directories ###
-    os.makedirs(sbatch_dir, exist_ok=True)
-    os.makedirs(results_dir, exist_ok=True)
-    os.makedirs(os.path.join(log_dir, 'out'), exist_ok=True)
-    os.makedirs(os.path.join(log_dir, 'error'), exist_ok=True)
-    
-    ### Get Data Files ###
-    data_files = [f for f in os.listdir(data_dir) if f.endswith('.pkl')]
+    total_jobs = n_models * n_replications
+    log_dir = os.path.join(code_dir, 'Cluster', 'RunSimulations', 'ClusterMessages')
+    python_script_name = 'RunSimulation.py'
 
-    ### Loop and Generate Scripts ###
-    for data_file in data_files:
-        data_name = os.path.splitext(data_file)[0]
-        job_name = f"{data_name}_{model_type}"
-        output_filename = f"{data_name}_results.pkl"
-        
-        ## Define log file paths (using absolute paths) ##
-        log_out_path = os.path.join(log_dir, 'out', f"{job_name}_%j.out")
-        log_err_path = os.path.join(log_dir, 'error', f"{job_name}_%j.err")
-
-        ## Define the content of the .sbatch file ##
-        sbatch_content = f"""#!/bin/bash
-#SBATCH --job-name={job_name}
+    sbatch_content = f"""#!/bin/bash
+#SBATCH --job-name=AL_{dataset_name}
 #SBATCH --partition=short
-#SBATCH --ntasks=1
-#SBATCH --output={log_out_path}
-#SBATCH --error={log_err_path}
+#SBATCH --array=1-{total_jobs}
+#SBATCH --output={log_dir}/out/{dataset_name}_%A_%a.out
+#SBATCH --error={log_dir}/error/{dataset_name}_%A_%a.err
 #SBATCH --time={time_limit}
 #SBATCH --mem-per-cpu={memory}
 #SBATCH --cpus-per-task=1
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=simondn@uw.edu
 
-# --- Set the correct working directory ---
-cd {os.path.dirname(python_script_path)}
+cd {code_dir}
 
-# Command to execute your main Python simulation script
-# Now we can just use the script's filename
-python {os.path.basename(python_script_path)} \\
-    --Data "{data_name}" \\
-    --NSim {n_sim} \\
-    --ModelType "{model_type}" \\
+python {python_script_name} \\
+    --Data "{dataset_name}" \\
+    --TaskID "$SLURM_ARRAY_TASK_ID" \\
+    --NReplications {n_replications} \\
     --TestProportion {test_prop} \\
-    --CandidateProportion {candidate_prop} \\
-    --Output "{output_filename}"
+    --CandidateProportion {candidate_prop}
 """
-        
-        ## Save ##
-        sbatch_file_path = os.path.join(sbatch_dir, f"run_{data_name}_{model_type}.sbatch")
-        with open(sbatch_file_path, 'w') as f:
-            f.write(sbatch_content)
-        os.chmod(sbatch_file_path, stat.S_IRWXU)
-
-    print(f"Successfully generated {len(data_files)} .sbatch files for model '{model_type}' in '{sbatch_dir}'")
-
-### Execute ###
-if __name__ == "__main__":
     
-    ## Dynamically Define Absolute Paths ##
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)) # .../Code/utils/Auxiliary
-    UTILS_DIR = os.path.dirname(SCRIPT_DIR)                 # .../Code/utils
-    CODE_DIR = os.path.dirname(UTILS_DIR)                   # .../Code
-    PROJECT_ROOT = os.path.dirname(CODE_DIR)                # Correctly gets .../WeightedGreedySampling
-
-    ## Define all paths based on the project structure
-    DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'Data', 'processed')
-    SBATCH_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations')
-    RESULTS_DIRECTORY = os.path.join(CODE_DIR, 'Results', 'simulation_results') 
-    LOG_DIRECTORY = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations', 'ClusterMessages')
-    PYTHON_SCRIPT = os.path.join(CODE_DIR, 'RunSimulation.py')
-    
-    ## Define Simulation Parameters ##
-    N_SIMULATIONS = 100
-    TEST_PROPORTION = 0.2
-    CANDIDATE_PROPORTION = 0.8
-    
-    ## Models ##
-    models_to_run = ['LinearRegressionPredictor']
-
-    print("--- Starting sbatch file generation ---")
-    for model in models_to_run:
-        create_sbatch_files(
-            data_dir=DATA_DIRECTORY,
-            sbatch_dir=SBATCH_DIRECTORY,
-            results_dir=RESULTS_DIRECTORY,
-            log_dir=LOG_DIRECTORY,
-            python_script_path=PYTHON_SCRIPT,
-            n_sim=N_SIMULATIONS,
-            model_type=model,
-            test_prop=TEST_PROPORTION,
-            candidate_prop=CANDIDATE_PROPORTION
-        )
-    print("--- Finished ---")
+    with open(sbatch_path, 'w') as f:
+        f.write(sbatch_content)
+    os.chmod(sbatch_path, stat.S_IRWXU)
+    print(f"  > Successfully generated master job script at '{os.path.basename(sbatch_path)}'")
+    print(f"    Job array size: {total_jobs} ( {n_models} models x {n_replications} replications)")

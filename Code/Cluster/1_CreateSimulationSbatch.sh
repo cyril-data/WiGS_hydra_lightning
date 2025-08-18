@@ -1,8 +1,11 @@
 #!/bin/bash
 
-### Current Directory Name ###
-CURRENT_DIR=$(basename "$PWD")
-echo "Processing results for dataset: $CURRENT_DIR"
+echo "--- Preparing to generate cluster jobs ---"
 
-cd ~/WeightedGreedySampling
-python Code/utils/Auxiliary/GenerateJobs.py
+### Directory ####
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+cd "$SCRIPT_DIR/.."
+
+### Run script ###
+python Cluster/CreateSimulationSbatch.py
+echo "--- Job generation complete. ---"
