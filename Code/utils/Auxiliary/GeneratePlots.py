@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
-# Make sure you have this import if the function is in another file
 from .MeanVariancePlot import MeanVariancePlot
 
 def generate_all_plots(aggregated_results_dir, image_dir):
