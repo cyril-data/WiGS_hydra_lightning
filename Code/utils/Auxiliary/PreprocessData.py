@@ -1,11 +1,20 @@
 ### Import Packages ###
 import os
+import sys
 import pickle
 import kagglehub
 import pandas as pd
 import numpy as np
 from pmlb import fetch_data
 
+### Set directory ###
+CODE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(CODE_DIR)
+
+### Import Data ###
+from utils.Auxiliary.BurbridgeDGP import *
+
+### Preprocess and Save Data ###
 def preprocess_and_save_all():
     """
     Loads all datasets from their sources, preprocesses them, and saves
@@ -107,6 +116,21 @@ def preprocess_and_save_all():
         print("\n--- KAGGLE ERROR ---")
         print("Could not download Kaggle datasets. Please ensure you have set up your kaggle.json API token.")
         print(f"Error: {e}")
+
+    # 11. Burbridge Dataset
+    print("Processing synthetic DGP datasets...")
+    
+    # Generate the 'correctly specified' case from the paper
+    df_dgp_correct = GenerateBurbridgeData(delta=0.0, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['dgp_correct'] = df_dgp_correct
+    
+    # Generate the 'misspecified' case from the paper
+    df_dgp_misspecified = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['dgp_misspecified'] = df_dgp_misspecified
+    
+    # Generate a 'low noise' version for comparison
+    df_dgp_low_noise = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.1, seed=42)
+    datasets_to_save['dgp_low_noise'] = df_dgp_low_noise
 
     # --- Save all successfully loaded datasets ---
     print("\nSaving all processed datasets...")

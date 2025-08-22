@@ -1,127 +1,138 @@
 ### Import Packages ###
 import os
 import pickle
-import glob
-import numpy as np
+import kagglehub
 import pandas as pd
-import matplotlib.pyplot as plt
-from .MeanVariancePlot import MeanVariancePlot
+import numpy as np
+from pmlb import fetch_data
 
-def process_all_results(results_dir, image_dir):
-
-    print("--- Starting Full Analysis ---")
-
-    ### Define Master Plotting Aesthetics for ALL possible strategies ###
-    master_colors = {
-        'Passive Learning': 'gray', 'GSx': 'cornflowerblue', 'GSy': 'salmon', 'iGS': 'red',
-        'WiGS (Static w_x=0.75)': 'lightgreen', 'WiGS (Static w_x=0.5)': 'forestgreen',
-        'WiGS (Static w_x=0.25)': 'darkgreen', 'WiGS (Time-Decay, Linear)': 'orange',
-        'WiGS (Time-Decay, Exponential)': 'saddlebrown', 'WiGS (MAB-UCB1, c=0.5)': 'orchid',
-        'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 'WiGS (MAB-UCB1, c=5.0)': 'indigo'
-    }
-    master_linestyles = {
-        'Passive Learning': ':', 'GSx': ':', 'GSy': ':', 'iGS': '-',
-        'WiGS (Static w_x=0.75)': '-', 'WiGS (Static w_x=0.5)': '-.',
-        'WiGS (Static w_x=0.25)': '--', 'WiGS (Time-Decay, Linear)': '-',
-        'WiGS (Time-Decay, Exponential)': '-.', 'WiGS (MAB-UCB1, c=0.5)': '-',
-        'WiGS (MAB-UCB1, c=2.0)': '-', 'WiGS (MAB-UCB1, c=5.0)': '-'
-    }
-    master_legend = {
-        'Passive Learning': 'Random', 'GSx': 'GSx', 'GSy': 'GSy', 'iGS': 'iGS',
-        'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)', 'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
-        'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
-        'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)', 'WiGS (MAB-UCB1, c=0.5)': 'WiGS (MAB, c=0.5)',
-        'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)', 'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)'
-    }
-
-    ### Define Metrics and Plot Types to Generate ###
-    metrics_to_plot = ['RMSE', 'MAE', 'R2', 'CC']
-    plot_types = {
-        'trace': None,
-        'trace_relative_iGS': 'iGS'
-    }
-
-    ### Create All Necessary Output Directories ###
-    for metric in metrics_to_plot:
-        for plot_folder in plot_types.keys():
-            os.makedirs(os.path.join(image_dir, metric, plot_folder, 'trace'), exist_ok=True)
-            os.makedirs(os.path.join(image_dir, metric, plot_folder, 'variance'), exist_ok=True)
-            
-    ### Discover Datasets and Aggregate Results ###
-    all_pkl_files = [f for f in os.listdir(results_dir) if f.endswith('.pkl')]
-    dataset_basenames = sorted(list(set([f.split('_')[0] for f in all_pkl_files])))
-
-    for data_name in dataset_basenames:
-        print(f"\nAggregating and processing dataset: {data_name}...")
-
-        ## Find all result files for this specific dataset using a pattern ##
-        search_pattern = os.path.join(results_dir, f"{data_name}_*_seed_*.pkl")
-        result_files_for_dataset = glob.glob(search_pattern)
-
-        if not result_files_for_dataset:
-            print(f"  > Warning: No result files found for {data_name}. Skipping.")
-            continue
-
-        ## AGGREGATION STEP ##
-        with open(result_files_for_dataset[0], 'rb') as f:
-            first_result = pickle.load(f)
-        aggregated_results = {strategy: {metric: [] for metric in metrics_df.keys()} for strategy, metrics_df in first_result.items()}
-
-        ## Loop through all files ##
-        for i, file_path in enumerate(result_files_for_dataset):
-            with open(file_path, 'rb') as f:
-                single_run_result = pickle.load(f)
-            for strategy, metrics_df in single_run_result.items():
-                if strategy in aggregated_results: 
-                    for metric, series in metrics_df.items():
-                        if metric in aggregated_results[strategy]:
-                            series.name = f"Sim_{i}"
-                            aggregated_results[strategy][metric].append(series)
+def preprocess_and_save_all():
+    """
+    Loads all datasets from their sources, preprocesses them, and saves
+    them to the processed data directory.
+    """
+    print("--- Starting Data Preprocessing ---")
+    
+    # --- Setup Save Directory (Robust Pathing) ---
+    try:
+        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+        PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+    except NameError:
+        # Fallback for interactive environments like Jupyter
+        PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..'))
         
-        ## Concatenate everything ##
-        final_results_for_plotting = {}
-        for strategy, metrics_dict in aggregated_results.items():
-            final_results_for_plotting[strategy] = {}
-            for metric, series_list in metrics_dict.items():
-                if series_list: 
-                    final_results_for_plotting[strategy][metric] = pd.concat(series_list, axis=1)
+    save_path = os.path.join(PROJECT_ROOT, 'Data', 'processed')
+    os.makedirs(save_path, exist_ok=True)
+    
+    datasets_to_save = {}
 
-        ## Generate plots ##
-        for metric in metrics_to_plot:
-            results_for_metric = {
-                strategy: data[metric] 
-                for strategy, data in final_results_for_plotting.items() 
-                if metric in data and not data[metric].empty
-            }
+    # --- Load, Process, and Collect All Datasets ---
+    
+    ## 1. Concrete Compressive Strength ##
+    print("Processing Dataset: Concrete Compressive Strength")
+    concrete_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/concrete/compressive/Concrete_Data.xls'
+    df_concrete = pd.read_excel(concrete_url)
+    datasets_to_save['concrete_4'] = df_concrete.rename(columns={'Concrete compressive strength(MPa, megapascals) ': 'Y'})
 
-            if not results_for_metric:
-                print(f"  > Warning: No results found for metric '{metric}'. Skipping plot.")
-                continue
+    ## 2. Concrete Slump (CS, Flow, Slump) ##
+    print("Processing Dataset: Concrete Slump (CS, Flow, Slump)")
+    slump_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/concrete/slump/slump_test.data'
+    df_slump_base = pd.read_csv(slump_url)
+    df_concrete_cs = df_slump_base.drop(columns=['FLOW(cm)', 'SLUMP(cm)']).rename(columns={'Compressive Strength (28-day)(Mpa)': 'Y'})
+    df_concrete_flow = df_slump_base.drop(columns=['Compressive Strength (28-day)(Mpa)', 'SLUMP(cm)']).rename(columns={'FLOW(cm)': 'Y'})
+    df_concrete_slump = df_slump_base.drop(columns=['Compressive Strength (28-day)(Mpa)', 'FLOW(cm)']).rename(columns={'SLUMP(cm)': 'Y'})
+    datasets_to_save.update({'concrete_cs': df_concrete_cs, 'concrete_flow': df_concrete_flow, 'concrete_slump': df_concrete_slump})
 
-            for folder_name, relative_error_baseline in plot_types.items():
-                
-                y_label = f"Normalized {metric}" if relative_error_baseline else metric
-                subtitle = f"Performance ({metric}) on {data_name.upper()} Dataset"
+    ## 3. Yacht Hydrodynamics ##
+    print("Processing Dataset: Yacht Hydrodynamics")
+    yacht_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00243/yacht_hydrodynamics.data'
+    yacht_columns = ['longitudinal_pos', 'prismatic_coeff', 'length_displacement_ratio', 'beam_draught_ratio', 'length_beam_ratio', 'froude_number', 'Y']
+    datasets_to_save['yacht'] = pd.read_csv(yacht_url, sep=r'\s+', header=None, names=yacht_columns)
 
-                TracePlotMean, TracePlotVariance = MeanVariancePlot(
-                    RelativeError=relative_error_baseline,
-                    Colors=master_colors, LegendMapping=master_legend, Linestyles=master_linestyles,
-                    Y_Label=y_label, Subtitle=subtitle,
-                    TransparencyVal=0.1, VarInput=True, CriticalValue=1.96,
-                    initial_train_proportion=0.16, candidate_pool_proportion=0.64,
-                    **results_for_metric
-                )
+    ## 4. Housing ##
+    print("Processing Dataset: Housing")
+    housing_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data'
+    housing_columns = ['CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE', 'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT', 'MEDV']
+    df_housing = pd.read_csv(housing_url, sep=r'\s+', header=None, names=housing_columns)
+    datasets_to_save['housing'] = df_housing.rename(columns={'MEDV': 'Y'})
+    
+    ## 5. Auto MPG ##
+    print("Processing Dataset: Auto MPG")
+    mpg_column_names = ['Y', 'cylinders', 'displacement', 'horsepower', 'weight', 'acceleration', 'model_year', 'origin', 'car_name']
+    mpg_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data"
+    df_auto_mpg = pd.read_csv(mpg_url, sep=r'\s+', header=None, names=mpg_column_names, na_values='?')
+    del df_auto_mpg['car_name']
+    df_auto_mpg.dropna(inplace=True)
+    datasets_to_save['mpg'] = df_auto_mpg
 
-                # Save the plots #
-                base_plot_path = os.path.join(image_dir, metric, folder_name)
-                trace_plot_path = os.path.join(base_plot_path, 'trace', f"{data_name}_{metric}_TracePlot.png")
-                TracePlotMean.savefig(trace_plot_path, bbox_inches='tight', dpi=300)
-                plt.close(TracePlotMean)
+    ## 6. Wine (Red and White) ##
+    print("Processing Dataset: Wine (Red and White)")
+    url_red = 'https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-red.csv'
+    df_wine_red = pd.read_csv(url_red, sep=';').rename(columns={'quality': 'Y'})
+    url_white = 'https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv'
+    df_wine_white = pd.read_csv(url_white, sep=';').rename(columns={'quality': 'Y'})
+    datasets_to_save.update({'wine_red': df_wine_red, 'wine_white': df_wine_white})
+    
+    # ## 7. CPS ##
+    # print("Processing Dataset: CPS")
+    # cps_url = 'http://lib.stat.cmu.edu/datasets/CPS_85_Wages'
+    # df_cps = pd.read_csv(cps_url, sep=r'\s+', skiprows=27, header=None)
+    # df_cps.columns = ["EDUCATION", "SOUTH", "SEX", "EXPERIENCE", "UNION", "WAGE", "AGE", "RACE", "OCCUPATION", "SECTOR", "MARR"]
+    # df_cps = df_cps.rename(columns={'WAGE': 'Y'})
+    # datasets_to_save['cps'] = df_cps
 
-                if TracePlotVariance:
-                    variance_plot_path = os.path.join(base_plot_path, 'variance', f"{data_name}_{metric}_VariancePlot.png")
-                    TracePlotVariance.savefig(variance_plot_path, bbox_inches='tight', dpi=300)
-                    plt.close(TracePlotVariance)
-        print(f"Saved all plots for {data_name}.")
+    ## 8. pmlb datasets (NO2 and PM10) ##
+    print("Processing pmlb datasets...")
+    df_pm10 = fetch_data('529_pollen', return_X_y=False).rename(columns={'target': 'Y'})
+    df_no2 = fetch_data('560_bodyfat', return_X_y=False).rename(columns={'target': 'Y'})
+    datasets_to_save.update({'pm10': df_pm10, 'no2': df_no2})
 
-    print("\n--- Analysis Complete ---")
+    ## 9. QSAR Aquatic Toxicity ##
+    print("Processing Dataset: QSAR Aquatic Toxicity")
+    qsar_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00505/qsar_aquatic_toxicity.csv'
+    df_qsar = pd.read_csv(qsar_url, sep=';', header=None)
+    df_qsar.columns = ['TPSA', 'SAacc', 'H050', 'MLOGP', 'RDCHI','GATS1p', 'nN', 'C040', 'Y']
+    datasets_to_save['qsar'] = df_qsar
+
+    ## 10. Kaggle datasets ##
+    print("Processing Kaggle Hub datasets...")
+    try:
+        download_path_bf = kagglehub.dataset_download("fedesoriano/body-fat-prediction-dataset")
+        df_bodyfat = pd.read_csv(os.path.join(download_path_bf, 'bodyfat.csv'))
+        if 'Density' in df_bodyfat.columns: del df_bodyfat['Density']
+        datasets_to_save['bodyfat'] = df_bodyfat.rename(columns={'BodyFat': 'Y'})
+
+        download_path_beer = kagglehub.dataset_download("dongeorge/beer-consumption-sao-paulo")
+        df_beer = pd.read_csv(os.path.join(download_path_beer, 'Consumo_cerveja.csv'), decimal=',')
+        df_beer.dropna(inplace=True)
+        df_beer.columns = ['Date', 'Temp_Avg_C', 'Temp_Min_C', 'Temp_Max_C', 'Precipitation_mm', 'Weekend', 'Y']
+        del df_beer['Date']
+        for col in df_beer.columns:
+            df_beer[col] = df_beer[col].astype(float)
+        datasets_to_save['beer'] = df_beer
+    except Exception as e:
+        print("\n--- KAGGLE ERROR ---")
+        print("Could not download Kaggle datasets. Please ensure you have set up your kaggle.json API token.")
+        print(f"Error: {e}")
+
+    ## 11. Burbridge Dataset ##
+    print("Processing synthetic DGP datasets...")
+    df_dgp_correct = generate_burbidge_data(delta=0.0, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['dgp_correct'] = df_dgp_correct
+    df_dgp_misspecified = generate_burbidge_data(delta=0.05, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['dgp_misspecified'] = df_dgp_misspecified
+    df_dgp_low_noise = generate_burbidge_data(delta=0.05, sigma_epsilon=0.1, seed=42)
+    datasets_to_save['dgp_low_noise'] = df_dgp_low_noise
+
+    # --- Save all successfully loaded datasets ---
+    print("\nSaving all processed datasets...")
+    for name, dataframe in datasets_to_save.items():
+        file_path = os.path.join(save_path, f"{name}.pkl")
+        with open(file_path, 'wb') as file:
+            pickle.dump(dataframe, file)
+        print(f"  > Successfully saved: {name}.pkl")
+    
+    print("\n--- Data Preprocessing Complete ---")
+
+if __name__ == "__main__":
+    preprocess_and_save_all()
