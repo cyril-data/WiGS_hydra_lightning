@@ -12,16 +12,16 @@ Our framework recasts the selection criterion as a weighted, additive combinatio
 
 Python 3.9 was used in both local and high-performance computing (HPC) cluster simulations. The following packages are required:
 
-* `argparse` (standard library)
-* `glob` (standard library)
-* `inspect` (standard library)
-* `os` (standard library)
-* `pickle` (standard library)
-* `sys` (standard library)
+* `argparse`
+* `glob`
+* `inspect`
+* `os`
+* `pickle`
+* `sys`
 * `kagglehub`
 * `matplotlib`
 * `numpy`
-* `openpyxl` (for reading Excel files)
+* `openpyxl`
 * `pandas`
 * `pmlb`
 * `scikit-learn`
@@ -32,9 +32,10 @@ Python 3.9 was used in both local and high-performance computing (HPC) cluster s
 
 The project is designed to be run as an automated pipeline on a SLURM-based HPC cluster. The scripts for managing the workflow are located in `Code/Cluster/` and are numbered in the order they should be run.
 
-1.  `0_PreprocessData.sh`: This script executes a Python script that downloads all 15+ benchmark datasets from their sources (UCI, Kaggle Hub, StatLib/pmlb), preprocesses them into a clean format, and saves them as `.pkl` files in the `Data/processed/` directory. **Note:** This requires a `kaggle.json` API token to be set up on the machine.
+1.  `0_PreprocessData.sh`: This script executes a Python script that downloads all 15+ benchmark datasets from their sources (UCI, Kaggle Hub, StatLib/pmlb), preprocesses them into a clean format, and saves them as `.pkl` files in the `Data/processed/` directory. 
 
-2.  `1_CreateSimulationSbatch.py`: This Python script automatically discovers all processed datasets and generates a master job script (e.g., `master_job_LinearRegressionPredictor.sbatch`) for each machine learning model you wish to test. Each master script uses a **SLURM job array** to parallelize the simulation across all datasets and all `N` replications. Note that the user should edit to the appropriate parition name in the function `create_master_sbatch` found in the file `utils/Auxiliary/GenerateJobs.py`.
+2.  `1_CreateSimulationSbatch.py`: This Python script automatically discovers all processed datasets and generates a master job script (e.g., `master_job_LinearRegressionPredictor.sbatch`) for each machine learning model you wish to test. Each master script uses a **SLURM job array** to parallelize the simulation across all datasets and all `N` replications. 
+**Note:** The user can edit to the appropriate parition name (amongst other cluster inputs) in the function `create_master_sbatch` found in the file `utils/Auxiliary/GenerateJobs.py`.
 
 3.  `2_RunAllSimulations.sh`: This shell script finds and submits all the generated master jobs to the SLURM scheduler.
 
@@ -42,7 +43,7 @@ The project is designed to be run as an automated pipeline on a SLURM-based HPC 
 
 5.  `4_ImageGeneration.sh`: This script runs the final analysis, loading the aggregated results and generating all trace and variance plots for every metric (RMSE, MAE, R², CC) and saves them to the `Results/images/` directory.
 
-6.  `4_DeleteSimulationAuxiliaryFiles.sh` & `5_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary SLURM log files, sbatch scripts, and the large number of raw `.pkl` files after the analysis is complete.
+6.  `5_DeleteSimulationAuxiliaryFiles.sh` & `6_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary SLURM log files, sbatch scripts, and the large number of raw `.pkl` files after the analysis is complete.
 
 ## Results Structure
 
@@ -63,11 +64,11 @@ The core logic is contained in the `Code/utils/` package, organized into sub-pac
 #### Prediction
 * `LinearRegressionPredictor.py`, `RidgeRegressionPredictor.py`, `RandomForestRegressorPredictor.py`: Wrapper classes for scikit-learn models.
 * `TestErrorFunction.py`: Calculates standard performance metrics (RMSE, MAE, R², CC) on a held-out test set.
-* [cite_start]`PaperEvaluation.py`: Calculates performance using the specific "in-pool" metric described in the original Wu, Lin, and Huang (2018) paper[cite: 185].
+<!-- * [cite_start]`PaperEvaluation.py`: Calculates performance using the specific "in-pool" metric described in the original Wu, Lin, and Huang (2018) paper[cite: 185]. -->
 
 #### Selector
 * `PassiveLearningSelector.py`: Implements random sampling (baseline).
-* [cite_start]`GreedySamplingSelector.py`: Implements the original GSx, GSy, and iGS methods from the paper[cite: 9].
+* `GreedySamplingSelector.py`: Implements the original GSx, GSy, and iGS methods from [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
 * `WeightedGreedySamplingSelector.py`: Implements the novel **WiGS** method with static and time-decay adaptive weights.
 * `WiGS_MAB.py`: Implements the novel **WiGS** method using a Multi-Armed Bandit (UCB1) to learn weights adaptively.
 
