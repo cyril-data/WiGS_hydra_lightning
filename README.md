@@ -1,6 +1,6 @@
 # Weighted Improved Greedy Sampling
 
-This repository is under construction.
+🚧 This repository is under construction. 🚧
 
 ## Abstract
 
@@ -35,6 +35,7 @@ The project is designed to be run as an automated pipeline on a SLURM-based HPC 
 1.  `0_PreprocessData.sh`: This script executes a Python script that downloads all 15+ benchmark datasets from their sources (UCI, Kaggle Hub, StatLib/pmlb), preprocesses them into a clean format, and saves them as `.pkl` files in the `Data/processed/` directory. 
 
 2.  `1_CreateSimulationSbatch.py`: This Python script automatically discovers all processed datasets and generates a master job script (e.g., `master_job_LinearRegressionPredictor.sbatch`) for each machine learning model you wish to test. Each master script uses a **SLURM job array** to parallelize the simulation across all datasets and all `N` replications. 
+
 **Note:** The user can edit to the appropriate parition name (amongst other cluster inputs) in the function `create_master_sbatch` found in the file `utils/Auxiliary/GenerateJobs.py`.
 
 3.  `2_RunAllSimulations.sh`: This shell script finds and submits all the generated master jobs to the SLURM scheduler.
