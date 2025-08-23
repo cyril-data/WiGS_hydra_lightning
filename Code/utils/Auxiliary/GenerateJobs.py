@@ -9,8 +9,8 @@ def create_master_sbatch(
     test_prop,
     candidate_prop,
     code_dir,
-    time_limit='11:59:59',
-    memory='30000MB'
+    time_limit='1:59:59',
+    memory='500MB'
 ):
     total_jobs = n_models * n_replications
     log_dir = os.path.join(code_dir, 'Cluster', 'RunSimulations', 'ClusterMessages')
