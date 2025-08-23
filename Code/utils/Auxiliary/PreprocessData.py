@@ -6,7 +6,77 @@ import kagglehub
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
-from .BurbridgeDGP import GenerateBurbridgeData
+
+### My DGP ###
+### Import Packages ###
+import numpy as np
+import pandas as pd
+
+def generate_two_regime_data(n_samples=1000, seed=None):
+    """
+    Generates a synthetic dataset with two distinct regimes to test the
+    adaptability of active learning strategies.
+
+    - Regime 1 (x < 0.5): A complex sine wave with low noise.
+      Requires EXPLORATION to learn its shape.
+    - Regime 2 (x >= 0.5): A simple linear function with a small region
+      of very high noise. Requires EXPLOITATION to reduce uncertainty.
+    """
+    if seed is not None:
+        np.random.seed(seed)
+    
+    # Generate uniformly distributed inputs
+    x = np.random.uniform(low=0, high=1, size=n_samples)
+    
+    # Initialize the target and noise vectors
+    y = np.zeros(n_samples)
+    noise = np.zeros(n_samples)
+    
+    # --- Define the two regimes ---
+    
+    # Regime 1: Exploration is key
+    exploration_mask = x < 0.5
+    y[exploration_mask] = np.sin(x[exploration_mask] * 10 * np.pi)
+    noise[exploration_mask] = np.random.normal(0, 0.1, size=np.sum(exploration_mask))
+    
+    # Regime 2: Exploitation is key
+    exploitation_mask = x >= 0.5
+    y[exploitation_mask] = 2 * x[exploitation_mask] - 1
+    noise[exploitation_mask] = np.random.normal(0, 0.1, size=np.sum(exploitation_mask))
+    
+    # Add a "trap" of high noise in a small part of the exploitation regime
+    noise_trap_mask = (x > 0.8) & (x < 0.9)
+    noise[noise_trap_mask] = np.random.normal(0, 1.0, size=np.sum(noise_trap_mask))
+    
+    # Combine the function and the noise
+    final_y = y + noise
+    
+    # Create and return the DataFrame
+    df = pd.DataFrame({'X1': x, 'Y': final_y})
+    return df
+
+### Burbridge DGP ###
+def GenerateBurbridgeData(n_samples=500, delta=0.0, sigma_epsilon=0.3, seed=None):
+    if seed is not None:
+        np.random.seed(seed)
+    
+    ### Generate inputs from N(\mu=0.2, \sd^2=0.4^2) ###
+    x = np.random.normal(loc=0.2, scale=0.4, size=n_samples)
+    
+    ### Calculate z and r(x) ###
+    z = (x - 0.2) / 0.4
+    r_x = (z**3 - 3 * z) / np.sqrt(6)
+    
+    ### Calculate the deterministic part of the function ###
+    f_x = 1 - x + x**2 + delta * r_x
+    
+    ### Add noise ###
+    epsilon = np.random.normal(loc=0, scale=sigma_epsilon, size=n_samples)
+    y = f_x + epsilon
+    
+    ### Create and return the final DataFrame ###
+    df = pd.DataFrame({'X1': x, 'Y': y})
+    return df
 
 ### Helper Function for Preprocessing ###
 def _preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -143,15 +213,15 @@ def preprocess_and_save_all():
         datasets_to_save['bodyfat'] = _preprocess_dataframe(df_raw)
         print("  > Processed: bodyfat")
 
-
         # 14. Beer
         download_path_beer = kagglehub.dataset_download("dongeorge/beer-consumption-sao-paulo")
         df_raw = pd.read_csv(os.path.join(download_path_beer, 'Consumo_cerveja.csv'), decimal=',')
-        df_raw.dropna(inplace=True)
-        df_raw.columns = ['Date', 'Temp_Avg_C', 'Temp_Min_C', 'Temp_Max_C', 'Precipitation_mm', 'Weekend', 'Y']
+        df_raw.dropna(inplace=True) 
+        df_raw.columns = ['Date', 'Temp_Avg_C', 'Temp_Min_C', 'Temp_Max_C', 'Precipitation_mm', 'Weekend', 'Y'] 
         del df_raw['Date']
         for col in df_raw.columns:
-            if col != 'Y': df_raw[col] = df_raw[col].astype(float)
+            df_raw[col] = pd.to_numeric(df_raw[col], errors='coerce')
+        df_raw.dropna(inplace=True)
         datasets_to_save['beer'] = _preprocess_dataframe(df_raw)
         print("  > Processed: beer")
 
@@ -194,6 +264,11 @@ def preprocess_and_save_all():
     datasets_to_save['dgp_low_noise'] = _preprocess_dataframe(df_dgp_low_noise)
     print("  > Processed: dgp_low_noise")
 
+    # 19. Two-Regime Dataset
+    df_dgp_two_regime = generate_two_regime_data(seed=42)
+    datasets_to_save['dgp_two_regime'] = _preprocess_dataframe(df_dgp_two_regime)
+    print("  > Processed: dgp_two_regime")
+
     # --- Save all successfully processed datasets ---
     print("\nSaving all processed datasets...")
     for name, dataframe in datasets_to_save.items():
@@ -203,3 +278,6 @@ def preprocess_and_save_all():
         
     print("\n--- Data Preprocessing Complete ---")
     return(datasets_to_save)
+
+if __name__ == "__main__":
+    preprocess_and_save_all()
