@@ -10,23 +10,24 @@ Our framework recasts the selection criterion as a weighted, additive combinatio
 
 ## Setup
 
-Python 3.9 was used in both local and high-performance computing (HPC) cluster simulations. The following packages are required:
+This project was developed using **Python 3.9**. To ensure a clean and reproducible environment, it is highly recommended to use a virtual environment manager like Conda.
 
-* `argparse`
-* `glob`
-* `inspect`
-* `os`
-* `pickle`
-* `sys`
-* `kagglehub`
-* `matplotlib`
-* `numpy`
-* `openpyxl`
-* `pandas`
-* `pmlb`
-* `scikit-learn`
-* `scipy`
-* `tqdm`
+1.  **Create and Activate a New Conda Environment:**
+    ```bash
+    # Create a new environment named 'wgs_env' with Python 3.9
+    conda create --name wgs_env python=3.9
+
+    # Activate the new environment
+    conda activate wgs_env
+    ```
+
+2.  **Install All Required Packages:**
+    With the environment activated, install all necessary libraries using the provided `requirements.txt` file. This command will automatically install the exact versions of all packages used in this project.
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+You are now ready to run the project's scripts.
 
 ## Automated Workflow on an HPC Cluster
 
