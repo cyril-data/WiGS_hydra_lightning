@@ -55,7 +55,7 @@ def RunSimulationFunction(DataFileInput,
         results = OneIterationFunction(SimulationConfigInput)
 
         # Store results #
-        all_results_by_strategy[strategy_name] = results["ErrorVec"]
+        all_results_by_strategy[strategy_name] = results
 
     ### Return the nested dictionary for this single seed ###
     return all_results_by_strategy

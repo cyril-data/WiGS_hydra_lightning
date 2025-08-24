@@ -1,22 +1,40 @@
+### Packages ###
 import os
 import stat
 
-def create_master_sbatch(
-        partition_name,
-    sbatch_path,
-    n_replications,
-    n_models,
-    dataset_name,
-    test_prop,
-    candidate_prop,
-    code_dir,
-    time_limit='2:59:59',
-    memory='500MB'
-):
+### Function ###
+def create_master_sbatch(partition_name, 
+                         sbatch_path, 
+                         n_replications, 
+                         n_models, 
+                         dataset_name, 
+                         test_prop, 
+                         candidate_prop, 
+                         code_dir, 
+                         time_limit='2:59:59', 
+                         memory='500MB'):
+    """
+    Generates a master SLURM sbatch script for running a job array.
+
+    Args:
+        partition_name (str): The name of the SLURM partition to submit the job to
+        sbatch_path (str): The full file path where the generated .sbatch script will be saved.
+        n_replications (int): The number of times each simulation is replicated with a different seed.
+        n_models (int): The total number of different machine learning models being tested in this job array.
+        dataset_name (str): The base name of the dataset this job array will process.
+        test_prop (float): The proportion of the data to be used for the test set.
+        candidate_prop (float): The proportion of the data to be used for the initial candidate pool.
+        code_dir (str): The absolute path to the main 'Code/' directory of the project. 
+        time_limit (str): The maximum wall time for each job in the array formatted as 'HH:MM:SS'.
+        memory (str): The amount of memory to request for each job including units. Defaults to '500MB'.
+    """
+
+    ### Set up ##
     total_jobs = n_models * n_replications
     log_dir = os.path.join(code_dir, 'Cluster', 'RunSimulations', 'ClusterMessages')
     python_script_name = 'RunSimulation.py'
 
+### sbatch content ###
     sbatch_content = f"""#!/bin/bash
 #SBATCH --job-name=AL_{dataset_name}
 #SBATCH --partition={partition_name}
@@ -37,6 +55,7 @@ python {python_script_name} \\
     --CandidateProportion {candidate_prop}
 """
     
+    ### Save sbatch content ###
     with open(sbatch_path, 'w') as f:
         f.write(sbatch_content)
     os.chmod(sbatch_path, stat.S_IRWXU)

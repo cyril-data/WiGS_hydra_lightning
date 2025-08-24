@@ -73,7 +73,6 @@ The core logic is contained in the `Code/utils/` package, organized into sub-pac
 
 #### Auxiliary
 * `AggregateResults.py`: The script for compiling raw parallel results into aggregated files.
-* `AnalyzeResults.py`: Deprecated
 * `DataFrameUtils.py`: Extracts the parameters used for specific selector and prediction methods.
 * `GenerateJobs.py`: The function for creating the content of the `master_job.sbatch` files.
 * `GeneratePlots.py`: The script containing the main plotting logic for the trace plots.

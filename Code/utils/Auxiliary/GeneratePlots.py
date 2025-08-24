@@ -1,9 +1,7 @@
 ### Import Packages ###
 import os
 import pickle
-import matplotlib
 import numpy as np
-import pandas as pd
 from scipy.stats import chi2
 import matplotlib.pyplot as plt
 
@@ -17,7 +15,6 @@ def MeanVariancePlot(Subtitle=None,
                      RelativeError=None,
                      Colors=None,
                      Linestyles=None,
-                     Markerstyles=None,
                      xlim=None,
                      Y_Label=None,
                      VarInput=False,
@@ -26,6 +23,40 @@ def MeanVariancePlot(Subtitle=None,
                      initial_train_proportion=0.16,
                      candidate_pool_proportion=0.64,
                      **SimulationErrorResults):
+    """
+    Generates and returns trace plots for the mean and variance of simulation results.
+
+    Args:
+        Subtitle (str): A subtitle to display on the plot(s).
+        TransparencyVal (float): The alpha transparency for the confidence interval shading.
+        CriticalValue (float): The z-score for the confidence interval.
+        RelativeError (str): The name of a strategy in SimulationErrorResults to use as a baseline for normalization. 
+            If provided, all other curves will be divided by this baseline.
+        Colors (Dict[str, str]): A dictionary mapping strategy names to matplotlib color strings. 
+        Linestyles (Dict[str, str]): A dictionary mapping strategy names to matplotlib linestyle strings. 
+        xlim (list): A list of two numbers [min, max] to set the x-axis limits.
+        Y_Label (str): The label for the y-axis. 
+        VarInput (bool): If True, a second plot for the variance of the error will also be generated.
+        FigSize (Tuple[int, int]): The dimensions of the plot figures.
+        LegendMapping (Dict[str, str]): A dictionary to map strategy names to more descriptive labels for the plot legend. 
+        initial_train_proportion (float): The proportion of the dataset used for the initial training set, used to calculate the x-axis.
+            This is 0.16 when the `TEST_PROPORTION` and `CANDIDATE_PROPORTION` input in `CreateSimulationSBatch.py` are 
+            0.2 and 0.8 respectively. 
+        candidate_pool_proportion (float): The proportion of the dataset in the candidate pool, used to calculate the x-axis.
+            This is 0.64 when the `TEST_PROPORTION` and `CANDIDATE_PROPORTION` input in `Code/Cluster/CreateSimulationSBatch.py` 
+            are 0.2 and 0.8 respectively. 
+        **SimulationErrorResults (Dict[str, pd.DataFrame]): Arbitrary keyword arguments
+            where each key is a strategy name and the value is a pandas DataFrame
+            of its results. Rows should be iterations and columns should be
+            simulation runs.
+
+    Returns:
+        Tuple[plt.Figure, Optional[plt.Figure]]: A tuple containing:
+            - fig_mean (plt.Figure): The Matplotlib figure object for the mean trace plot.
+            - fig_var (plt.Figure or None): The Matplotlib figure object for the
+              variance trace plot if VarInput is True, otherwise None.
+    """
+
 
     ### Set Up ###
     MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector = {}, {}, {}, {}
@@ -73,7 +104,6 @@ def MeanVariancePlot(Subtitle=None,
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(x, MeanValues - CriticalValue * StdErrorValues,
                              MeanValues + CriticalValue * StdErrorValues, alpha=TransparencyVal, color=color)
-    
     ax_mean.set_xlabel("Percent of Total Data Labeled for Training")
     ax_mean.set_ylabel(Y_Label)
     ax_mean.set_title(Subtitle, fontsize=9)
@@ -95,12 +125,10 @@ def MeanVariancePlot(Subtitle=None,
             color = Colors.get(Label, None) if Colors else None
             linestyle = Linestyles.get(Label, '-') if Linestyles else '-'
             legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
-            
             ax_var.plot(x, VarianceValues, label=legend_label, color=color, linestyle=linestyle)
             lower_bound = StdErrorVarianceVector[Label]["lower"]
             upper_bound = StdErrorVarianceVector[Label]["upper"]
             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
-        
         ax_var.set_xlabel("Percent of Total Data Labeled for Training")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
         ax_var.set_title(Subtitle, fontsize=9)
@@ -110,15 +138,18 @@ def MeanVariancePlot(Subtitle=None,
     
     return (fig_mean, fig_var)
 
-### Wrapper Function ###
 ### Main Wrapper Function ###
 def generate_all_plots(aggregated_results_dir, image_dir):
     """
-    Loads aggregated .pkl files and generates all specified plots.
+    Wrapper function to load aggregated .pkl files and generates all specified plots.
+
+    Args:  
+        aggregated_results_dir: Directory of the aggregated results.
+        image_dir: Target directory of the images.
     """
     print("--- Starting Plot Generation from Aggregated Results ---")
     
-    # --- Aesthetics and Plot Definitions (no changes needed) ---
+    ### Aesthetics and Plot Definitions ###
     master_colors = {
         'Passive Learning': 'gray', 'GSx': 'cornflowerblue', 'GSy': 'salmon', 'iGS': 'red',
         'WiGS (Static w_x=0.75)': 'lightgreen', 'WiGS (Static w_x=0.5)': 'forestgreen',
@@ -141,74 +172,75 @@ def generate_all_plots(aggregated_results_dir, image_dir):
         'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)', 'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)'
     }
     
+    ### Set up ###
     metrics_to_plot = ['RMSE', 'MAE', 'R2', 'CC']
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
 
+    ### Make folder for each metric ###
     for metric in metrics_to_plot:
         for plot_folder in plot_types.keys():
-            os.makedirs(os.path.join(image_dir, metric, plot_folder), exist_ok=True)
-            
+            os.makedirs(os.path.join(image_dir, metric, plot_folder, 'trace'), exist_ok=True)
+            os.makedirs(os.path.join(image_dir, metric, plot_folder, 'variance'), exist_ok=True)
     dataset_folders = [d for d in os.listdir(aggregated_results_dir) if os.path.isdir(os.path.join(aggregated_results_dir, d))]
 
+    ### Dynamically find datasets ###
     for data_name in dataset_folders:
         print(f"\nProcessing dataset: {data_name}...")
         dataset_path = os.path.join(aggregated_results_dir, data_name)
 
+        ## For each metric ##
         for metric in metrics_to_plot:
             metric_pkl_path = os.path.join(dataset_path, f"{metric}.pkl")
-
-            if not os.path.exists(metric_pkl_path):
-                print(f"  > Warning: File '{metric}.pkl' not found for '{data_name}'. Skipping.")
-                continue
             
+            # Get metric #
             with open(metric_pkl_path, 'rb') as f:
                 results_for_metric = pickle.load(f)
-            
             print(f"  > Plotting metric: {metric}")
 
+            # Plot metric #
             for folder_name, baseline in plot_types.items():
                 y_label = f"Normalized {metric}" if baseline else metric
                 subtitle = f"Performance ({metric}) on {data_name.upper()} Dataset"
 
-                if baseline and baseline not in results_for_metric:
-                    print(f"  > Warning: Baseline '{baseline}' not in results for {metric}. Skipping relative plot.")
-                    continue
-
-                TracePlotMean, TracePlotVariance = MeanVariancePlot(
-                    RelativeError=baseline, Colors=master_colors, LegendMapping=master_legend, 
-                    Linestyles=master_linestyles, Y_Label=y_label, Subtitle=subtitle,
-                    TransparencyVal=0.1, VarInput=True, CriticalValue=1.96,
-                    initial_train_proportion=0.16, candidate_pool_proportion=0.64,
-                    **results_for_metric
-                )
-
-                base_plot_path = os.path.join(image_dir, metric, folder_name)
+                TracePlotMean, TracePlotVariance = MeanVariancePlot(RelativeError=baseline, 
+                                                                    Colors=master_colors, 
+                                                                    LegendMapping=master_legend, 
+                                                                    Linestyles=master_linestyles, 
+                                                                    Y_Label=y_label, 
+                                                                    Subtitle=subtitle,
+                                                                    TransparencyVal=0.1, 
+                                                                    VarInput=True, 
+                                                                    CriticalValue=1.96,
+                                                                    initial_train_proportion=0.16, 
+                                                                    candidate_pool_proportion=0.64,
+                                                                    **results_for_metric)
                 
-                # --- Save and IMMEDIATELY close the mean plot ---
-                trace_plot_path = os.path.join(base_plot_path, f"{data_name}_{metric}_TracePlot.png")
+                # Base plot path #
+                base_plot_path = os.path.join(image_dir, metric, folder_name)
+
+                # Save and close the mean plot #
+                trace_plot_path = os.path.join(base_plot_path, 'trace', f"{data_name}_{metric}_TracePlot.png")
                 TracePlotMean.savefig(trace_plot_path, bbox_inches='tight', dpi=300)
-                plt.close(TracePlotMean) # <-- THIS LINE IS CRUCIAL
+                plt.close(TracePlotMean)
 
-                # # --- Save and IMMEDIATELY close the variance plot if it exists ---
-                # if TracePlotVariance:
-                #     variance_plot_path = os.path.join(base_plot_path, f"{data_name}_{metric}_VariancePlot.png")
-                #     TracePlotVariance.savefig(variance_plot_path, bbox_inches='tight', dpi=300)
-                #     plt.close(TracePlotVariance) # <-- THIS LINE IS ALSO CRUCIAL
-        
+                # Save and close the variance plot #
+                if TracePlotVariance:
+                    variance_plot_path = os.path.join(base_plot_path, 'variance', f"{data_name}_{metric}_VariancePlot.png")
+                    TracePlotVariance.savefig(variance_plot_path, bbox_inches='tight', dpi=300)
+                    plt.close(TracePlotVariance)
+
         print(f"Finished all plots for {data_name}.")
-
     print("\n--- Plot Generation Complete ---")
     
 ### Script Execution ###
 if __name__ == "__main__":
-    
+
+    ## Directory ##    
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
-    
-    # Define the input and output directories relative to the project root
     AGGREGATED_RESULTS_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
     IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
     
-    # Execute the main function
+    ## Execute ##
     generate_all_plots(aggregated_results_dir=AGGREGATED_RESULTS_DIR, image_dir=IMAGE_DIR)
     print("All images made")

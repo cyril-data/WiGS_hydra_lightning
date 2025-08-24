@@ -1,16 +1,23 @@
-# Summary: Computes the Wilcoxon Ranked Signed Test pairwisely for each of the methods in the simulation.
-# Input: SimulationErrorResults is a dictionary containing the name of each active learning 
-#        method and its values as the error across the active learning process.
-# Output: Returns a diagonal matrix whose entries are the p-values from the Wilcoxon Ranked Signed Test 
-#         pairwisely comparing each of the methods in the simulation.
-
 ### Packages ###
 import numpy as np
 import pandas as pd
 from scipy.stats import wilcoxon
+from typing import Dict, Optional
 
 ### Function ###
-def WilcoxonRankSignedTest(SimulationErrorResults, RoundingVal = None):
+def WilcoxonRankSignedTest(SimulationErrorResults: Dict[str, pd.DataFrame],
+                           RoundingVal: Optional[int] = None) -> pd.DataFrame:
+    """
+    Performs a pairwise Wilcoxon signed-rank test on simulation results.
+
+    Args:
+        SimulationErrorResults (Dict[str, pd.DataFrame]): A dictionary where each key
+            is a strategy name and the value is a pandas DataFrame of its results.
+        RoundingVal (int): The number of decimal places to round the p-values to. 
+    Returns:
+        pd.DataFrame: A formatted DataFrame where the entry at (row i, column j)
+        is the p-value from the Wilcoxon test comparing strategy i and strategy j.
+    """
 
     ### Set Up ###
     strategies = list(SimulationErrorResults.keys())
@@ -20,12 +27,17 @@ def WilcoxonRankSignedTest(SimulationErrorResults, RoundingVal = None):
     ### Wilcoxon Signed-Rank Test ###
     for i in range(n_strategies):
         for j in range(i):
-            stat, pval = wilcoxon(np.mean(SimulationErrorResults[strategies[i]],axis=0), 
-                                  np.mean(SimulationErrorResults[strategies[j]],axis=0))
-            if RoundingVal == None:
+            ## Calculate the mean for each simulation ##
+            mean_error_i = np.mean(SimulationErrorResults[strategies[i]], axis=0)
+            mean_error_j = np.mean(SimulationErrorResults[strategies[j]], axis=0)
+            
+            ### Perform the Wilcoxon Ranked Signed Test ##
+            stat, pval = wilcoxon(mean_error_i, mean_error_j)
+            
+            if RoundingVal is None:
                 PValeMatrix[i, j] = pval
             else:
-                PValeMatrix[i, j] = np.round(pval,RoundingVal)
+                PValeMatrix[i, j] = np.round(pval, RoundingVal)
 
     ### Formatting ###
     np.fill_diagonal(PValeMatrix, 1)

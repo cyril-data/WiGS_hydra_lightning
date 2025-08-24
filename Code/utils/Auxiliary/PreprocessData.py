@@ -7,39 +7,39 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
-### My DGP ###
-### Import Packages ###
-import numpy as np
-import pandas as pd
-
+### Two regime DGP ###
 def generate_two_regime_data(n_samples=1000, seed=None):
     """
     Generates a synthetic dataset with two distinct regimes to test the
     adaptability of active learning strategies.
+    - Regime 1 (x < 0.5): A complex sine wave with low noise. Requires exploration to learn its shape.
+    - Regime 2 (x >= 0.5): A linear function with a small region of high noise. Requires exploitation to reduce uncertainty.
 
-    - Regime 1 (x < 0.5): A complex sine wave with low noise.
-      Requires EXPLORATION to learn its shape.
-    - Regime 2 (x >= 0.5): A simple linear function with a small region
-      of very high noise. Requires EXPLOITATION to reduce uncertainty.
+    Args:
+        n_samples (int): The number of data points to generate.
+        seed (int): A random seed for reproducibility.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the generated synthetic data.
     """
+
+    ### Set seed ###
     if seed is not None:
         np.random.seed(seed)
     
-    # Generate uniformly distributed inputs
-    x = np.random.uniform(low=0, high=1, size=n_samples)
+    ### Generation ###
+    x = np.random.uniform(low=0, high=1, size=n_samples) # Covariates
+    y = np.zeros(n_samples)                              # Target 
+    noise = np.zeros(n_samples)                          # Noise 
     
-    # Initialize the target and noise vectors
-    y = np.zeros(n_samples)
-    noise = np.zeros(n_samples)
+    ### Two regimes ###
     
-    # --- Define the two regimes ---
-    
-    # Regime 1: Exploration is key
+    ## Regime 1 ##
     exploration_mask = x < 0.5
     y[exploration_mask] = np.sin(x[exploration_mask] * 10 * np.pi)
     noise[exploration_mask] = np.random.normal(0, 0.1, size=np.sum(exploration_mask))
     
-    # Regime 2: Exploitation is key
+    ## Regime 2 ##
     exploitation_mask = x >= 0.5
     y[exploitation_mask] = 2 * x[exploitation_mask] - 1
     noise[exploitation_mask] = np.random.normal(0, 0.1, size=np.sum(exploitation_mask))
@@ -48,15 +48,87 @@ def generate_two_regime_data(n_samples=1000, seed=None):
     noise_trap_mask = (x > 0.8) & (x < 0.9)
     noise[noise_trap_mask] = np.random.normal(0, 1.0, size=np.sum(noise_trap_mask))
     
-    # Combine the function and the noise
+    ### Add noise to target ###
     final_y = y + noise
     
-    # Create and return the DataFrame
+    ### Return ###
+    df = pd.DataFrame({'X1': x, 'Y': final_y})
+    return df
+
+### Three regime DGP ###
+def generate_three_regime_data(n_samples=1500, seed=None):
+    """
+    Generates a synthetic dataset with three distinct regimes to test the
+    ability of an active learning agent to learn a complex, non-monotonic policy.
+
+    - Regime 1 (x < 0.4): Complex sine wave. Requires exploration.
+    - Regime 2 (0.4 <= x < 0.7): Simple line with a high-noise trap. Requires explitation.
+    - Regime 3 (x >= 0.7): Different complex cosine wave. Requires a return to exploration again.
+
+    Args:
+        n_samples (int): The number of data points to generate.
+        seed (int): A random seed for reproducibility.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the generated synthetic data.
+    """
+
+    ### Seed ###
+    if seed is not None:
+        np.random.seed(seed)
+    
+    ### Generate uniformly distributed inputs ###
+    x = np.random.uniform(low=0, high=1, size=n_samples) # Variables 
+    y = np.zeros(n_samples)                              # Target
+    noise = np.zeros(n_samples)                          # Noise
+    
+    ### Three regimes ###
+    
+    ## Regime 1 ##
+    regime1_mask = x < 0.4
+    y[regime1_mask] = np.sin(x[regime1_mask] * 8 * np.pi)
+    noise[regime1_mask] = np.random.normal(0, 0.1, size=np.sum(regime1_mask))
+    
+    ## Regime 2 ##
+    regime2_mask = (x >= 0.4) & (x < 0.7)
+    y[regime2_mask] = 3 * x[regime2_mask] - 1.5
+    noise[regime2_mask] = np.random.normal(0, 0.1, size=np.sum(regime2_mask))
+    
+    # Add a "noise trap" to the exploitation regime to make it the clear target
+    noise_trap_mask = (x > 0.6) & (x < 0.65)
+    noise[noise_trap_mask] = np.random.normal(0, 1.5, size=np.sum(noise_trap_mask))
+
+    ## Regime 3 ##
+    regime3_mask = x >= 0.7
+    y[regime3_mask] = 2 * np.cos(x[regime3_mask] * 6 * np.pi)
+    noise[regime3_mask] = np.random.normal(0, 0.15, size=np.sum(regime3_mask))
+
+    ### Target ###
+    final_y = y + noise
+    
+    ### Return ###
     df = pd.DataFrame({'X1': x, 'Y': final_y})
     return df
 
 ### Burbridge DGP ###
 def GenerateBurbridgeData(n_samples=500, delta=0.0, sigma_epsilon=0.3, seed=None):
+    """
+    Generates a synthetic dataset based on the DGP from Burbidge et al. (2007).
+
+    Args:
+        n_samples (int): The number of data points to generate.
+        delta (float): Controls the misspecification.
+            - delta = 0.0: Correctly specified model.
+            - delta = 0.005: Approximately correct model.
+            - delta = 0.05: Misspecified model.
+        sigma_epsilon (float): Standard deviation of the i.i.d. label noise.
+        seed (int): A random seed for reproducibility.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the generated synthetic data.
+    """
+
+    ### Seed ###
     if seed is not None:
         np.random.seed(seed)
     
@@ -83,27 +155,25 @@ def _preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Helper function to apply the full preprocessing pipeline to a dataframe.
     """
+
+    ### Set up ###
     if 'Y' not in df.columns:
         raise ValueError("DataFrame must have a target column named 'Y'.")
-    
     X = df.drop(columns=['Y'])
     y = df['Y']
-    
     for col in X.columns:
         if X[col].dtype == 'object':
             X[col] = X[col].astype('category')
-
-    # UPDATED: Added drop_first=True to handle binary variables correctly
     X_encoded = pd.get_dummies(X, drop_first=True)
     
-    # Standardize all features
+    ### Standardize all features ###
     scaler = StandardScaler()
     X_scaled_array = scaler.fit_transform(X_encoded)
     
-    # Convert scaled features back to a DataFrame
+    ### Convert scaled features back to a DataFrame ###
     X_scaled = pd.DataFrame(X_scaled_array, columns=X_encoded.columns, index=X_encoded.index)
     
-    # Recombine and return
+    ### Recombine and return ###
     return pd.concat([y, X_scaled], axis=1)
 
 ### Main Preprocessing and Saving Function ###
@@ -113,22 +183,20 @@ def preprocess_and_save_all():
     """
     print("--- Starting Data Preprocessing")
     
-    # --- Setup Paths ---
+    #### Directories ###
     try:
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
     except NameError:
         PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
-        
     save_path = os.path.join(PROJECT_ROOT, 'Data', 'processed')
     os.makedirs(save_path, exist_ok=True)
     
+    ### Set up ###
     datasets_to_save = {}
-
     print("Loading and processing all datasets...")
 
-    # --- Load, Process, and Collect All Datasets ---
-    # Each dataset is loaded raw, then passed to the helper function
+    ### Load, Process, and Collect All Datasets ###
     
     # 1. Concrete Compressive Strength
     concrete_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/concrete/compressive/Concrete_Data.xls'
@@ -202,64 +270,51 @@ def preprocess_and_save_all():
     datasets_to_save['qsar'] = _preprocess_dataframe(df_raw)
     print("  > Processed: qsar")
 
-    # Kaggle datasets
-    try:
+    # 13. Body Fat
+    download_path_bf = kagglehub.dataset_download("fedesoriano/body-fat-prediction-dataset")
+    df_raw = pd.read_csv(os.path.join(download_path_bf, 'bodyfat.csv'))
+    if 'Density' in df_raw.columns: del df_raw['Density']
+    df_raw = df_raw.rename(columns={'BodyFat': 'Y'})
+    datasets_to_save['bodyfat'] = _preprocess_dataframe(df_raw)
+    print("  > Processed: bodyfat")
 
-        # 13. Body Fat
-        download_path_bf = kagglehub.dataset_download("fedesoriano/body-fat-prediction-dataset")
-        df_raw = pd.read_csv(os.path.join(download_path_bf, 'bodyfat.csv'))
-        if 'Density' in df_raw.columns: del df_raw['Density']
-        df_raw = df_raw.rename(columns={'BodyFat': 'Y'})
-        datasets_to_save['bodyfat'] = _preprocess_dataframe(df_raw)
-        print("  > Processed: bodyfat")
+    # 14. Beer
+    download_path_beer = kagglehub.dataset_download("dongeorge/beer-consumption-sao-paulo")
+    df_raw = pd.read_csv(os.path.join(download_path_beer, 'Consumo_cerveja.csv'), decimal=',')
+    df_raw.dropna(inplace=True) 
+    df_raw.columns = ['Date', 'Temp_Avg_C', 'Temp_Min_C', 'Temp_Max_C', 'Precipitation_mm', 'Weekend', 'Y'] 
+    del df_raw['Date']
+    for col in df_raw.columns:
+        df_raw[col] = pd.to_numeric(df_raw[col], errors='coerce')
+    df_raw.dropna(inplace=True)
+    datasets_to_save['beer'] = _preprocess_dataframe(df_raw)
+    print("  > Processed: beer")
 
-        # 14. Beer
-        download_path_beer = kagglehub.dataset_download("dongeorge/beer-consumption-sao-paulo")
-        df_raw = pd.read_csv(os.path.join(download_path_beer, 'Consumo_cerveja.csv'), decimal=',')
-        df_raw.dropna(inplace=True) 
-        df_raw.columns = ['Date', 'Temp_Avg_C', 'Temp_Min_C', 'Temp_Max_C', 'Precipitation_mm', 'Weekend', 'Y'] 
-        del df_raw['Date']
-        for col in df_raw.columns:
-            df_raw[col] = pd.to_numeric(df_raw[col], errors='coerce')
-        df_raw.dropna(inplace=True)
-        datasets_to_save['beer'] = _preprocess_dataframe(df_raw)
-        print("  > Processed: beer")
+    # 15. CPS
+    download_path_cps = kagglehub.dataset_download("avikdas2021/determinants-of-wages-data-cps-1985")
+    csv_file = [f for f in os.listdir(download_path_cps) if f.endswith('.csv')][0]
+    df_raw = pd.read_csv(os.path.join(download_path_cps, csv_file))
+    df_raw = df_raw.rename(columns={'wage': 'Y'})
+    if "Unnamed: 0" in df_raw.columns:
+        df_raw = df_raw.drop("Unnamed: 0", axis=1)
+    categorical_cols = ['ethnicity', 'region', 'occupation', 'sector', 'union', 'married']
+    for col in categorical_cols:
+        if col in df_raw.columns:
+            df_raw[col] = df_raw[col].astype('category')
+    datasets_to_save['cps_wage'] = _preprocess_dataframe(df_raw)
+    print("  > Processed: cps_wage")
 
-        # 15. CPS
-        download_path_cps = kagglehub.dataset_download("avikdas2021/determinants-of-wages-data-cps-1985")
-        csv_file = [f for f in os.listdir(download_path_cps) if f.endswith('.csv')][0]
-        df_raw = pd.read_csv(os.path.join(download_path_cps, csv_file))
-
-        # Rename wage to Y (target variable)
-        df_raw = df_raw.rename(columns={'wage': 'Y'})
-
-        # Drop the unnecessary index column
-        if "Unnamed: 0" in df_raw.columns:
-            df_raw = df_raw.drop("Unnamed: 0", axis=1)
-
-        # Explicitly define which columns are categorical by changing their type
-        categorical_cols = [
-            'ethnicity', 'region', 'occupation', 
-            'sector', 'union', 'married'
-        ]
-        for col in categorical_cols:
-            if col in df_raw.columns:
-                df_raw[col] = df_raw[col].astype('category')
-
-        # The helper function will now correctly handle these
-        datasets_to_save['cps_wage'] = _preprocess_dataframe(df_raw)
-        print("  > Processed: cps_wage")
-
-    except Exception as e:
-        print(f"\n--- KAGGLE ERROR: {e} ---")
-
-    # 16 - 18. Burbridge Dataset
+    # 16. Burbridge Dataset (correctly specified)
     df_dgp_correct = GenerateBurbridgeData(delta=0.0, sigma_epsilon=0.3, seed=42)
     datasets_to_save['dgp_correct'] = _preprocess_dataframe(df_dgp_correct)
     print("  > Processed: dgp_correct")
+
+    # 17. Burbridge Dataset (correctly misspecified)
     df_dgp_misspecified = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.3, seed=42)
     datasets_to_save['dgp_misspecified'] = _preprocess_dataframe(df_dgp_misspecified)
     print("  > Processed: dgp_misspecified")
+
+    # 18. Burbridge Dataset (correctly low noise)
     df_dgp_low_noise = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.1, seed=42)
     datasets_to_save['dgp_low_noise'] = _preprocess_dataframe(df_dgp_low_noise)
     print("  > Processed: dgp_low_noise")
@@ -268,6 +323,11 @@ def preprocess_and_save_all():
     df_dgp_two_regime = generate_two_regime_data(seed=42)
     datasets_to_save['dgp_two_regime'] = _preprocess_dataframe(df_dgp_two_regime)
     print("  > Processed: dgp_two_regime")
+
+    # 20. Three-Regime Dataset 
+    df_dgp_three_regime = generate_three_regime_data(seed=42)
+    datasets_to_save['dgp_three_regime'] = _preprocess_dataframe(df_dgp_three_regime)
+    print("  > Processed: dgp_three_regime")
 
     # --- Save all successfully processed datasets ---
     print("\nSaving all processed datasets...")
