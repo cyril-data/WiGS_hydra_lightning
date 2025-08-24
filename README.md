@@ -14,11 +14,11 @@ This project was developed using **Python 3.9**. To ensure a clean and reproduci
 
 1.  **Create and Activate a New Conda Environment:**
     ```bash
-    # Create a new environment named 'wgs_env' with Python 3.9
-    conda create --name wgs_env python=3.9
+    # Create a new environment named 'wigs_env' with Python 3.9
+    conda create --name wigs_env python=3.9
 
     # Activate the new environment
-    conda activate wgs_env
+    conda activate wigs_env
     ```
 
 2.  **Install All Required Packages:**
