@@ -2,6 +2,7 @@ import os
 import stat
 
 def create_master_sbatch(
+        partition_name,
     sbatch_path,
     n_replications,
     n_models,
@@ -18,7 +19,7 @@ def create_master_sbatch(
 
     sbatch_content = f"""#!/bin/bash
 #SBATCH --job-name=AL_{dataset_name}
-#SBATCH --partition=short
+#SBATCH --partition={partition_name}
 #SBATCH --array=1-{total_jobs}
 #SBATCH --output={log_dir}/out/{dataset_name}_%A_%a.out
 #SBATCH --error={log_dir}/error/{dataset_name}_%A_%a.err

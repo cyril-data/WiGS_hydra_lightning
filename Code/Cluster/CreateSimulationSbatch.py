@@ -15,6 +15,11 @@ if __name__ == "__main__":
     ## Directories ##
     PROJECT_ROOT = os.path.dirname(CODE_DIR)
     DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'Data', 'processed')
+
+    ## Cluster Parameters ##
+    partition_name_input = "short"
+    time_limit_input='2:59:59'
+    memory_input='500MB'
     
     ## Define Simulation Parameters ##
     N_REPLICATIONS = 100
@@ -39,6 +44,9 @@ if __name__ == "__main__":
         
         # Create master sbatch #
         create_master_sbatch(
+            partition_name = partition_name_input,
+            time_limit=time_limit_input,
+            memory=memory_input,
             sbatch_path=model_sbatch_path,
             n_replications=N_REPLICATIONS,
             n_models=len(models_to_run), 
