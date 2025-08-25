@@ -1,1 +1,29 @@
+# .gitignore
+
+# Python #
+# Ignore the bytecode cache directory
+__pycache__/
+*.pyc
+
+# macOS #
+# Ignore the file that stores custom folder attributes
+.DS_Store
+
+# R #
+# Ignore the R command history file
+.Rhistory
+
+# Virtual Environments #
+# Ignore your local Conda environment folder
 .WiGS_Env/
+
+# Project-specific Outputs #
+# Ignore large data and result files
+Data/processed/
+Results/simulation_results/
+Results/images/
+
+# Ignore SLURM log files
+slurm_logs/
+*.out
+*.err
