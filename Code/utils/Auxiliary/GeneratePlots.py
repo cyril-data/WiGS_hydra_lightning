@@ -190,7 +190,7 @@ def generate_all_plots(aggregated_results_dir, image_dir):
 
         ## For each metric ##
         for metric in metrics_to_plot:
-            metric_pkl_path = os.path.join(dataset_path, f"{metric}.pkl")
+            metric_pkl_path = os.path.join(dataset_path, "metrics", f"{metric}.pkl")
             
             # Get metric #
             with open(metric_pkl_path, 'rb') as f:
@@ -208,7 +208,7 @@ def generate_all_plots(aggregated_results_dir, image_dir):
                                                                     Linestyles=master_linestyles, 
                                                                     Y_Label=y_label, 
                                                                     Subtitle=subtitle,
-                                                                    TransparencyVal=0.1, 
+                                                                    TransparencyVal=0, 
                                                                     VarInput=True, 
                                                                     CriticalValue=1.96,
                                                                     initial_train_proportion=0.16, 
