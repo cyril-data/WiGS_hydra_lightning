@@ -49,18 +49,18 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## Get features and target for the current training set ##
         X_train_df, y_train_series = get_features_and_target(
             df=SimulationConfigInputUpdated["df_Train"],
-            target_column_name="Y",
-            auxiliary_columns=SimulationConfigInputUpdated.get('auxiliary_data_cols', []))
+            target_column_name="Y"
+            )
 
         ## Prediction Model ##
         predictor_model.fit(X_train_df=X_train_df, y_train_series=y_train_series)
         
         ### Test Error ###
-        # TestErrorOutput = TestErrorFunction(InputModel=predictor_model,
-                                            # df_Test=SimulationConfigInputUpdated["df_Test"])
-        TestErrorOutput = PaperTestErrorMetrics(InputModel=predictor_model,
-                                                   df_Train=SimulationConfigInputUpdated["df_Train"],
-                                                   df_Candidate=SimulationConfigInputUpdated["df_Candidate"])
+        TestErrorOutput = TestErrorFunction(InputModel=predictor_model,
+                                            df_Test=SimulationConfigInputUpdated["df_Test"])
+        # TestErrorOutput = PaperTestErrorMetrics(InputModel=predictor_model,
+        #                                            df_Train=SimulationConfigInputUpdated["df_Train"],
+        #                                            df_Candidate=SimulationConfigInputUpdated["df_Candidate"])
         
         ## Store Errors ##
         for metric_name, value in TestErrorOutput.items():

@@ -77,7 +77,6 @@ class WeightedGreedySamplingSelector:
             df_Candidate (pd.DataFrame): The pool of unlabeled data points from which to select.
             Model (object): A trained model with a `.predict()` method.
             df_Train (pd.DataFrame): The current set of labeled training data.
-            auxiliary_columns (list): A list of column names in the DataFrames that should not be treated as features.
             **kwargs: Accepts and ignores additional keyword arguments for consistency.
 
         Returns:
