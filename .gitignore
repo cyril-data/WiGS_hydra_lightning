@@ -17,12 +17,6 @@ __pycache__/
 # Ignore your local Conda environment folder
 .WiGS_Env/
 
-# Project-specific Outputs #
-# Ignore large data and result files
-Data/processed/
-Results/simulation_results/
-Results/images/
-
 # Ignore SLURM log files
 slurm_logs/
 *.out
