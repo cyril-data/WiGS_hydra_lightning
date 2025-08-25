@@ -1,20 +1,39 @@
-# Summary: Chooses an index at random from the candidate set to be queried.
-
 ### Libraries ###
 import pandas as pd
-import numpy as np
+# import numpy as np
 
 ### Passive Learning ###
 class PassiveLearningSelector:
-    def __init__(self, BatchSize: int = 1, Seed: int = None, **kwargs):
-        self.BatchSize = BatchSize
+    """
+    Implements a random sampling selection strategy.
+
+    Attributes:
+        Seed (int): A random seed to ensure the sampling is reproducible.
+    """
+
+    def __init__(self, Seed: int = None, **kwargs):
+        """
+        Initializes the PassiveLearningSelector.
+
+        Args:
+            Seed (int, optional): The random seed for reproducibility of the sampling process.
+            **kwargs: Accepts and ignores additional keyword arguments for consistency.
+        """
         self.Seed = Seed
 
     def select(self, df_Candidate: pd.DataFrame, **kwargs) -> dict:
-        if df_Candidate.shape[0] >= self.BatchSize:
-             QueryObservation = df_Candidate.sample(n=self.BatchSize, random_state=self.Seed) 
-             IndexRecommendation = list(QueryObservation.index)
-        else:
-            IndexRecommendation = list(df_Candidate.index) 
+        """
+        Randomly selects a single observation from the candidate set.
+
+        Args:
+            df_Candidate (pd.DataFrame): The pool of unlabeled data points from which to select.
+            **kwargs: Accepts and ignores additional keyword arguments for consistency.
+
+        Returns:
+            dict: A dictionary containing the recommended point's index, in the format `{'IndexRecommendation': [index]}`.
+        """
+
+        QueryObservation = df_Candidate.sample(n=1, random_state=self.Seed)
+        IndexRecommendation = list(QueryObservation.index)
 
         return {"IndexRecommendation": IndexRecommendation}

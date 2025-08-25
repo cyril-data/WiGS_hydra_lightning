@@ -16,6 +16,17 @@ from utils.Auxiliary.DataFrameUtils import get_features_and_target
 ### Function ###
 def TestErrorFunction(InputModel, df_Test):
 
+    """
+    Calculates the RMSE, MAE, R^2, and Correlation Coefficient on a test set.
+
+    Args:
+        InputModel (object): A trained model object.
+        df_Test (pd.DataFrame): The test dataset
+
+    Returns:
+        dict: A dictionary containing the calculated performance metrics. The keys 'RMSE', 'MAE', 'R2', and 'CC'.
+    """
+
     ### Get features and target ###
     X_test_df, y_test_series = get_features_and_target(
         df=df_Test,
@@ -34,6 +45,5 @@ def TestErrorFunction(InputModel, df_Test):
     Output = {"RMSE": rmse_val, 
               "MAE": mae_val,
               "R2": r2_val,
-              "CC": cc_val
-              }
+              "CC": cc_val}
     return Output

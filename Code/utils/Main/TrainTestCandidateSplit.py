@@ -1,18 +1,21 @@
-# Summary: Splits the original dataframe df into three sets: the training, test, and candidate sets.
-# Input:
-#   df: The original dataframe.
-#   TestProportion: Proportion of the data that is reserved for testing.
-#   CandidateProportion: Proportion of the data that is initially "unseen" and later added to the training set.
-# Output:
-#   df_Train: The initial training set.
-#   df_Test: The test set that is reserved for testing.
-#   df_Candidate: The candidate set that is initially "unseen" and later added to the training set.
-
 ### Libraries ###
 from sklearn.model_selection import train_test_split
 
 ### Function ###
 def TrainTestCandidateSplit(df, TestProportion, CandidateProportion):
+    """
+    Splits the original dataframe df into three sets: the training, test, and candidate sets.
+
+    Args:
+        - df: The original dataframe.
+        - TestProportion: Proportion of the data that is reserved for testing.
+        - CandidateProportion: Proportion of the data that is initially "unseen" and later added to the training set.
+    
+    Returns:
+        - df_Train: The initial training set.
+        - df_Test: The test set that is reserved for testing.
+        - df_Candidate: The candidate set that is initially "unseen" and later added to the training set.
+    """
 
     # Train/Test split #
     X_TrainCandidate, X_Test, y_TrainCandidate, y_Test = train_test_split(

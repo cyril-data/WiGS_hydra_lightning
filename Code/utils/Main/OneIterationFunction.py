@@ -9,9 +9,21 @@ from utils.Auxiliary import LoadData
 from utils.Main.LearningProcedure import LearningProcedure 
 from utils.Main.TrainTestCandidateSplit import TrainTestCandidateSplit 
 
-
 ### Function ###
 def OneIterationFunction(SimulationConfigInput):
+    """
+    Executes a single, complete simulation iteration for a given configuration.
+
+    Args:
+        SimulationConfigInput (dict): A dictionary containing all parameters needed to run the simulation. 
+
+    Returns:
+        dict: A dictionary containing the results of the simulation run, with the following keys:
+            - ErrorVec (pd.DataFrame): The history of performance metrics over the course of the learning procedure.
+            - SelectionHistory (list): The history of observations selected from the candidate pool.
+            - SimulationParameters (dict): The key input parameters used for this simulation run.
+            - ElapsedTime (float): The total execution time in seconds for this iteration.
+    """
     
     ### Set Up ###
     StartTime = time.time()

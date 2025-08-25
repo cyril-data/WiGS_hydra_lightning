@@ -1,6 +1,6 @@
 ### Import ###
-import pandas as pd
-from tqdm import tqdm
+# import pandas as pd
+# from tqdm import tqdm
 from utils.Main.OneIterationFunction import OneIterationFunction
 
 ### Function Definition ###
@@ -9,6 +9,21 @@ def RunSimulationFunction(DataFileInput,
                           machine_learning_model,
                           test_proportion,
                           candidate_proportion):
+    """
+    Runs a single simulation iteration across multiple data selection strategies.
+
+    Args:
+        DataFileInput (str): The file path for the dataset to be loaded.
+        Seed (int): Seed
+        machine_learning_model (str): A string identifier for the machine learning model to be used.
+            Expected values include 'LinearRegressionPredictor', 'RandomForestRegressorPredictor', or 'RidgeRegressionPredictor'.
+        test_proportion (float): The fraction of the dataset to be reserved for the final, unseen test set.
+        candidate_proportion (float): The fraction of the non-test data to be used as the unlabeled candidate pool.
+    Returns:
+        dict: A nested dictionary containing the simulation results for the single seed. 
+            The keys are the string names of the strategies that were run (e.g., 'Passive Learning', 'iGS'), 
+            and the values are the corresponding result objects returned by `OneIterationFunction`.
+    """
 
     ### Set Up ###
     all_results_by_strategy = {}
@@ -36,7 +51,7 @@ def RunSimulationFunction(DataFileInput,
         'WiGS (MAB-UCB1, c=0.5)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 0.5},
         'WiGS (MAB-UCB1, c=2.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 2.0},
         'WiGS (MAB-UCB1, c=5.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 5.0}
-    }
+        }
     
     ### Loop Through Strategies ###
     for strategy_name, strategy_params in strategies_to_run.items():

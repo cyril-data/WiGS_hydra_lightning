@@ -9,6 +9,19 @@ from utils.Prediction import *
 
 ### Function ###
 def LearningProcedure(SimulationConfigInputUpdated):
+    """
+    Executes an iterative active learning or greedy sampling loop.
+
+    Args:
+        SimulationConfigInputUpdated (dict): A dictionary containing the configuration and state for the learning loop.
+
+    Returns:
+        dict: A dictionary containing the results of the learning procedure with the following keys:
+            - ErrorVec (dict): A dictionary where keys are metric names ('RMSE', 'MAE', 'R2', 'CC') and 
+            values are lists of the metric's value at each iteration of the loop.
+            - SelectedObservationHistory (list): A list of the indices of observations selected from the candidate pool
+              in the order they were chosen.
+    """
 
     ### Set Up ###
     i = 0

@@ -1,16 +1,12 @@
-# Summary: Initializes and fits a linear regression model.
-# Input:
-#   X_train_df: The training features (DataFrame).
-#   y_train_series: The training target (Series).
-# Output:
-# LinearRegressionModel: A linear regression model instance.
-
 ### Libraries ###
 import pandas as pd
 import numpy as np 
 from sklearn.linear_model import LinearRegression
 
 class LinearRegressionPredictor:
+    """
+    A wrapper for the scikit-learn LinearRegression model.
+    """
 
     ### Initialize Model ###
     def __init__(self, **kwargs):
