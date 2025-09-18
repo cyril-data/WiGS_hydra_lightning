@@ -70,6 +70,7 @@ The core logic is contained in the `Code/utils/` package, organized into sub-pac
 * `GreedySamplingSelector.py`: Implements the original GSx, GSy, and iGS methods from [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
 * `WeightedGreedySamplingSelector.py`: Implements the novel **WiGS** method with static and time-decay adaptive weights.
 * `WiGS_MAB.py`: Implements the novel **WiGS** method using a Multi-Armed Bandit (UCB1) to learn weights adaptively.
+* `WiGS_SAC.py`: Implements the novel **WiGS** method using a Soft Actor-Critic (SAC) to learn weights adaptively.
 
 #### Auxiliary
 * `AggregateResults.py`: The script for compiling raw parallel results into aggregated files.
