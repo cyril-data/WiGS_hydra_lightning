@@ -155,21 +155,27 @@ def generate_all_plots(aggregated_results_dir, image_dir):
         'WiGS (Static w_x=0.75)': 'lightgreen', 'WiGS (Static w_x=0.5)': 'forestgreen',
         'WiGS (Static w_x=0.25)': 'darkgreen', 'WiGS (Time-Decay, Linear)': 'orange',
         'WiGS (Time-Decay, Exponential)': 'saddlebrown', 'WiGS (MAB-UCB1, c=0.5)': 'orchid',
-        'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 'WiGS (MAB-UCB1, c=5.0)': 'indigo'
+        'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 'WiGS (MAB-UCB1, c=5.0)': 'indigo',
+        'iRDM': 'darkcyan',
+        'IDEAL': 'deeppink'
     }
     master_linestyles = {
         'Passive Learning': ':', 'GSx': ':', 'GSy': ':', 'iGS': '-',
         'WiGS (Static w_x=0.75)': '-', 'WiGS (Static w_x=0.5)': '-.',
         'WiGS (Static w_x=0.25)': '--', 'WiGS (Time-Decay, Linear)': '-',
         'WiGS (Time-Decay, Exponential)': '-.', 'WiGS (MAB-UCB1, c=0.5)': '-',
-        'WiGS (MAB-UCB1, c=2.0)': '-', 'WiGS (MAB-UCB1, c=5.0)': '-'
+        'WiGS (MAB-UCB1, c=2.0)': '-', 'WiGS (MAB-UCB1, c=5.0)': '-',
+        'iRDM': '--',
+        'IDEAL': '-.'
     }
     master_legend = {
         'Passive Learning': 'Random', 'GSx': 'GSx', 'GSy': 'GSy', 'iGS': 'iGS',
         'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)', 'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
         'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
         'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)', 'WiGS (MAB-UCB1, c=0.5)': 'WiGS (MAB, c=0.5)',
-        'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)', 'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)'
+        'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)', 'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)',
+        'iRDM': 'iRDM',
+        'IDEAL': 'IDEAL'
     }
     
     ### Set up ###
@@ -208,7 +214,7 @@ def generate_all_plots(aggregated_results_dir, image_dir):
                                                                     Linestyles=master_linestyles, 
                                                                     Y_Label=y_label, 
                                                                     Subtitle=subtitle,
-                                                                    TransparencyVal=0, 
+                                                                    TransparencyVal=0.1, 
                                                                     VarInput=True, 
                                                                     CriticalValue=1.96,
                                                                     initial_train_proportion=0.16, 

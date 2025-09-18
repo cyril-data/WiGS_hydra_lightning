@@ -55,7 +55,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## Prediction Model ##
         predictor_model.fit(X_train_df=X_train_df, y_train_series=y_train_series)
         
-        ### Test Error ###
+        # ### Test Error ###
         TestErrorOutput = TestErrorFunction(InputModel=predictor_model,
                                             df_Test=SimulationConfigInputUpdated["df_Test"])
         # TestErrorOutput = PaperTestErrorMetrics(InputModel=predictor_model,
