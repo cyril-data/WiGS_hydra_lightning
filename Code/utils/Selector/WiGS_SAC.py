@@ -12,7 +12,6 @@ from collections import deque
 import random
 
 # --- Hyperparameters ---
-# These can be tuned, but are reasonable starting points.
 HIDDEN_SIZE = 64          # Number of neurons in hidden layers
 BUFFER_SIZE = 10000       # Max size of the replay buffer
 BATCH_SIZE = 64           # Number of samples to train on from the buffer
@@ -206,8 +205,8 @@ class WiGS_SAC_Selector:
     def update(self):
         """Samples a batch from the replay buffer and updates the agent's networks."""
         if len(self.replay_buffer) < BATCH_SIZE:
-            return  # Don't train until we have enough samples
-
+            return  
+        
         # Sample a batch
         state, action, reward, next_state, done = self.replay_buffer.sample(BATCH_SIZE)
         
