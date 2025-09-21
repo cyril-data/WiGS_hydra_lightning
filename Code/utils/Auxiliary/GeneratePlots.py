@@ -107,7 +107,8 @@ def MeanVariancePlot(Subtitle=None,
     ax_mean.set_xlabel("Percent of Total Data Labeled for Training")
     ax_mean.set_ylabel(Y_Label)
     ax_mean.set_title(Subtitle, fontsize=9)
-    ax_mean.legend(loc='upper right')
+    # ax_mean.legend(loc='upper right')
+    ax_mean.legend(loc='upper left', bbox_to_anchor=(1.02, 1))
     if isinstance(xlim, list):
         ax_mean.set_xlim(xlim)
 
