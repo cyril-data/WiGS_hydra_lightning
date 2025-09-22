@@ -140,13 +140,11 @@ def MeanVariancePlot(Subtitle=None,
     return (fig_mean, fig_var)
 
 ### Main Wrapper Function ###
+### Main Wrapper Function ###
 def generate_all_plots(aggregated_results_dir, image_dir):
     """
-    Wrapper function to load aggregated .pkl files and generates all specified plots.
-
-    Args:  
-        aggregated_results_dir: Directory of the aggregated results.
-        image_dir: Target directory of the images.
+    Wrapper function to load aggregated .pkl files and generates all specified plots
+    for both 'standard' and 'paper' evaluation metrics.
     """
     print("--- Starting Plot Generation from Aggregated Results ---")
     
@@ -182,72 +180,64 @@ def generate_all_plots(aggregated_results_dir, image_dir):
     ### Set up ###
     metrics_to_plot = ['RMSE', 'MAE', 'R2', 'CC']
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
-
-    ### Make folder for each metric ###
-    for metric in metrics_to_plot:
-        for plot_folder in plot_types.keys():
-            os.makedirs(os.path.join(image_dir, metric, plot_folder, 'trace'), exist_ok=True)
-            os.makedirs(os.path.join(image_dir, metric, plot_folder, 'variance'), exist_ok=True)
-    dataset_folders = [d for d in os.listdir(aggregated_results_dir) if os.path.isdir(os.path.join(aggregated_results_dir, d))]
+    eval_types = ['standard', 'paper']
 
     ### Dynamically find datasets ###
+    dataset_folders = [d for d in os.listdir(aggregated_results_dir) if os.path.isdir(os.path.join(aggregated_results_dir, d))]
+
     for data_name in dataset_folders:
         print(f"\nProcessing dataset: {data_name}...")
         dataset_path = os.path.join(aggregated_results_dir, data_name)
 
-        ## For each metric ##
-        for metric in metrics_to_plot:
-            metric_pkl_path = os.path.join(dataset_path, "metrics", f"{metric}.pkl")
-            
-            # Get metric #
-            with open(metric_pkl_path, 'rb') as f:
-                results_for_metric = pickle.load(f)
-            print(f"  > Plotting metric: {metric}")
+        for eval_type in eval_types:
+            print(f"  > Generating plots for '{eval_type}' metrics...")
+            eval_metric_path = os.path.join(dataset_path, f"{eval_type}_metrics")
 
-            # Plot metric #
-            for folder_name, baseline in plot_types.items():
-                y_label = f"Normalized {metric}" if baseline else metric
-                subtitle = f"Performance ({metric}) on {data_name.upper()} Dataset"
+            if not os.path.isdir(eval_metric_path):
+                print(f"    - Skipping: Directory not found at {eval_metric_path}")
+                continue
 
-                TracePlotMean, TracePlotVariance = MeanVariancePlot(RelativeError=baseline, 
-                                                                    Colors=master_colors, 
-                                                                    LegendMapping=master_legend, 
-                                                                    Linestyles=master_linestyles, 
-                                                                    Y_Label=y_label, 
-                                                                    Subtitle=subtitle,
-                                                                    TransparencyVal=0.1, 
-                                                                    VarInput=True, 
-                                                                    CriticalValue=1.96,
-                                                                    initial_train_proportion=0.16, 
-                                                                    candidate_pool_proportion=0.64,
-                                                                    **results_for_metric)
+            for metric in metrics_to_plot:
+                metric_pkl_path = os.path.join(eval_metric_path, f"{metric}.pkl")
                 
-                # Base plot path #
-                base_plot_path = os.path.join(image_dir, metric, folder_name)
+                if not os.path.exists(metric_pkl_path):
+                    continue
 
-                # Save and close the mean plot #
-                trace_plot_path = os.path.join(base_plot_path, 'trace', f"{data_name}_{metric}_TracePlot.png")
-                TracePlotMean.savefig(trace_plot_path, bbox_inches='tight', dpi=300)
-                plt.close(TracePlotMean)
+                with open(metric_pkl_path, 'rb') as f:
+                    results_for_metric = pickle.load(f)
+                
+                for folder_name, baseline in plot_types.items():
+                    y_label = f"Normalized {metric}" if baseline else metric
+                    subtitle = f"Performance ({eval_type.capitalize()} {metric}) on {data_name.upper()} Dataset"
 
-                # Save and close the variance plot #
-                if TracePlotVariance:
-                    variance_plot_path = os.path.join(base_plot_path, 'variance', f"{data_name}_{metric}_VariancePlot.png")
-                    TracePlotVariance.savefig(variance_plot_path, bbox_inches='tight', dpi=300)
-                    plt.close(TracePlotVariance)
+                    TracePlotMean, TracePlotVariance = MeanVariancePlot(RelativeError=baseline, 
+                                                                        Colors=master_colors, 
+                                                                        LegendMapping=master_legend, 
+                                                                        Linestyles=master_linestyles, 
+                                                                        Y_Label=y_label, 
+                                                                        Subtitle=subtitle,
+                                                                        TransparencyVal=0.1, 
+                                                                        VarInput=True, 
+                                                                        CriticalValue=1.96,
+                                                                        initial_train_proportion=0.16, 
+                                                                        candidate_pool_proportion=0.64,
+                                                                        **results_for_metric)
+                    
+                    # Update the base saving path to include the evaluation type
+                    base_plot_path = os.path.join(image_dir, eval_type, metric, folder_name)
+                    os.makedirs(os.path.join(base_plot_path, 'trace'), exist_ok=True)
+                    os.makedirs(os.path.join(base_plot_path, 'variance'), exist_ok=True)
+
+                    # Save the mean trace plot
+                    trace_plot_path = os.path.join(base_plot_path, 'trace', f"{data_name}_{metric}_TracePlot.png")
+                    TracePlotMean.savefig(trace_plot_path, bbox_inches='tight', dpi=300)
+                    plt.close(TracePlotMean)
+
+                    # Save the variance trace plot
+                    if TracePlotVariance:
+                        variance_plot_path = os.path.join(base_plot_path, 'variance', f"{data_name}_{metric}_VariancePlot.png")
+                        TracePlotVariance.savefig(variance_plot_path, bbox_inches='tight', dpi=300)
+                        plt.close(TracePlotVariance)
 
         print(f"Finished all plots for {data_name}.")
     print("\n--- Plot Generation Complete ---")
-    
-### Script Execution ###
-if __name__ == "__main__":
-
-    ## Directory ##    
-    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
-    AGGREGATED_RESULTS_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
-    IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
-    
-    ## Execute ##
-    generate_all_plots(aggregated_results_dir=AGGREGATED_RESULTS_DIR, image_dir=IMAGE_DIR)
-    print("All images made")

@@ -25,7 +25,10 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
     ### Set Up ###
     i = 0
-    ErrorVec = {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
+    ErrorVecs = {
+    'Standard': {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []},
+    'Paper':    {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
+    }
     SelectedObservationHistory = []
 
     ### Initialize Model ###
@@ -55,22 +58,26 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## Prediction Model ##
         predictor_model.fit(X_train_df=X_train_df, y_train_series=y_train_series)
         
-        # ### Test Error ###
-        # TestErrorOutput = TestErrorFunction(InputModel=predictor_model,
-                                            # df_Test=SimulationConfigInputUpdated["df_Test"])
-        TestErrorOutput = PaperTestErrorMetrics(InputModel=predictor_model,
-                                                   df_Train=SimulationConfigInputUpdated["df_Train"],
-                                                   df_Candidate=SimulationConfigInputUpdated["df_Candidate"])
-        
-        ## Store Errors ##
-        for metric_name, value in TestErrorOutput.items():
-            ErrorVec[metric_name].append(value)
+        ## Calculate Test Error (both from the paper and the standard way)
+
+        # 1. Standard Hold-Out Test Error
+        StandardErrorOutput = TestErrorFunction(InputModel=predictor_model,
+                                                df_Test=SimulationConfigInputUpdated["df_Test"])
+        for metric_name, value in StandardErrorOutput.items():
+            ErrorVecs['Standard'][metric_name].append(value)
+
+        # 2. Paper's Hybrid Pool Error
+        PaperErrorOutput = PaperTestErrorMetrics(InputModel=predictor_model,
+                                                df_Train=SimulationConfigInputUpdated["df_Train"],
+                                                df_Candidate=SimulationConfigInputUpdated["df_Candidate"])
+        for metric_name, value in PaperErrorOutput.items():
+            ErrorVecs['Paper'][metric_name].append(value)
 
         ## Sampling Procedure ##
         SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
-                                                   df_Train=SimulationConfigInputUpdated["df_Train"],
-                                                   Model=predictor_model,
-                                                   current_rmse=TestErrorOutput["RMSE"])
+                                                df_Train=SimulationConfigInputUpdated["df_Train"],
+                                                Model=predictor_model,
+                                                current_rmse=PaperErrorOutput["RMSE"])
 
         ## Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
@@ -85,7 +92,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         i+=1
 
     ### Output ###
-    LearningProcedureOutput = {"ErrorVec": ErrorVec,
+    LearningProcedureOutput = {"ErrorVecs": ErrorVecs,
                                "SelectedObservationHistory": SelectedObservationHistory}
                               
     return LearningProcedureOutput

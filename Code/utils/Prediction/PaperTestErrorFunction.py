@@ -1,42 +1,55 @@
-### Libraries ###
-import numpy as np
+### Import libraries ###
 import pandas as pd
-from sklearn.metrics import mean_absolute_error, r2_score
-from scipy.stats import pearsonr
+import numpy as np
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 
 ### Function ###
-def PaperTestErrorMetrics(InputModel, df_Train, df_Candidate):
-
+def PaperTestErrorMetrics(InputModel, df_Train: pd.DataFrame, df_Candidate: pd.DataFrame) -> dict:
     """
-    Calculates performance metrics using the specific "in-pool" evaluation
-    method described by Wu, Lin, and Huang (2018).
+    Calculates performance metrics using the hybrid evaluation method from Wu et al. (2018).
+
+    This method evaluates performance on the entire data pool (training + candidate).
+    It uses the true labels for the training set and the model's predictions for the
+    candidate set to form a "hybrid" prediction vector, which is then compared against
+    the true labels of the entire pool.
 
     Args:
-        InputModel: A trained regression model object.
-        df_Train (pd.DataFrame): The current training set, containing labeled samples.
-        df_Candidate (pd.DataFrame): The current candidate pool, containing unlabeled samples.
+        InputModel (object): A trained model object with a .predict() method.
+        df_Train (pd.DataFrame): The current training dataset.
+        df_Candidate (pd.DataFrame): The current candidate dataset.
 
     Returns:
-        Dict[str, float]: A dictionary containing the calculated performance
-        metrics: "RMSE", "MAE", "R2", and "CC". 
+        dict: A dictionary containing the calculated metrics: 'RMSE', 'MAE', 'R2', and 'CC'.
     """
+    # 1. Recreate the full data pool. 
+    df_pool = pd.concat([df_Train, df_Candidate])
+    _, y_true_pool = get_features_and_target(df_pool, "Y")
 
-    if df_Candidate.empty:
-        return {"RMSE": np.nan, "MAE": np.nan, "R2": np.nan, "CC": np.nan}
-    
-    X_cand, y_cand_true = get_features_and_target(df=df_Candidate, target_column_name="Y")
-    y_cand_pred = InputModel.predict(X_cand)
+    # 2. Get features and labels from the separate sets.
+    _, y_train = get_features_and_target(df_Train, "Y")
+    X_candidate, _ = get_features_and_target(df_Candidate, "Y")
 
-    _, y_train_true = get_features_and_target(df=df_Train, target_column_name="Y")
-    
-    pool_true = pd.concat([y_train_true, y_cand_true], ignore_index=True)
-    pool_pred = pd.concat([y_train_true, pd.Series(y_cand_pred, index=y_cand_true.index)], ignore_index=True)
-    
-    rmse_val = np.sqrt(np.mean((pool_pred - pool_true)**2))
-    mae_val = mean_absolute_error(pool_true, pool_pred)
-    r2_val = r2_score(pool_true, pool_pred)
-    cc_val, _ = pearsonr(pool_true, pool_pred)
+    # 3. Generate predictions for the candidate set.
+    y_pred_candidate = InputModel.predict(X_candidate)
+    y_pred_candidate_series = pd.Series(y_pred_candidate, index=X_candidate.index)
 
-    Output = {"RMSE": rmse_val, "MAE": mae_val, "R2": r2_val, "CC": cc_val}
-    return Output
+    # 4. Construct the hybrid prediction vector.
+    y_hybrid_predictions = pd.concat([y_train, y_pred_candidate_series])
+
+    # 5. Ensure the final vectors are aligned by index.
+    y_hybrid_predictions = y_hybrid_predictions.loc[y_true_pool.index]
+
+    # 6. Calculate all metrics using the same logic for every iteration.
+    rmse = np.sqrt(mean_squared_error(y_true_pool, y_hybrid_predictions))
+    mae = mean_absolute_error(y_true_pool, y_hybrid_predictions)
+    r2 = r2_score(y_true_pool, y_hybrid_predictions)
+
+    # Handle the zero-variance edge case for the correlation coefficient.
+    if np.std(y_hybrid_predictions) > 0 and np.std(y_true_pool) > 0:
+        cc = np.corrcoef(y_true_pool, y_hybrid_predictions)[0, 1]
+    else:
+        # If there's no variance, a perfect prediction is trivially perfectly correlated.
+        cc = 1.0
+
+    return {'RMSE': rmse, 'MAE': mae, 'R2': r2, 'CC': cc}
