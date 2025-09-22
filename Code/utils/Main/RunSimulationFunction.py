@@ -65,7 +65,8 @@ def RunSimulationFunction(DataFileInput,
             'Seed': Seed,
             'TestProportion': test_proportion, 
             'CandidateProportion': candidate_proportion,
-            'ModelType': machine_learning_model
+            'ModelType': machine_learning_model,
+            'regularization': 0.01 
         }
         SimulationConfigInput.update(strategy_params)
         

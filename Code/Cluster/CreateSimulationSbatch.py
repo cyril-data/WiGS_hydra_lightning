@@ -26,7 +26,7 @@ if __name__ == "__main__":
     TEST_PROPORTION = 0.2
     CANDIDATE_PROPORTION = 0.8
     models_to_run = [
-        'LinearRegressionPredictor'
+        'RidgeRegressionPredictor'
     ]
     
     ## Data sets ##
