@@ -140,15 +140,21 @@ def MeanVariancePlot(Subtitle=None,
     return (fig_mean, fig_var)
 
 ### Main Wrapper Function ###
-### Main Wrapper Function ###
 def generate_all_plots(aggregated_results_dir, image_dir):
     """
     Wrapper function to load aggregated .pkl files and generates all specified plots
     for both 'standard' and 'paper' evaluation metrics.
     """
+    # This print statement should appear immediately.
     print("--- Starting Plot Generation from Aggregated Results ---")
+
+    # MODIFIED: Add a check to see if the main aggregated directory exists.
+    print(f"DEBUG: Checking for aggregated results directory at: {aggregated_results_dir}")
+    if not os.path.isdir(aggregated_results_dir):
+        print("DEBUG: ERROR - The aggregated results directory does not exist. Exiting.")
+        return
     
-    ### Aesthetics and Plot Definitions ###
+    ### Aesthetics and Plot Definitions (no changes) ###
     master_colors = {
         'Passive Learning': 'gray', 'GSx': 'cornflowerblue', 'GSy': 'salmon', 'iGS': 'red',
         'WiGS (Static w_x=0.75)': 'lightgreen', 'WiGS (Static w_x=0.5)': 'forestgreen',
@@ -183,12 +189,22 @@ def generate_all_plots(aggregated_results_dir, image_dir):
     eval_types = ['standard', 'paper']
 
     ### Dynamically find datasets ###
-    dataset_folders = [d for d in os.listdir(aggregated_results_dir) if os.path.isdir(os.path.join(aggregated_results_dir, d))]
+    # MODIFIED: Add a print statement to show what os.listdir finds.
+    all_items = os.listdir(aggregated_results_dir)
+    print(f"DEBUG: Items found in aggregated directory: {all_items}")
+    
+    dataset_folders = [d for d in all_items if os.path.isdir(os.path.join(aggregated_results_dir, d))]
+    # MODIFIED: Add a print statement to show the final list of folders to process.
+    print(f"DEBUG: Filtered dataset folders to process: {dataset_folders}")
+
+    if not dataset_folders:
+        print("DEBUG: No dataset folders found. Cannot generate plots.")
 
     for data_name in dataset_folders:
         print(f"\nProcessing dataset: {data_name}...")
         dataset_path = os.path.join(aggregated_results_dir, data_name)
 
+        # (The rest of your code from here is likely correct)
         for eval_type in eval_types:
             print(f"  > Generating plots for '{eval_type}' metrics...")
             eval_metric_path = os.path.join(dataset_path, f"{eval_type}_metrics")
@@ -223,17 +239,14 @@ def generate_all_plots(aggregated_results_dir, image_dir):
                                                                         candidate_pool_proportion=0.64,
                                                                         **results_for_metric)
                     
-                    # Update the base saving path to include the evaluation type
                     base_plot_path = os.path.join(image_dir, eval_type, metric, folder_name)
                     os.makedirs(os.path.join(base_plot_path, 'trace'), exist_ok=True)
                     os.makedirs(os.path.join(base_plot_path, 'variance'), exist_ok=True)
 
-                    # Save the mean trace plot
                     trace_plot_path = os.path.join(base_plot_path, 'trace', f"{data_name}_{metric}_TracePlot.png")
                     TracePlotMean.savefig(trace_plot_path, bbox_inches='tight', dpi=300)
                     plt.close(TracePlotMean)
 
-                    # Save the variance trace plot
                     if TracePlotVariance:
                         variance_plot_path = os.path.join(base_plot_path, 'variance', f"{data_name}_{metric}_VariancePlot.png")
                         TracePlotVariance.savefig(variance_plot_path, bbox_inches='tight', dpi=300)
@@ -241,3 +254,31 @@ def generate_all_plots(aggregated_results_dir, image_dir):
 
         print(f"Finished all plots for {data_name}.")
     print("\n--- Plot Generation Complete ---")
+
+### Script Execution ###
+if __name__ == "__main__":
+
+    print("--- Debugging Path Construction ---")
+    
+    # Step 1: Find the script's own directory
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    print(f"1. SCRIPT_DIR: {SCRIPT_DIR}")
+
+    # Step 2: Try to find the project root by going up three directories
+    PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+    print(f"2. Calculated PROJECT_ROOT: {PROJECT_ROOT}")
+
+    # Step 3: Construct the full path to the results
+    AGGREGATED_RESULTS_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
+    print(f"3. Final path being scanned: {AGGREGATED_RESULTS_DIR}")
+
+    # Step 4: Check if this path actually exists
+    print(f"4. Does this path exist? -> {os.path.isdir(AGGREGATED_RESULTS_DIR)}")
+    
+    # --- Original Code ---
+    IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
+    
+    print("\n--- Calling generate_all_plots ---")
+    generate_all_plots(aggregated_results_dir=AGGREGATED_RESULTS_DIR, image_dir=IMAGE_DIR)
+    
+    print("--- Script Finished ---")

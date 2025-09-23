@@ -32,11 +32,14 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         with open(result_files_for_dataset[0], 'rb') as f:
             first_result = pickle.load(f)
         
-        ## Initialize results storage based on the new nested structure ##
+        ## MODIFIED: Discover metrics and eval types from the actual DataFrame structure ##
         strategies = list(first_result.keys())
-        eval_types = list(first_result[strategies[0]]['ErrorVecs'].keys())
-        metrics = list(first_result[strategies[0]]['ErrorVecs'][eval_types[0]].columns)
+        # The key is 'ErrorVec', not 'ErrorVecs', in the raw files
+        error_df_template = first_result[strategies[0]]['ErrorVecs']
+        eval_types = list(error_df_template.columns)  # e.g., ['Standard', 'Paper']
+        metrics = list(error_df_template.index)      # e.g., ['RMSE', 'MAE', ...]
         
+        # Initialize the nested storage dictionary as intended
         aggregated_data = {
             s: {
                 'ErrorVecs': {
@@ -54,29 +57,28 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
             
             for strategy, results in single_run_result.items():
                 if strategy in aggregated_data:
-
-                    # Collect Error Metrics for both evaluation types
-                    for eval_type, error_vec_df in results['ErrorVecs'].items():
-                        for metric, series in error_vec_df.items():
-                            series.name = f"Sim_{i}"
+                    
+                    # MODIFIED: Extract data from the flattened DataFrame and rebuild the nested structure
+                    error_vec_df = results['ErrorVecs']
+                    for eval_type in error_vec_df.columns:
+                        for metric in error_vec_df.index:
+                            # The value at each cell is a list of metric values
+                            metric_values_list = error_vec_df.loc[metric, eval_type]
+                            series = pd.Series(metric_values_list, name=f"Sim_{i}")
                             aggregated_data[strategy]['ErrorVecs'][eval_type][metric].append(series)
-                    
-                    # Collect Elapsed Time
+
+                    # Collect Elapsed Time and Selection History (no changes needed)
                     aggregated_data[strategy]['ElapsedTime'].append(results['ElapsedTime'])
-                    
-                    # Collect Selection History
                     aggregated_data[strategy]['SelectionHistory'].append(results['SelectionHistory'])
 
-        ## Final Processing and Saving ##
+        ## Final Processing and Saving (This part is already correct from our last edit) ##
         dataset_output_dir = os.path.join(aggregated_results_dir, data_name)
         os.makedirs(dataset_output_dir, exist_ok=True)
 
         for eval_type in eval_types:
-            # Create a specific directory for this evaluation type's metrics
             eval_metrics_save_dir = os.path.join(dataset_output_dir, f'{eval_type.lower()}_metrics')
             os.makedirs(eval_metrics_save_dir, exist_ok=True)
             
-            # Save Aggregated Metrics for the current evaluation type
             for metric in metrics:
                 metric_results = {}
                 for strategy in strategies:
@@ -90,13 +92,12 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                         pickle.dump(metric_results, f)
                     print(f"  > Saved {metric}.pkl to {eval_type.lower()}_metrics/")
 
-        ## Save Aggregated Elapsed Time ##
+        # (The rest of the saving logic for Time and History is unchanged and correct)
         time_data = {strategy: data['ElapsedTime'] for strategy, data in aggregated_data.items()}
         time_df = pd.DataFrame(time_data)
         time_df.to_csv(os.path.join(dataset_output_dir, 'ElapsedTime.csv'), index_label='Simulation')
         print(f"  > Saved ElapsedTime.csv")
         
-        ## Save Aggregated Selection History ##
         history_save_dir = os.path.join(dataset_output_dir, 'selection_history')
         os.makedirs(history_save_dir, exist_ok=True)
         for strategy in strategies:
@@ -108,7 +109,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
 
     print("\n--- Aggregation Complete ---")
 
-### Execute ###
+
 if __name__ == "__main__":
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))

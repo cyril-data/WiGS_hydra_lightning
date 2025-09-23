@@ -19,7 +19,7 @@ def OneIterationFunction(SimulationConfigInput):
 
     Returns:
         dict: A dictionary containing the results of the simulation run, with the following keys:
-            - ErrorVec (pd.DataFrame): The history of performance metrics over the course of the learning procedure.
+            - ErrorVecs (pd.DataFrame): The history of performance metrics over the course of the learning procedure.
             - SelectionHistory (list): The history of observations selected from the candidate pool.
             - SimulationParameters (dict): The key input parameters used for this simulation run.
             - ElapsedTime (float): The total execution time in seconds for this iteration.
@@ -59,9 +59,9 @@ def OneIterationFunction(SimulationConfigInput):
     ElapsedTime = time.time() - StartTime
 
     ### Return Dictionary ###
-    ErrorVec = pd.DataFrame(LearningProcedureOutput["ErrorVec"])
+    ErrorVecs = pd.DataFrame(LearningProcedureOutput["ErrorVecs"])
 
-    SimulationResults = {"ErrorVec" : ErrorVec,
+    SimulationResults = {"ErrorVecs" : ErrorVecs,
                          "SelectionHistory" : LearningProcedureOutput["SelectedObservationHistory"],
                          "SimulationParameters" : SimulationParameters,
                          "ElapsedTime" : ElapsedTime}
