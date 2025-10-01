@@ -32,14 +32,12 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         with open(result_files_for_dataset[0], 'rb') as f:
             first_result = pickle.load(f)
         
-        ## MODIFIED: Discover metrics and eval types from the actual DataFrame structure ##
+        ## Discover metrics and eval types from the actual DataFrame structure ##
         strategies = list(first_result.keys())
-        # The key is 'ErrorVec', not 'ErrorVecs', in the raw files
         error_df_template = first_result[strategies[0]]['ErrorVecs']
-        eval_types = list(error_df_template.columns)  # e.g., ['Standard', 'Paper']
-        metrics = list(error_df_template.index)      # e.g., ['RMSE', 'MAE', ...]
+        eval_types = list(error_df_template.columns)  
+        metrics = list(error_df_template.index)      
         
-        # Initialize the nested storage dictionary as intended
         aggregated_data = {
             s: {
                 'ErrorVecs': {
@@ -58,20 +56,17 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
             for strategy, results in single_run_result.items():
                 if strategy in aggregated_data:
                     
-                    # MODIFIED: Extract data from the flattened DataFrame and rebuild the nested structure
                     error_vec_df = results['ErrorVecs']
                     for eval_type in error_vec_df.columns:
                         for metric in error_vec_df.index:
-                            # The value at each cell is a list of metric values
                             metric_values_list = error_vec_df.loc[metric, eval_type]
                             series = pd.Series(metric_values_list, name=f"Sim_{i}")
                             aggregated_data[strategy]['ErrorVecs'][eval_type][metric].append(series)
 
-                    # Collect Elapsed Time and Selection History (no changes needed)
                     aggregated_data[strategy]['ElapsedTime'].append(results['ElapsedTime'])
                     aggregated_data[strategy]['SelectionHistory'].append(results['SelectionHistory'])
 
-        ## Final Processing and Saving (This part is already correct from our last edit) ##
+        ## Final Processing and Saving ##
         dataset_output_dir = os.path.join(aggregated_results_dir, data_name)
         os.makedirs(dataset_output_dir, exist_ok=True)
 
@@ -92,7 +87,6 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                         pickle.dump(metric_results, f)
                     print(f"  > Saved {metric}.pkl to {eval_type.lower()}_metrics/")
 
-        # (The rest of the saving logic for Time and History is unchanged and correct)
         time_data = {strategy: data['ElapsedTime'] for strategy, data in aggregated_data.items()}
         time_df = pd.DataFrame(time_data)
         time_df.to_csv(os.path.join(dataset_output_dir, 'ElapsedTime.csv'), index_label='Simulation')

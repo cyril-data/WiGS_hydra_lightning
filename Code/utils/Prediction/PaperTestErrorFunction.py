@@ -49,7 +49,6 @@ def PaperTestErrorMetrics(InputModel, df_Train: pd.DataFrame, df_Candidate: pd.D
     if np.std(y_hybrid_predictions) > 0 and np.std(y_true_pool) > 0:
         cc = np.corrcoef(y_true_pool, y_hybrid_predictions)[0, 1]
     else:
-        # If there's no variance, a perfect prediction is trivially perfectly correlated.
         cc = 1.0
 
     return {'RMSE': rmse, 'MAE': mae, 'R2': r2, 'CC': cc}

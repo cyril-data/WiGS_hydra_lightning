@@ -2,11 +2,9 @@
 import os
 import glob
 import math
-import argparse
-import gc 
+import argparse 
 from PIL import Image
-
-def create_image_grid(image_paths, grid_layout, output_path, bg_color='white', resize_factor=0.3): # MODIFIED: More aggressive resize
+def create_image_grid(image_paths, grid_layout, output_path, bg_color='white', resize_factor=0.5):
     """
     Creates a single image by arranging multiple images in a grid, with resizing.
     """
@@ -40,10 +38,9 @@ def create_image_grid(image_paths, grid_layout, output_path, bg_color='white', r
         except FileNotFoundError:
             print(f"  > Warning: Could not find image {path}. Skipping.")
 
-    final_output_path = os.path.splitext(output_path)[0] + ".jpg"
-    grid_image.save(final_output_path, 'JPEG', quality=95)
-    print(f"  > Successfully created image grid at: {final_output_path}")
-
+    grid_image.save(output_path)
+    print(f"  > Successfully created image grid at: {output_path}")
+    
 def compile_all_plots_in_grid(image_glob_pattern, grid_layout, output_prefix, output_dir):
     """
     Finds all images matching a pattern and arranges them into one or more grids.
@@ -63,14 +60,7 @@ def compile_all_plots_in_grid(image_glob_pattern, grid_layout, output_prefix, ou
         start_index = i * plots_per_grid
         end_index = start_index + plots_per_grid
         image_slice = all_image_paths[start_index:end_index]
-
-        if num_grids > 1:
-            output_filename = f"{output_prefix}_{i+1}.png" 
-        else:
-            output_filename = f"{output_prefix}.png"
-            
-        output_path = os.path.join(output_dir, output_filename)
-
+        output_path = os.path.join(output_dir, f"{output_prefix}_{i+1}.png")
         create_image_grid(
             image_paths=image_slice,
             grid_layout=grid_layout,
@@ -79,7 +69,6 @@ def compile_all_plots_in_grid(image_glob_pattern, grid_layout, output_prefix, ou
 
 ### Main Execution ###
 if __name__ == "__main__":
-    
     parser = argparse.ArgumentParser(description="Compile plot images into a grid.")
     parser.add_argument("--eval_type", type=str, required=True, help="Evaluation type (e.g., 'standard', 'paper').")
     parser.add_argument("--metric", type=str, required=True, help="Metric name (e.g., 'RMSE', 'MAE').")
@@ -88,28 +77,24 @@ if __name__ == "__main__":
     parser.add_argument("--rows", type=int, required=True, help="Number of rows in the grid.")
     args = parser.parse_args()
 
+    ## Define Paths ##
     try:
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
     except NameError:
         PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
 
-    IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
-    COMPILED_DIR = os.path.join(IMAGE_DIR, 'compiled')
-    os.makedirs(COMPILED_DIR, exist_ok=True)
-
+    IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')    
     SPECIFIC_COMPILED_DIR = os.path.join(IMAGE_DIR, 'compiled', args.eval_type, args.plot_type)
     os.makedirs(SPECIFIC_COMPILED_DIR, exist_ok=True)
-
     grid_layout = (args.columns, args.rows)
     output_prefix = args.metric
     image_glob_pattern = os.path.join(IMAGE_DIR, args.eval_type, args.metric, args.plot_type, 'trace', '*_TracePlot.png')
 
+    ## Call ##
     compile_all_plots_in_grid(
         image_glob_pattern=image_glob_pattern,
         grid_layout=grid_layout,
         output_prefix=output_prefix,
-        output_dir=SPECIFIC_COMPILED_DIR
+        output_dir=SPECIFIC_COMPILED_DIR 
     )
-    
-    gc.collect()

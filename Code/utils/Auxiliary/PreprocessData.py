@@ -255,13 +255,40 @@ def preprocess_and_save_all():
     datasets_to_save['wine_white'] = _preprocess_dataframe(df_white_raw)
     print("  > Processed: wine_white")
 
-    # # 10 - 11. pmlb datasets (NO2 and PM10)
-    # df_pm10_raw = fetch_data('522_pm10', return_X_y=False).rename(columns={'target': 'Y'})
-    # datasets_to_save['pm10'] = _preprocess_dataframe(df_pm10_raw)
-    # print("  > Processed: pm10")
-    # df_no2_raw = fetch_data('547_no2', return_X_y=False).rename(columns={'target': 'Y'})
-    # datasets_to_save['no2'] = _preprocess_dataframe(df_no2_raw)
-    # print("  > Processed: no2")
+    # 10 - 11. StatLib datasets (NO2 and PM10)
+    print("  > Processing: NO2 and PM10 from StatLib")
+    
+    # Process NO2 dataset
+    no2_url = 'https://lib.stat.cmu.edu/datasets/NO2.dat'
+    no2_columns = [
+        'Y',  # log(NO2) concentration
+        'log_cars_per_hour',
+        'temp_2m',
+        'wind_speed',
+        'temp_diff',
+        'wind_direction',
+        'hour_of_day',
+        'day_num'
+    ]
+    df_no2_raw = pd.read_csv(no2_url, sep=r'\s+', header=None, names=no2_columns)
+    datasets_to_save['no2'] = _preprocess_dataframe(df_no2_raw)
+    print("  > Processed: no2")
+
+    # Process PM10 dataset
+    pm10_url = 'https://lib.stat.cmu.edu/datasets/PM10.dat'
+    pm10_columns = [
+        'Y',  # log(PM10) concentration
+        'log_cars_per_hour',
+        'temp',
+        'wind_speed',
+        'temp_diff',
+        'wind_direction',
+        'hour_of_day',
+        'day_num'
+    ]
+    df_pm10_raw = pd.read_csv(pm10_url, sep=r'\s+', header=None, names=pm10_columns)
+    datasets_to_save['pm10'] = _preprocess_dataframe(df_pm10_raw)
+    print("  > Processed: pm10")
 
     # 12. QSAR Aquatic Toxicity
     qsar_url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/00505/qsar_aquatic_toxicity.csv'

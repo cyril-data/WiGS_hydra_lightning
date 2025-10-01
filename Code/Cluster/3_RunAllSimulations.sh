@@ -7,3 +7,4 @@ for f in RunSimulations/master_job_*.sbatch; do
     fi
 done
 echo "All jobs submitted."
+
