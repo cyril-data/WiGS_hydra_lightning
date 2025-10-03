@@ -21,3 +21,6 @@ __pycache__/
 slurm_logs/
 *.out
 *.err
+
+# Ignore raw simulation results
+Results/simulation_results/
