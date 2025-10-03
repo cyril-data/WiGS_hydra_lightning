@@ -2,7 +2,7 @@
 
 🚧 This repository is under construction. 🚧
 
-Preliminary results can be seen in `Results/images/RMSE`. The folder `/trace` contains the typical trace plots, while `/trace_relative_iGS` contains the trace plot relative to Wu, Lin, and Huang (2018)'s iGS method.
+Preliminary results can be seen in `Results/images/full_pool/RMSE`. The folder [`/trace`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/main/Results/images/full_pool/RMSE/trace/trace) contains the typical trace plots, while [`/trace_relative_iGS`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/main/Results/images/full_pool/RMSE/trace_relative_iGS/trace) contains the trace plot relative to [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680)'s iGS method.
 
 As shown, the adaptive **WiGS** methods, particularly those guided by reinforcement learning, generally outperform the static iGS baseline.
 
@@ -32,30 +32,41 @@ This project was developed using **Python 3.9**. To ensure a clean and reproduci
     ```bash
     pip install -r requirements.txt
     ```
-
 ## Automated Workflow on an HPC Cluster
 
-The project is designed to be run as an automated pipeline on a SLURM-based HPC cluster. The scripts for managing the workflow are located in `Code/Cluster/` and are numbered in the order they should be run.
+The project is designed as an automated pipeline for a SLURM-based HPC cluster. The scripts in `Code/Cluster/` are numbered in their execution order.
 
-1.  `1_PreprocessData.sh`: This script executes a Python script that downloads all 15+ benchmark datasets from their sources (UCI, Kaggle Hub, StatLib/pmlb), preprocesses them into a clean format, and saves them as `.pkl` files in the `Data/processed/` directory. 
+**Note:** The user can edit to the appropriate parition name (amongst other cluster inputs) in the file `Code/Cluster/CreateSimulationSbatch.py`, `5_ImageGeneration.sbatch`, and `6_CompileAllPlots.sbatch`.
+
+
+1.  `1_PreprocessData.sh`: This script executes a Python script that downloads all 20 benchmark datasets from their sources (UCI, Kaggle Hub, StatLib/pmlb), preprocesses them into a clean format, and saves them as `.pkl` files in the `Data/processed/` directory. 
 
 2.  `2_CreateSimulationSbatch.py`: This Python script automatically discovers all processed datasets and generates a master job script (e.g., `master_job_LinearRegressionPredictor.sbatch`) for each machine learning model you wish to test. Each master script uses a **SLURM job array** to parallelize the simulation across all datasets and all `N` replications. 
 
-    **Note:** The user can edit to the appropriate parition name (amongst other cluster inputs) in the file `Code/Cluster/CreateSimulationSbatch.py`.
+3.  `3_RunAllSimulations.sh`: Submits all generated master jobs to the SLURM scheduler.
 
-3.  `3_RunAllSimulations.sh`: This shell script finds and submits all the generated master jobs to the SLURM scheduler.
+4.  `4_ProcessResults.sh`: **Run this after all cluster jobs are complete.** Aggregates the raw result files into organized, per-dataset files. Results are split by evaluation type into `test_set_metrics` and `full_pool_metrics` folders.
 
-4.  `4_ProcessResults.sh`: **Run this after all cluster jobs are complete.** This script executes the Python aggregation logic, which finds all the raw, individual result files from the parallel jobs and compiles them into smaller, organized `.pkl` files, saved in `Results/simulation_results/aggregated/`.
+5.  `5_ImageGeneration.sbatch`: Submits a parallel job array to generate all individual trace plots for every dataset, metric, and evaluation type. The `--no-legend` flag can be added to this script's Python call to generate plots ready for compilation.
 
-5.  `5_ImageGeneration.sh`: This script runs the final analysis, loading the aggregated results and generating all trace and variance plots for every metric (RMSE, MAE, R^2, CC) and saves them to the `Results/images/` directory.
+6.  `6_CompileAllPlots.sbatch`: Submits a parallel job array to compile the individual plots into summary grid images, perfect for presentations. This script is highly configurable for different layouts.
 
-6.  `6_DeleteSimulationAuxiliaryFiles.sh` & `7_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary SLURM log files, sbatch scripts, and the large number of raw `.pkl` files after the analysis is complete.
+7.  `7_DeleteAuxiliaryFiles.sh` & `8_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary logs and raw data.
 
-## Results Structure
+## Directory Structure
 
-* **Raw Results**: Saved by cluster jobs in `Results/simulation_results/raw/{dataset_name}/{dataset}_{model}_seed_{i}.pkl`.
-* **Aggregated Results**: Created by the processing script in `Results/simulation_results/aggregated/{dataset_name}/{metric}.pkl`. These are the primary files used for analysis.
-* **Plots**: Saved in a nested structure in `Results/images/{metric}/{plot_type}/{plot_name}.png`.
+* **`Code/`**: Contains all executable code.
+    * `Cluster/`: Holds all shell and sbatch scripts for managing the HPC workflow.
+    * `Notebooks/`: Jupyter notebooks for exploratory analysis.
+    * `utils/`: The core Python package for the project.
+        * `Auxiliary/`: Helper scripts for preprocessing, aggregation, and plotting.
+        * `Main/`: The main simulation engine (`LearningProcedure.py`).
+        * `Prediction/`: Wrappers for machine learning models and error calculation functions (`HoldOutError.py`, `FullPoolError.py`).
+        * `Selector/`: Implementations of all active learning strategies (Random, GSx, iGS, WiGS, etc.).
+* **`Data/`**: Stores the preprocessed `.pkl` datasets.
+* **`Results/`**: Contains all outputs from the simulations.
+    * `simulation_results/`: Raw and aggregated numerical data.
+    * `images/`: Individual plots and final compiled grid images.
 
 ## Code
 
