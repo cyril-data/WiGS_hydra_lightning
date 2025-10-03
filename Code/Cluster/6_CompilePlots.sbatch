@@ -9,9 +9,9 @@
 #SBATCH --mem-per-cpu=2GB
 
 ### INPUTS ###
-COLUMNS=4
-ROWS=5
-EVAL_TYPES=("standard" "paper")
+COLUMNS=2
+ROWS=2
+EVAL_TYPES=("test_set" "full_pool")
 PLOT_TYPES=("trace" "trace_relative_iGS")
 METRICS=("RMSE" "MAE" "R2" "CC")
 

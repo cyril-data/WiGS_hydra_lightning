@@ -5,7 +5,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 
 ### Function ###
-def PaperTestErrorMetrics(InputModel, df_Train: pd.DataFrame, df_Candidate: pd.DataFrame) -> dict:
+def FullPoolErrorFunction(InputModel, df_Train: pd.DataFrame, df_Candidate: pd.DataFrame) -> dict:
     """
     Calculates performance metrics using the hybrid evaluation method from Wu et al. (2018).
 

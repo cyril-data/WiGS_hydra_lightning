@@ -70,7 +70,7 @@ def compile_all_plots_in_grid(image_glob_pattern, grid_layout, output_prefix, ou
 ### Main Execution ###
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compile plot images into a grid.")
-    parser.add_argument("--eval_type", type=str, required=True, help="Evaluation type (e.g., 'standard', 'paper').")
+    parser.add_argument("--eval_type", type=str, required=True, help="Evaluation type (e.g., 'test_set', 'full_pool').")
     parser.add_argument("--metric", type=str, required=True, help="Metric name (e.g., 'RMSE', 'MAE').")
     parser.add_argument("--plot_type", type=str, required=True, help="Plot type (e.g., 'trace', 'trace_relative_iGS').")
     parser.add_argument("--columns", type=int, required=True, help="Number of columns in the grid.")

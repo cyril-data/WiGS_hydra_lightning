@@ -14,7 +14,7 @@ from scipy.stats import pearsonr
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 
 ### Function ###
-def TestErrorFunction(InputModel, df_Test):
+def HoldOutErrorFunction(InputModel, df_Test):
 
     """
     Calculates the RMSE, MAE, R^2, and Correlation Coefficient on a test set.

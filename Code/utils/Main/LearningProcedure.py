@@ -26,8 +26,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
     ### Set Up ###
     i = 0
     ErrorVecs = {
-    'Standard': {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []},
-    'Paper':    {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
+    'Test_Set': {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []},
+    'Full_Pool':    {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
     }
     SelectedObservationHistory = []
 
@@ -60,18 +60,18 @@ def LearningProcedure(SimulationConfigInputUpdated):
         
         ## Calculate Test Error (both from the paper and the standard way)
 
-        # 1. Standard Hold-Out Test Error
-        StandardErrorOutput = TestErrorFunction(InputModel=predictor_model,
+        # 1. Hold-Out Test Error
+        TestSetErrorOutput = HoldOutErrorFunction(InputModel=predictor_model,
                                                 df_Test=SimulationConfigInputUpdated["df_Test"])
-        for metric_name, value in StandardErrorOutput.items():
-            ErrorVecs['Standard'][metric_name].append(value)
+        for metric_name, value in TestSetErrorOutput.items():
+            ErrorVecs['Test_Set'][metric_name].append(value)
 
-        # 2. Paper's Hybrid Pool Error
-        PaperErrorOutput = PaperTestErrorMetrics(InputModel=predictor_model,
+        # 2. Full_Pool Error
+        FullPoolErrorOuputs = FullPoolErrorFunction(InputModel=predictor_model,
                                                 df_Train=SimulationConfigInputUpdated["df_Train"],
                                                 df_Candidate=SimulationConfigInputUpdated["df_Candidate"])
-        for metric_name, value in PaperErrorOutput.items():
-            ErrorVecs['Paper'][metric_name].append(value)
+        for metric_name, value in FullPoolErrorOuputs.items():
+            ErrorVecs['Full_Pool'][metric_name].append(value)
 
         ## Sampling Procedure ##
         SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
