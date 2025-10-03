@@ -47,7 +47,7 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
 
 4.  `4_ProcessResults.sh`: **Run this after all cluster jobs are complete.** Aggregates the raw result files into organized, per-dataset files. Results are split by evaluation type into `test_set_metrics` and `full_pool_metrics` folders.
 
-5.  `5_ImageGeneration.sbatch`: Submits a parallel job array to generate all individual trace plots for every dataset, metric, and evaluation type. The `--no-legend` flag can be added to this script's Python call to generate plots ready for compilation.
+5.  `5_ImageGeneration.sbatch`: Submits a parallel job array to generate all individual trace plots for every dataset, metric, and evaluation type. 
 
 6.  `6_CompileAllPlots.sbatch`: Submits a parallel job array to compile the individual plots into summary grid images, perfect for presentations. This script is highly configurable for different layouts.
 
