@@ -1,5 +1,5 @@
 from .LinearRegressionPredictor import *
 from .RandomForestRegressorPredictor import *
 from .RidgeRegressionPredictor import *
-from .TestErrorFunction import *
-from .PaperTestErrorFunction import *
+from .FullPoolError import *
+from .HoldOutError import *

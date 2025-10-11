@@ -77,7 +77,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
                                                 df_Train=SimulationConfigInputUpdated["df_Train"],
                                                 Model=predictor_model,
-                                                current_rmse=PaperErrorOutput["RMSE"])
+                                                current_rmse=FullPoolErrorOuputs["RMSE"])
 
         ## Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
