@@ -1,8 +1,10 @@
 ### Import Packages ###
 import os
+import glob
 import pickle
 import argparse
 import numpy as np
+import pandas as pd
 from scipy.stats import chi2
 import matplotlib.pyplot as plt
 
@@ -16,15 +18,16 @@ def MeanVariancePlot(Subtitle=None,
                      xlim=None,
                      Y_Label=None,
                      VarInput=False,
+                     initial_train_size: int = None,
                      FigSize=(10, 5),
                      LegendMapping=None,
-                     initial_train_proportion=0.16,
-                     candidate_pool_proportion=0.64,
                      show_legend=True, 
                      **SimulationErrorResults):
     """
     Generates and returns trace plots for the mean and variance of simulation results.
     """
+    if initial_train_size is None:
+        raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
 
     ### Set Up ###
     MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector = {}, {}, {}, {}
@@ -58,11 +61,14 @@ def MeanVariancePlot(Subtitle=None,
     for Label, MeanValues in MeanVector.items():
         StdErrorValues = StdErrorVector[Label]
         num_iterations = len(MeanValues)
-        if num_iterations > 1:
+        total_pool_size = initial_train_size + num_iterations
+
+        if num_iterations > 0:
             iterations_array = np.arange(num_iterations)
-            x = (initial_train_proportion + (iterations_array / (num_iterations - 1)) * candidate_pool_proportion) * 100
+            num_labeled_at_step = initial_train_size + iterations_array
+            x = (num_labeled_at_step / total_pool_size) * 100
         else:
-            x = [initial_train_proportion * 100]
+            x = []
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ':') if Linestyles else ':'
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
@@ -70,7 +76,7 @@ def MeanVariancePlot(Subtitle=None,
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(x, MeanValues - CriticalValue * StdErrorValues,
                              MeanValues + CriticalValue * StdErrorValues, alpha=TransparencyVal, color=color)
-    ax_mean.set_xlabel("Percent of Total Data Labeled for Training")
+    ax_mean.set_xlabel("Percent of Learning Pool Labeled")
     ax_mean.set_ylabel(Y_Label)
     ax_mean.set_title(Subtitle, fontsize=12)
     if show_legend:
@@ -86,11 +92,15 @@ def MeanVariancePlot(Subtitle=None,
         fig_var, ax_var = plt.subplots(figsize=FigSize)
         for Label, VarianceValues in VarianceVector.items():
             num_iterations = len(VarianceValues)
-            if num_iterations > 1:
+            total_pool_size = initial_train_size + num_iterations
+
+            if num_iterations > 0:
                 iterations_array = np.arange(num_iterations)
-                x = (initial_train_proportion + (iterations_array / (num_iterations - 1)) * candidate_pool_proportion) * 100
+                num_labeled_at_step = initial_train_size + iterations_array
+                x = (num_labeled_at_step / total_pool_size) * 100
             else:
-                x = [initial_train_proportion * 100]
+                x = []
+            
             color = Colors.get(Label, None) if Colors else None
             linestyle = Linestyles.get(Label, '-') if Linestyles else '-'
             legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
@@ -98,7 +108,7 @@ def MeanVariancePlot(Subtitle=None,
             lower_bound = StdErrorVarianceVector[Label]["lower"]
             upper_bound = StdErrorVarianceVector[Label]["upper"]
             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
-        ax_var.set_xlabel("Percent of Total Data Labeled for Training")
+        ax_var.set_xlabel("Percent of Learning Pool Labeled")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
         ax_var.set_title(Subtitle, fontsize=9)
         ax_var.legend(loc='upper right')
@@ -206,6 +216,17 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
 
                 with open(metric_pkl_path, 'rb') as f:
                     results_for_metric = pickle.load(f)
+
+                # Indices #                
+                indices_dir = os.path.join(dataset_path, 'initial_indices_history')
+                try:
+                    any_indices_file = glob.glob(os.path.join(indices_dir, '*.csv'))[0]
+                    indices_df = pd.read_csv(any_indices_file)
+                    initial_train_size = len(indices_df)
+                    if initial_train_size == 0: raise IndexError
+                except (IndexError, FileNotFoundError):
+                    print(f"  > Warning: Could not load initial_indices_history for {data_name}. Skipping {metric} plot.")
+                    continue
                 
                 # Filter out the excluded strategies
                 filtered_results = {strategy: df for strategy, df in results_for_metric.items() 
@@ -222,10 +243,9 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                                                                         Y_Label=y_label, 
                                                                         Subtitle=subtitle,
                                                                         TransparencyVal=0.1, 
-                                                                        VarInput=False, # Set to False if you don't need variance plots
+                                                                        VarInput=True, 
                                                                         CriticalValue=1.96,
-                                                                        initial_train_proportion=0.16, 
-                                                                        candidate_pool_proportion=0.64,
+                                                                        initial_train_size=initial_train_size,
                                                                         show_legend=show_legend,
                                                                         **filtered_results)
                     
@@ -264,13 +284,6 @@ if __name__ == "__main__":
 
     AGGREGATED_RESULTS_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
     IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
-    
-    # --- ADD THESE DEBUG PRINTS ---
-    print(f"DEBUG: Project Root is: {PROJECT_ROOT}")
-    print(f"DEBUG: Looking for aggregated data in: {AGGREGATED_RESULTS_DIR}")
-    print(f"DEBUG: Will save images to: {IMAGE_DIR}")
-    print(f"DEBUG: Does the aggregated data path exist? -> {os.path.isdir(AGGREGATED_RESULTS_DIR)}")
-    # --- END OF DEBUG PRINTS ---
     
     ## Execute the main function ##
     generate_all_plots(aggregated_results_dir=AGGREGATED_RESULTS_DIR, 

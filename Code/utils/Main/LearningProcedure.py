@@ -25,7 +25,9 @@ def LearningProcedure(SimulationConfigInputUpdated):
     ### Set Up ###
     i = 0
     ErrorVecs = {'Full_Pool':    {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}}
+    WeightHistory = []
     SelectedObservationHistory = []
+    InitialTrainIndices = list(SimulationConfigInputUpdated["df_Train"].index)
 
     ### Initialize Model ###
     ModelClass = globals().get(SimulationConfigInputUpdated["ModelType"], None)
@@ -70,7 +72,12 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
         QueryObservation = SimulationConfigInputUpdated["df_Candidate"].loc[QueryObservationIndex]
-        SelectedObservationHistory.append(QueryObservationIndex)
+        # SelectedObservationHistory.append(QueryObservationIndex)
+        SelectedObservationHistory.append(QueryObservationIndex[0])
+
+        ## Store weights ##
+        w_x = SelectorFuncOutput.get("w_x", np.nan) 
+        WeightHistory.append(w_x)
 
         ## Update Train and Candidate Sets ##
         SimulationConfigInputUpdated["df_Train"] = pd.concat([SimulationConfigInputUpdated["df_Train"], QueryObservation])
@@ -81,6 +88,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
     ### Output ###
     LearningProcedureOutput = {"ErrorVecs": ErrorVecs,
-                               "SelectedObservationHistory": SelectedObservationHistory}
-                              
+                               "SelectedObservationHistory": SelectedObservationHistory,
+                               "WeightHistory": WeightHistory,
+                               "InitialTrainIndices": InitialTrainIndices}
     return LearningProcedureOutput

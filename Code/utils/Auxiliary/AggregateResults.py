@@ -32,7 +32,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         with open(result_files_for_dataset[0], 'rb') as f:
             first_result = pickle.load(f)
         
-        ## Discover metrics and eval types from the actual DataFrame structure ##
+        ## Discover metrics and eval types from DataFrame structure ##
         strategies = list(first_result.keys())
         error_df_template = first_result[strategies[0]]['ErrorVecs']
         eval_types = list(error_df_template.columns)  
@@ -44,8 +44,9 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     eval_type: {m: [] for m in metrics} for eval_type in eval_types
                 },
                 'ElapsedTime': [],
-                'SelectionHistory': []
-            } for s in strategies
+                'SelectionHistory': [],
+                'WeightHistory': [],
+                'InitialTrainIndices': []} for s in strategies
         }
 
         ## Aggregation Loop ##
@@ -63,8 +64,13 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                             series = pd.Series(metric_values_list, name=f"Sim_{i}")
                             aggregated_data[strategy]['ErrorVecs'][eval_type][metric].append(series)
 
+                    # Store #
                     aggregated_data[strategy]['ElapsedTime'].append(results['ElapsedTime'])
                     aggregated_data[strategy]['SelectionHistory'].append(results['SelectionHistory'])
+                    if 'WeightHistory' in results:
+                        aggregated_data[strategy]['WeightHistory'].append(results['WeightHistory'])
+                    if 'InitialTrainIndices' in results:
+                        aggregated_data[strategy]['InitialTrainIndices'].append(results['InitialTrainIndices'])
 
         ## Final Processing and Saving ##
         dataset_output_dir = os.path.join(aggregated_results_dir, data_name)
@@ -92,6 +98,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         time_df.to_csv(os.path.join(dataset_output_dir, 'ElapsedTime.csv'), index_label='Simulation')
         print(f"  > Saved ElapsedTime.csv")
         
+        ### Save Selection History ###
         history_save_dir = os.path.join(dataset_output_dir, 'selection_history')
         os.makedirs(history_save_dir, exist_ok=True)
         for strategy in strategies:
@@ -101,9 +108,31 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
             history_df.to_csv(os.path.join(history_save_dir, f'{strategy}_SelectionHistory.csv'), index_label='Iteration')
         print(f"  > Saved SelectionHistory CSVs.")
 
+        ### Save Weight History ###
+        weight_save_dir = os.path.join(dataset_output_dir, 'weight_history')
+        os.makedirs(weight_save_dir, exist_ok=True)
+        for strategy in strategies:
+            weight_data = aggregated_data[strategy]['WeightHistory']
+            if weight_data:
+                weight_df = pd.DataFrame(weight_data).transpose()
+                weight_df.columns = [f"Sim_{i}" for i in range(len(weight_data))]
+                weight_df.to_csv(os.path.join(weight_save_dir, f'{strategy}_WeightHistory.csv'), index_label='Iteration')
+        print(f"  > Saved WeightHistory CSVs.")
+
+        ### Save Initial Indices History ###
+        indices_save_dir = os.path.join(dataset_output_dir, 'initial_indices_history')
+        os.makedirs(indices_save_dir, exist_ok=True)
+        for strategy in strategies:
+            indices_data = aggregated_data[strategy]['InitialTrainIndices']
+            if indices_data:
+                indices_df = pd.DataFrame(indices_data).transpose()
+                indices_df.columns = [f"Sim_{i}" for i in range(len(indices_data))]
+                indices_df.to_csv(os.path.join(indices_save_dir, f'{strategy}_InitialIndices.csv'), index_label='Index_Position')
+        print(f"  > Saved InitialIndices CSVs.")
+
     print("\n--- Aggregation Complete ---")
 
-
+### MAIN ###
 if __name__ == "__main__":
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))

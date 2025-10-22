@@ -55,10 +55,11 @@ def OneIterationFunction(SimulationConfigInput):
 
     ### Return Dictionary ###
     ErrorVecs = pd.DataFrame(LearningProcedureOutput["ErrorVecs"])
-
+    
     SimulationResults = {"ErrorVecs" : ErrorVecs,
                          "SelectionHistory" : LearningProcedureOutput["SelectedObservationHistory"],
+                         "WeightHistory" : LearningProcedureOutput["WeightHistory"],
+                         "InitialTrainIndices" : LearningProcedureOutput["InitialTrainIndices"],
                          "SimulationParameters" : SimulationParameters,
                          "ElapsedTime" : ElapsedTime}
-
     return SimulationResults
