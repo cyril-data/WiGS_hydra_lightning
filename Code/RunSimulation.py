@@ -19,7 +19,6 @@ parser = argparse.ArgumentParser(description="Parse command line arguments for a
 parser.add_argument("--Data", type=str, required=True, help="Data type for this job array.")
 parser.add_argument("--TaskID", type=int, required=True, help="SLURM Array Task ID (1-based).")
 parser.add_argument("--NReplications", type=int, required=True, help="Total number of simulations per model.")
-parser.add_argument("--TestProportion", type=float, required=True, help="Percent for validation set.")
 parser.add_argument("--CandidateProportion", type=float, required=True, help="Percent for candidate dataset.")
 args = parser.parse_args()
 
@@ -46,7 +45,6 @@ SimulationResults = RunSimulationFunction(
     DataFileInput=args.Data,
     Seed=replication_seed,
     machine_learning_model=model_type,
-    test_proportion=float(args.TestProportion),
     candidate_proportion=float(args.CandidateProportion)
 )
 

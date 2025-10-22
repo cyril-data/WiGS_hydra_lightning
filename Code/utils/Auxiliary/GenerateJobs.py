@@ -8,7 +8,6 @@ def create_master_sbatch(partition_name,
                          n_replications, 
                          n_models, 
                          dataset_name, 
-                         test_prop, 
                          candidate_prop, 
                          code_dir, 
                          time_limit='2:59:59', 
@@ -22,7 +21,6 @@ def create_master_sbatch(partition_name,
         n_replications (int): The number of times each simulation is replicated with a different seed.
         n_models (int): The total number of different machine learning models being tested in this job array.
         dataset_name (str): The base name of the dataset this job array will process.
-        test_prop (float): The proportion of the data to be used for the test set.
         candidate_prop (float): The proportion of the data to be used for the initial candidate pool.
         code_dir (str): The absolute path to the main 'Code/' directory of the project. 
         time_limit (str): The maximum wall time for each job in the array formatted as 'HH:MM:SS'.
@@ -51,7 +49,6 @@ python {python_script_name} \\
     --Data "{dataset_name}" \\
     --TaskID "$SLURM_ARRAY_TASK_ID" \\
     --NReplications {n_replications} \\
-    --TestProportion {test_prop} \\
     --CandidateProportion {candidate_prop}
 """
     

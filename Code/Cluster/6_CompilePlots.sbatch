@@ -2,7 +2,7 @@
 
 #SBATCH --job-name=CompilePlots
 #SBATCH --partition=short
-#SBATCH --array=1-16
+#SBATCH --array=1-8
 #SBATCH --output=RunSimulations/ClusterMessages/out/compile_%A_%a.out
 #SBATCH --error=RunSimulations/ClusterMessages/error/compile_%A_%a.err
 #SBATCH --time=00:10:00
@@ -11,7 +11,7 @@
 ### INPUTS ###
 COLUMNS=2
 ROWS=2
-EVAL_TYPES=("test_set" "full_pool")
+EVAL_TYPES=("full_pool")
 PLOT_TYPES=("trace" "trace_relative_iGS")
 METRICS=("RMSE" "MAE" "R2" "CC")
 

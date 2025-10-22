@@ -22,8 +22,7 @@ if __name__ == "__main__":
     memory_input='750MB'
     
     ## Define Simulation Parameters ##
-    N_REPLICATIONS = 100
-    TEST_PROPORTION = 0.2
+    N_REPLICATIONS = 3
     CANDIDATE_PROPORTION = 0.8
     models_to_run = [
         'RidgeRegressionPredictor'
@@ -51,7 +50,6 @@ if __name__ == "__main__":
             n_replications=N_REPLICATIONS,
             n_models=len(models_to_run), 
             dataset_name=dataset_name,   
-            test_prop=TEST_PROPORTION,
             candidate_prop=CANDIDATE_PROPORTION,
             code_dir=CODE_DIR
         )

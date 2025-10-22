@@ -7,7 +7,7 @@ import random as random
 ### Import functions ###
 from utils.Auxiliary import LoadData
 from utils.Main.LearningProcedure import LearningProcedure 
-from utils.Main.TrainTestCandidateSplit import TrainTestCandidateSplit 
+from utils.Main.TrainCandidateSplit import TrainCandidateSplit 
 
 ### Function ###
 def OneIterationFunction(SimulationConfigInput):
@@ -22,8 +22,7 @@ def OneIterationFunction(SimulationConfigInput):
             - ErrorVecs (pd.DataFrame): The history of performance metrics over the course of the learning procedure.
             - SelectionHistory (list): The history of observations selected from the candidate pool.
             - SimulationParameters (dict): The key input parameters used for this simulation run.
-            - ElapsedTime (float): The total execution time in seconds for this iteration.
-    """
+            - ElapsedTime (float): The total execution time in seconds for this iteration."""
     
     ### Set Up ###
     StartTime = time.time()
@@ -33,14 +32,11 @@ def OneIterationFunction(SimulationConfigInput):
     ### Load Data ###
     df = LoadData(SimulationConfigInput["DataFileInput"])
 
-    ### Train Test Candidate Split ###
-    df_Train, df_Test, df_Candidate = TrainTestCandidateSplit(df, 
-                                                              SimulationConfigInput["TestProportion"], 
-                                                              SimulationConfigInput["CandidateProportion"])
+    ### Train Candidate Split ###
+    df_Train, df_Candidate = TrainCandidateSplit(df, SimulationConfigInput["CandidateProportion"])
 
     ### Update SimulationConfig Arguments ###
     SimulationConfigInput['df_Train'] = df_Train
-    SimulationConfigInput["df_Test"] = df_Test
     SimulationConfigInput["df_Candidate"] = df_Candidate
     
     ### Learning Process ###
@@ -49,7 +45,6 @@ def OneIterationFunction(SimulationConfigInput):
     ### Return Simulation Parameters ###
     SimulationParameters = {"DataFileInput" : str(SimulationConfigInput["DataFileInput"]),
                             "Seed" : str(SimulationConfigInput["Seed"]),
-                            "TestProportion" : str(SimulationConfigInput["TestProportion"]),
                             "CandidateProportion" : str(SimulationConfigInput["CandidateProportion"]),
                             "SelectorType" :  str(SimulationConfigInput["SelectorType"]),
                             "ModelType" :  str(SimulationConfigInput["ModelType"])

@@ -17,18 +17,14 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
     Returns:
         dict: A dictionary containing the results of the learning procedure with the following keys:
-            - ErrorVec (dict): A dictionary where keys are metric names ('RMSE', 'MAE', 'R2', 'CC') and 
-            values are lists of the metric's value at each iteration of the loop.
+            - ErrorVec (dict): A dictionary (with key 'Full_Pool') where values are dictionaries
+              of metric names ('RMSE', 'MAE', 'R2', 'CC') and lists of the metric's value at each iteration.
             - SelectedObservationHistory (list): A list of the indices of observations selected from the candidate pool
-              in the order they were chosen.
-    """
+              in the order they were chosen."""
 
     ### Set Up ###
     i = 0
-    ErrorVecs = {
-    'Test_Set': {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []},
-    'Full_Pool':    {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}
-    }
+    ErrorVecs = {'Full_Pool':    {'RMSE': [], 'MAE': [], 'R2': [], 'CC': []}}
     SelectedObservationHistory = []
 
     ### Initialize Model ###
@@ -58,15 +54,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## Prediction Model ##
         predictor_model.fit(X_train_df=X_train_df, y_train_series=y_train_series)
         
-        ## Calculate Test Error (both from the paper and the standard way)
-
-        # 1. Hold-Out Test Error
-        TestSetErrorOutput = HoldOutErrorFunction(InputModel=predictor_model,
-                                                df_Test=SimulationConfigInputUpdated["df_Test"])
-        for metric_name, value in TestSetErrorOutput.items():
-            ErrorVecs['Test_Set'][metric_name].append(value)
-
-        # 2. Full_Pool Error
+        ## Calculate Full Pool Error ##
         FullPoolErrorOuputs = FullPoolErrorFunction(InputModel=predictor_model,
                                                 df_Train=SimulationConfigInputUpdated["df_Train"],
                                                 df_Candidate=SimulationConfigInputUpdated["df_Candidate"])

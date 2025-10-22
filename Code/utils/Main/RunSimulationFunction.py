@@ -5,7 +5,6 @@ from utils.Main.OneIterationFunction import OneIterationFunction
 def RunSimulationFunction(DataFileInput,
                           Seed,
                           machine_learning_model,
-                          test_proportion,
                           candidate_proportion):
     """
     Runs a single simulation iteration across multiple data selection strategies.
@@ -15,8 +14,7 @@ def RunSimulationFunction(DataFileInput,
         Seed (int): Seed
         machine_learning_model (str): A string identifier for the machine learning model to be used.
             Expected values include 'LinearRegressionPredictor', 'RandomForestRegressorPredictor', or 'RidgeRegressionPredictor'.
-        test_proportion (float): The fraction of the dataset to be reserved for the final, unseen test set.
-        candidate_proportion (float): The fraction of the non-test data to be used as the unlabeled candidate pool.
+        candidate_proportion (float): The fraction of the data to be used as the unlabeled candidate pool.
     Returns:
         dict: A nested dictionary containing the simulation results for the single seed. 
             The keys are the string names of the strategies that were run (e.g., 'Passive Learning', 'iGS'), 
@@ -61,7 +59,6 @@ def RunSimulationFunction(DataFileInput,
         SimulationConfigInput = {
             'DataFileInput': DataFileInput, 
             'Seed': Seed,
-            'TestProportion': test_proportion, 
             'CandidateProportion': candidate_proportion,
             'ModelType': machine_learning_model,
             'regularization': 0.01 
