@@ -87,18 +87,18 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
 
 * `RunSimulationFunction.py`: Runs all selector strategies for a single dataset and seed. Called by `RunSimulation.py`.
 * `OneIterationFunction.py`: Manages setup (data loading/splitting) and execution for one strategy run. Calls `LearningProcedure`.
-* `LearningProcedure.py`: The core active learning loop: fit model -> calculate error -> select sample -> update sets. Captures metrics, selections, weights, and initial indices.
+* `LearningProcedure.py`: The core active learning loop.
 * `TrainCandidateSplit.py`: Splits data into initial `df_Train` and `df_Candidate`.
 
 #### Prediction Functions
 
-* `RidgeRegressionPredictor.py`, (Others): Wrappers for scikit-learn models.
-* `FullPoolError.py`: Calculates performance metrics using the "Full Pool" method from [1].
+* `LinearRegressionPredictor.py`, `RidgeRegressionPredictor.py`, and `RandomForestRegressorPredictor.py`: Wrappers for scikit-learn models.
+* `FullPoolError.py`: Calculates performance metrics using the "Full Pool" method from [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
 
 #### Selector Functions
 
 * `PassiveLearningSelector.py`: Random sampling baseline.
-* `GreedySamplingSelector.py`: Implements GSx, GSy, and iGS [1].
+* `GreedySamplingSelector.py`: Implements GSx, GSy, and iGS [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
 * `WeightedGreedySamplingSelector.py`: Implements **WiGS** with static and time-decay weights. Returns `w_x`.
 * `WiGS_MAB.py`: Implements **WiGS** using a Multi-Armed Bandit (UCB1) to choose weights. Returns `w_x`.
 * `WiGS_SAC.py`: Implements **WiGS** using a Soft Actor-Critic agent to learn a policy for choosing `w_x`. Returns `w_x`.
