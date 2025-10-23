@@ -306,4 +306,5 @@ class WiGS_SAC_Selector:
         self.iteration += 1
 
         IndexRecommendation = df_Candidate.iloc[[best_candidate_iloc]].index[0]
-        return {"IndexRecommendation": [float(IndexRecommendation)], "w_x": w_x}
+        # return {"IndexRecommendation": [float(IndexRecommendation)], "w_x": w_x}
+        return {"IndexRecommendation": int(IndexRecommendation), "w_x": w_x}

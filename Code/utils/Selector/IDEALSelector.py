@@ -97,6 +97,10 @@ class IDEALSelector:
         k = int(max(1, self.BatchSize))
         top_idx_local = np.argsort(-a)[:k]  # descending
 
-        ## Output (follow GreedySamplingSelector style) ##
-        rec_indices = df_Candidate.iloc[top_idx_local].index.astype(float).tolist()
-        return {"IndexRecommendation": rec_indices}
+    
+        if k != 1:
+            raise NotImplementedError("IDEALSelector currently only supports BatchSize=1 in this project structure.")
+            
+        best_iloc_position = top_idx_local[0]
+        IndexRecommendation_int = int(df_Candidate.iloc[best_iloc_position].name) # Use .name for single index value        
+        return {"IndexRecommendation": IndexRecommendation_int}

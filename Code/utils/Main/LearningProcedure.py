@@ -72,8 +72,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
         QueryObservation = SimulationConfigInputUpdated["df_Candidate"].loc[QueryObservationIndex]
-        # SelectedObservationHistory.append(QueryObservationIndex)
-        SelectedObservationHistory.append(QueryObservationIndex[0])
+        SelectedObservationHistory.append(QueryObservationIndex)
+        # SelectedObservationHistory.append(QueryObservationIndex[0])
 
         ## Store weights ##
         w_x = SelectorFuncOutput.get("w_x", np.nan) 

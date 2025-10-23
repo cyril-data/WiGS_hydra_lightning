@@ -93,5 +93,5 @@ class GreedySamplingSelector:
             MaxRowNumber = np.argmax(d_nXY)
 
         ## Output ##
-        IndexRecommendation = df_Candidate.iloc[[MaxRowNumber]].index[0]
-        return {"IndexRecommendation": [float(IndexRecommendation)]}
+        IndexRecommendation_int = int(df_Candidate.iloc[[MaxRowNumber]].index[0])
+        return {"IndexRecommendation": IndexRecommendation_int}
