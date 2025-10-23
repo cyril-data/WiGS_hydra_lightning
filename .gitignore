@@ -23,4 +23,4 @@ slurm_logs/
 *.err
 
 # Ignore raw simulation results
-Results/simulation_results/
+Results/simulation_results/raw
