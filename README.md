@@ -16,8 +16,11 @@ These plots show that the adaptive **WiGS** methods, particularly those guided b
 
 A visualization demonstrating the adaptive behavior of the WiGS (SAC) agent on the dgp_three_regime dataset is shown below. Observe how the agent adjusts its exploration/exploitation strategy (indicated by the $w_x^{(t)}$ weight) throughout the learning process.
 
+<div align="center">
+
 ![WiGS SAC Demo](./wigs_sac_demo.gif)
 
+</div>
 
 ## Setup
 
