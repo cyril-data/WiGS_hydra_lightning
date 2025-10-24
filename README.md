@@ -1,11 +1,5 @@
 # Weighted Improved Greedy Sampling
 
-## Preliminary Results
-
-Preliminary results can be seen in `Results/images/full_pool/RMSE`. The folder [`/trace`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace/trace) contains the typical trace plots, while [`/trace_relative_iGS`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace_relative_iGS/trace) contains the trace plot relative to [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680)'s iGS method.
-
-As shown, the adaptive **WiGS** methods, particularly those guided by reinforcement learning, generally outperform the static iGS baseline.
-
 ## Abstract
 
 Active learning for regression aims to reduce labeling costs by intelligently selecting the most informative data points. The state-of-the-art iGS method from [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680) combines input-space diversity (exploration) and output-space uncertainty (exploitation) using a multiplicative approach. This project introduces a novel, more flexible methodology called **Weighted improved Greedy Sampling (WiGS)**, which hypothesizes that the relative importance of exploration and exploitation is not equal and may change depending on the dataset and the stage of learning.
@@ -14,6 +8,17 @@ Our framework recasts the selection criterion as a weighted, additive combinatio
 
 The results demonstrate that the flexible WiGS approach, particularly the adaptive RL methods, can outperform the original iGS, demonstrating the value of adaptively balancing exploration and exploitation throughout the learning process.
 
+## Visualization
+
+Demonstration of the WiGS (SAC) agent adapting its exploration/exploitation strategy (`w_x^{(t)}`) on the `dgp_three_regime` dataset:
+
+![WiGS SAC Demo](./wigs_sac_demo.gif)
+
+## Preliminary Results
+
+Preliminary results can be seen in `Results/images/full_pool/RMSE`. The folder [`/trace`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace/trace) contains the typical trace plots, while [`/trace_relative_iGS`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace_relative_iGS/trace) contains the trace plot relative to [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680)'s iGS method.
+
+As shown, the adaptive **WiGS** methods, particularly those guided by reinforcement learning, generally outperform the static iGS baseline.
 ## Setup
 
 This project was developed using **Python 3.9**. A virtual environment is highly recommended.
