@@ -10,15 +10,15 @@ The results demonstrate that the flexible WiGS approach, particularly the adapti
 
 ## Visualization
 
-Demonstration of the WiGS (SAC) agent adapting its exploration/exploitation strategy (`w_x^{(t)}`) on the `dgp_three_regime` dataset:
+Preliminary quantitative results can be seen in the trace plots located in `Results/images/full_pool/RMSE`. The folder [`/trace`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace/trace) contains the typical trace plots, while [`/trace_relative_iGS`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace_relative_iGS/trace) contains the trace plot relative to [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680)'s iGS method.
+
+These plots show that the adaptive **WiGS** methods, particularly those guided by reinforcement learning methods, generally outperform the static iGS baseline.
+
+A visualization demonstrating the adaptive behavior of the WiGS (SAC) agent on the dgp_three_regime dataset is shown below. Observe how the agent adjusts its exploration/exploitation strategy (indicated by the $w_x^{(t)}$ weight) throughout the learning process.
 
 ![WiGS SAC Demo](./wigs_sac_demo.gif)
 
-## Preliminary Results
 
-Preliminary results can be seen in `Results/images/full_pool/RMSE`. The folder [`/trace`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace/trace) contains the typical trace plots, while [`/trace_relative_iGS`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace_relative_iGS/trace) contains the trace plot relative to [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680)'s iGS method.
-
-As shown, the adaptive **WiGS** methods, particularly those guided by reinforcement learning, generally outperform the static iGS baseline.
 ## Setup
 
 This project was developed using **Python 3.9**. A virtual environment is highly recommended.
