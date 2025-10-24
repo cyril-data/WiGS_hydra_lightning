@@ -34,6 +34,6 @@ class PassiveLearningSelector:
         """
 
         QueryObservation = df_Candidate.sample(n=1, random_state=self.Seed)
-        IndexRecommendation = int(QueryObservation.index[0])
+        IndexRecommendation = list(QueryObservation.index)
 
         return {"IndexRecommendation": IndexRecommendation}

@@ -110,9 +110,6 @@ class IRDMSelector:
                 break
             iters += 1
 
-        if selected_idx.size == 0:
-             raise ValueError("iRDM selection failed, no index found.")
-
-        first_selected_iloc = selected_idx[0]
-        IndexRecommendation_int = int(df_Candidate.iloc[first_selected_iloc].name)
-        return {"IndexRecommendation": IndexRecommendation_int}
+        ## Output ##
+        rec_indices = df_Candidate.iloc[selected_idx].index.astype(float).tolist()
+        return {"IndexRecommendation": rec_indices}

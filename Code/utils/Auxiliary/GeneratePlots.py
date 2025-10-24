@@ -218,15 +218,24 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                     results_for_metric = pickle.load(f)
 
                 # Indices #                
-                indices_dir = os.path.join(dataset_path, 'initial_indices_history')
+                indices_file_path = os.path.join(dataset_path, 'InitialIndices.csv')
                 try:
-                    any_indices_file = glob.glob(os.path.join(indices_dir, '*.csv'))[0]
-                    indices_df = pd.read_csv(any_indices_file)
+                    if not os.path.exists(indices_file_path):
+                         raise FileNotFoundError 
+
+                    indices_df = pd.read_csv(indices_file_path)
                     initial_train_size = len(indices_df)
-                    if initial_train_size == 0: raise IndexError
-                except (IndexError, FileNotFoundError):
-                    print(f"  > Warning: Could not load initial_indices_history for {data_name}. Skipping {metric} plot.")
+                    if initial_train_size == 0:
+                         raise ValueError("InitialIndices.csv is empty.") 
+                except FileNotFoundError:
+                    print(f"  > Warning: InitialIndices.csv not found for {data_name} at {indices_file_path}. Skipping {metric} plot.")
                     continue
+                except ValueError as e:
+                     print(f"  > Warning: Error reading InitialIndices.csv for {data_name}: {e}. Skipping {metric} plot.")
+                     continue
+                except Exception as e:
+                     print(f"  > Warning: An unexpected error occurred loading InitialIndices.csv for {data_name}: {e}. Skipping {metric} plot.")
+                     continue
                 
                 # Filter out the excluded strategies
                 filtered_results = {strategy: df for strategy, df in results_for_metric.items() 

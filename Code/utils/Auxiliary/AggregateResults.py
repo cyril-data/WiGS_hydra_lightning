@@ -37,6 +37,8 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         error_df_template = first_result[strategies[0]]['ErrorVecs']
         eval_types = list(error_df_template.columns)  
         metrics = list(error_df_template.index)      
+
+        all_initial_indices = {}
         
         aggregated_data = {
             s: {
@@ -45,14 +47,19 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                 },
                 'ElapsedTime': [],
                 'SelectionHistory': [],
-                'WeightHistory': [],
-                'InitialTrainIndices': []} for s in strategies
+                'WeightHistory': []} for s in strategies
         }
 
         ## Aggregation Loop ##
+        all_initial_indices_list = []
         for i, file_path in enumerate(result_files_for_dataset):
             with open(file_path, 'rb') as f:
                 single_run_result = pickle.load(f)
+
+            # Grab initial indices from the first strategy (they are identical for this seed)
+            first_strategy_key = list(single_run_result.keys())[0]
+            if 'InitialTrainIndices' in single_run_result[first_strategy_key]:
+                all_initial_indices_list.append(single_run_result[first_strategy_key]['InitialTrainIndices'])
             
             for strategy, results in single_run_result.items():
                 if strategy in aggregated_data:
@@ -69,8 +76,6 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     aggregated_data[strategy]['SelectionHistory'].append(results['SelectionHistory'])
                     if 'WeightHistory' in results:
                         aggregated_data[strategy]['WeightHistory'].append(results['WeightHistory'])
-                    if 'InitialTrainIndices' in results:
-                        aggregated_data[strategy]['InitialTrainIndices'].append(results['InitialTrainIndices'])
 
         ## Final Processing and Saving ##
         dataset_output_dir = os.path.join(aggregated_results_dir, data_name)
@@ -111,25 +116,32 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         ### Save Weight History ###
         weight_save_dir = os.path.join(dataset_output_dir, 'weight_history')
         os.makedirs(weight_save_dir, exist_ok=True)
+        files_saved_count = 0 
         for strategy in strategies:
             weight_data = aggregated_data[strategy]['WeightHistory']
-            if weight_data:
-                weight_df = pd.DataFrame(weight_data).transpose()
-                weight_df.columns = [f"Sim_{i}" for i in range(len(weight_data))]
-                weight_df.to_csv(os.path.join(weight_save_dir, f'{strategy}_WeightHistory.csv'), index_label='Iteration')
-        print(f"  > Saved WeightHistory CSVs.")
+            if weight_data: 
+                weight_df = pd.DataFrame(weight_data).transpose()                
+                if weight_df.notna().any().any():
+                    weight_df.columns = [f"Sim_{i}" for i in range(len(weight_data))]
+                    weight_df.to_csv(os.path.join(weight_save_dir, f'{strategy}_WeightHistory.csv'), index_label='Iteration')
+                    files_saved_count += 1         
+        if files_saved_count > 0:
+            print(f"  > Saved WeightHistory CSVs.")
+        else:
+            print(f"  > No WeightHistory CSVs needed.")
 
-        ### Save Initial Indices History ###
-        indices_save_dir = os.path.join(dataset_output_dir, 'initial_indices_history')
-        os.makedirs(indices_save_dir, exist_ok=True)
-        for strategy in strategies:
-            indices_data = aggregated_data[strategy]['InitialTrainIndices']
-            if indices_data:
-                indices_df = pd.DataFrame(indices_data).transpose()
-                indices_df.columns = [f"Sim_{i}" for i in range(len(indices_data))]
-                indices_df.to_csv(os.path.join(indices_save_dir, f'{strategy}_InitialIndices.csv'), index_label='Index_Position')
-        print(f"  > Saved InitialIndices CSVs.")
-
+        # Save InitialIndices file per dataset ---
+        if all_initial_indices_list:
+            try:
+                indices_df = pd.DataFrame(all_initial_indices_list).transpose()
+                indices_df.columns = [f"Sim_{i}" for i in range(len(all_initial_indices_list))]
+                indices_output_path = os.path.join(dataset_output_dir, 'InitialIndices.csv')
+                indices_df.to_csv(indices_output_path, index_label='Index_Position')
+                print(f"  > Saved InitialIndices.csv")
+            except ValueError as e:
+                print(f"  > Error creating/saving InitialIndices.csv for {data_name}: {e}")
+        else:
+             print(f"  > Warning: InitialIndices data not found in raw files for {data_name}.")
     print("\n--- Aggregation Complete ---")
 
 ### MAIN ###

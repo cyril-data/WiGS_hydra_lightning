@@ -130,5 +130,4 @@ class WeightedGreedySamplingSelector:
 
         ## Output ##
         IndexRecommendation = df_Candidate.iloc[[best_candidate_iloc]].index[0]
-        # return {"IndexRecommendation": [float(IndexRecommendation)]}
-        return {"IndexRecommendation": int(IndexRecommendation), "w_x": w_x}
+        return {"IndexRecommendation": [float(IndexRecommendation)]}
