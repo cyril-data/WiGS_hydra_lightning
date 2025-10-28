@@ -99,7 +99,7 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
             * `weight_history/`: $w_x$ weights used by adaptive methods (`.csv`).
             * `InitialIndices.csv`: Indices of the initial training set for all seeds (`.csv`).
             * `ElapsedTime.csv`: Runtimes per strategy/seed (`.csv`).
-    # `visualizations/`: Outputs from visualization scripts
+    * `visualizations/`: Outputs from visualization scripts
 
 ## Code Overview
 
