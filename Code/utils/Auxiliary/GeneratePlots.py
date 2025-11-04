@@ -19,7 +19,7 @@ def MeanVariancePlot(Subtitle=None,
                      Y_Label=None,
                      VarInput=False,
                      initial_train_size: int = None,
-                     FigSize=(10, 5),
+                     FigSize=(6,4.5),
                      LegendMapping=None,
                      show_legend=True, 
                      **SimulationErrorResults):
