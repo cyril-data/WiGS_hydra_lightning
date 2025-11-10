@@ -19,7 +19,7 @@ def MeanVariancePlot(Subtitle=None,
                      Y_Label=None,
                      VarInput=False,
                      initial_train_size: int = None,
-                     FigSize=(6,4.5),
+                     FigSize=(9,12),
                      LegendMapping=None,
                      show_legend=True, 
                      **SimulationErrorResults):
@@ -78,7 +78,7 @@ def MeanVariancePlot(Subtitle=None,
                              MeanValues + CriticalValue * StdErrorValues, alpha=TransparencyVal, color=color)
     ax_mean.set_xlabel("Percent of Learning Pool Labeled")
     ax_mean.set_ylabel(Y_Label)
-    ax_mean.set_title(Subtitle, fontsize=12)
+    # ax_mean.set_title(Subtitle, fontsize=12)
     if show_legend:
         ax_mean.legend(loc='upper left', bbox_to_anchor=(1.02, 1))
 
@@ -110,7 +110,7 @@ def MeanVariancePlot(Subtitle=None,
             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
         ax_var.set_xlabel("Percent of Learning Pool Labeled")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
-        ax_var.set_title(Subtitle, fontsize=9)
+        # ax_var.set_title(Subtitle, fontsize=9)
         ax_var.legend(loc='upper right')
         if isinstance(xlim, list):
             ax_var.set_xlim(xlim)

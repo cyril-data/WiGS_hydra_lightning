@@ -26,6 +26,7 @@ if [ -z "$DATASET_TO_PROCESS" ]; then
 fi
 
 echo "Processing dataset: ${DATASET_TO_PROCESS}"
-python Code/utils/Auxiliary/GeneratePlots.py --dataset "$DATASET_TO_PROCESS"
+# python Code/utils/Auxiliary/GeneratePlots.py --dataset "$DATASET_TO_PROCESS"
+python Code/utils/Auxiliary/GeneratePlots.py --dataset "$DATASET_TO_PROCESS" --no-legend
 
 echo "--- Finished Task ${SLURM_ARRAY_TASK_ID} ---"

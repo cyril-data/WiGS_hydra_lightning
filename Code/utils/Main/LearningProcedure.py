@@ -6,6 +6,7 @@ import pandas as pd
 ### Functions ###
 from utils.Selector import *
 from utils.Prediction import *
+from utils.Prediction.CrossValidation import get_cv_rmse 
 
 ### Function ###
 def LearningProcedure(SimulationConfigInputUpdated):
@@ -47,43 +48,52 @@ def LearningProcedure(SimulationConfigInputUpdated):
     ### Algorithm ###
     while len(SimulationConfigInputUpdated["df_Candidate"]) > 0:
 
-        ## Get features and target for the current training set ##
+        ## 1. Get features and target for the current training set ##
         X_train_df, y_train_series = get_features_and_target(
             df=SimulationConfigInputUpdated["df_Train"],
             target_column_name="Y"
             )
 
-        ## Prediction Model ##
+        ## 2. Prediction Model ##
         predictor_model.fit(X_train_df=X_train_df, y_train_series=y_train_series)
         
-        ## Calculate Full Pool Error ##
+        ## 3. Calculate Full Pool Error ##
         FullPoolErrorOuputs = FullPoolErrorFunction(InputModel=predictor_model,
                                                 df_Train=SimulationConfigInputUpdated["df_Train"],
                                                 df_Candidate=SimulationConfigInputUpdated["df_Candidate"])
         for metric_name, value in FullPoolErrorOuputs.items():
             ErrorVecs['Full_Pool'][metric_name].append(value)
 
-        ## Sampling Procedure ##
+        ## 4. Calculate CV Error ##
+        sklearn_model = predictor_model.model 
+        if sklearn_model is not None:
+            current_cv_rmse = get_cv_rmse(sklearn_model, X_train_df, y_train_series, k=5)
+        else:
+            current_cv_rmse = np.nan 
+        if np.isnan(current_cv_rmse):
+            current_cv_rmse = FullPoolErrorOuputs["RMSE"]
+
+        ## 5. Sampling Procedure ##
         SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
                                                 df_Train=SimulationConfigInputUpdated["df_Train"],
                                                 Model=predictor_model,
-                                                current_rmse=FullPoolErrorOuputs["RMSE"])
+                                                current_rmse=current_cv_rmse)
 
-        ## Query selected observation ##
+        ## 6. Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
         QueryObservation = SimulationConfigInputUpdated["df_Candidate"].loc[QueryObservationIndex]
         SelectedObservationHistory.append(QueryObservationIndex)
         # SelectedObservationHistory.append(QueryObservationIndex[0])
 
-        ## Store weights ##
+        ## 7. Store weights ##
         w_x = SelectorFuncOutput.get("w_x", np.nan) 
         WeightHistory.append(w_x)
 
-        ## Update Train and Candidate Sets ##
+        ## 8. Update Train and Candidate Sets ##
         SimulationConfigInputUpdated["df_Train"] = pd.concat([SimulationConfigInputUpdated["df_Train"], QueryObservation])
         SimulationConfigInputUpdated["df_Candidate"] = SimulationConfigInputUpdated["df_Candidate"].drop(QueryObservationIndex)
         
-        ## Increase iteration ##
+        ## 9. Increase iteration ##
         i+=1
 
     ### Output ###
