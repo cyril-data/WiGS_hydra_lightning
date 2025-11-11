@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     ## Cluster Parameters ##
     partition_name_input = "short"
-    time_limit_input='11:59:59'
-    memory_input='750MB'
+    time_limit_input='5:59:59'
+    memory_input='1500MB'
     
     ## Define Simulation Parameters ##
     N_REPLICATIONS = 100
@@ -54,3 +54,5 @@ if __name__ == "__main__":
             code_dir=CODE_DIR
         )
     print("--- Finished ---")
+
+
