@@ -18,7 +18,7 @@ A visualization demonstrating the adaptive behavior of the WiGS (SAC) agent on t
 
 <div align="center">
 
-![WiGS SAC Demo](./Results/images/Presentation/wigs_sac_demo.gif)
+![WiGS SAC Demo](wigs_sac_demo.gif)
 
 </div>
 
