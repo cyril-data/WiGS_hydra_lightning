@@ -7,6 +7,53 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 
+import numpy as np
+
+def generate_gmm_x_samples(n_samples=1000, seed=None):
+    """
+    Generates 1D data sampled from a Gaussian Mixture Model (GMM)
+    and clipped to the [0, 1] range.
+    """
+    # Initialize a random number generator
+    rng = np.random.default_rng(seed)
+    weights = [0.4, 0.3, 0.3]   # (weights): Proportions of data in each clump. Must sum to 1.
+    means = [0.2, 0.5, 0.85]    # (means): The centers of the clumps on the [0, 1] axis.
+    stds = [0.07, 0.1, 0.05]    # (stds): The spread (standard deviation) of each clump.
+    
+    # Determine how many samples to draw from each component
+    n_components = len(weights)
+    component_samples = rng.multinomial(n_samples, weights)
+    
+    # Draw the samples for each component
+    samples_list = []
+    for i in range(n_components):
+        n_i = component_samples[i]
+        mean_i = means[i]
+        std_i = stds[i]
+        # Draw n_i samples from a normal distribution
+        samples_list.append(rng.normal(loc=mean_i, scale=std_i, size=n_i))
+    
+    # 4. Combine, shuffle, and clip
+    x_samples = np.concatenate(samples_list)
+    rng.shuffle(x_samples) 
+    x_samples_clipped = np.clip(x_samples, 0, 1)
+    
+    return x_samples_clipped
+
+def generate_normal_x_samples(n_samples=1000, seed=None):
+    """
+    Generates 1D data sampled from a single Normal (Gaussian) distribution
+    and clipped to the [0, 1] range.
+    """
+    # Initialize a random number generator
+    rng = np.random.default_rng(seed)
+    mean = 0.5
+    std = 0.25
+    x_samples = rng.normal(loc=mean, scale=std, size=n_samples)
+    x_samples_clipped = np.clip(x_samples, 0, 1)
+    
+    return x_samples_clipped
+
 ### Two regime DGP ###
 def generate_two_regime_data(n_samples=1000, seed=None):
     """
@@ -27,10 +74,10 @@ def generate_two_regime_data(n_samples=1000, seed=None):
     if seed is not None:
         np.random.seed(seed)
     
-    ### Generation ###
-    x = np.random.uniform(low=0, high=1, size=n_samples) # Covariates
-    y = np.zeros(n_samples)                              # Target 
-    noise = np.zeros(n_samples)                          # Noise 
+    ### Generate Normal-distributed inputs ###
+    x = generate_normal_x_samples(n_samples=n_samples, seed=seed)   # Variables
+    y = np.zeros(n_samples)                                         # Target 
+    noise = np.zeros(n_samples)                                     # Noise 
     
     ### Two regimes ###
     
@@ -77,10 +124,10 @@ def generate_three_regime_data(n_samples=1500, seed=None):
     if seed is not None:
         np.random.seed(seed)
     
-    ### Generate uniformly distributed inputs ###
-    x = np.random.uniform(low=0, high=1, size=n_samples) # Variables 
-    y = np.zeros(n_samples)                              # Target
-    noise = np.zeros(n_samples)                          # Noise
+    ### Generate Normal-distributed inputs ###
+    x = generate_normal_x_samples(n_samples=n_samples, seed=seed)   # Variables
+    y = np.zeros(n_samples)                                         # Target
+    noise = np.zeros(n_samples)                                      # Noise
     
     ### Three regimes ###
     

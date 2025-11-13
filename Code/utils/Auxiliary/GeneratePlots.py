@@ -274,14 +274,63 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         print(f"Finished all plots for {data_name}.")
     print("\n--- Plot Generation Complete ---")
 
+### NEW FUNCTION TO GENERATE LEGEND ###
+def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
+    """
+    Generates a standalone legend image from the master style dictionaries.
+    """
+    print(f"--- Generating standalone legend at {output_path} ---")
+    
+    # Create dummy plot handles for the legend
+    handles = []
+    labels = []
+    
+    for long_name, short_name in legend_mapping.items():
+        color = colors.get(long_name)
+        ls = linestyles.get(long_name, '-')
+        
+        if color is None:
+            continue
+            
+        # Create a dummy line object
+        line = plt.Line2D([0], [0], color=color, linestyle=ls, label=short_name)
+        handles.append(line)
+        labels.append(short_name)
+    fig = plt.figure(figsize=(15, 2)) 
+    
+    # Create the legend
+    fig_legend = fig.legend(
+        handles, 
+        labels, 
+        loc='center', 
+        frameon=True, 
+        ncol=ncol
+    )    
+    plt.gca().axis('off')    
+    fig.savefig(
+        output_path, 
+        bbox_inches=fig_legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted()),
+        dpi=300,
+        transparent=True 
+    )
+    plt.close(fig)
+    print(f"--- Legend generation complete: {output_path} ---")
+
 ### MAIN ###
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description="Generate plots for a specific dataset.")
-    parser.add_argument('--dataset', type=str, required=False, 
+    parser = argparse.ArgumentParser(description="Generate plots for simulation results.")
+    
+    parser.add_argument('--dataset', type=str, required=False,  
                         help="Optional: name of a single dataset folder to process.")
+    
     parser.add_argument('--no-legend', dest='show_legend', action='store_false',
                         help="Disable legends on individual plots (for later compilation).")
+    
+    # --- NEW ARGUMENT ---
+    parser.add_argument('--legend_only', action='store_true',
+                        help="If set, only generate a standalone legend file and exit.")
+    
     args = parser.parse_args()
 
     ## Define Paths ##
@@ -294,8 +343,82 @@ if __name__ == "__main__":
     AGGREGATED_RESULTS_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
     IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
     
-    ## Execute the main function ##
-    generate_all_plots(aggregated_results_dir=AGGREGATED_RESULTS_DIR, 
-                       image_dir=IMAGE_DIR, 
-                       show_legend=args.show_legend,
-                       single_dataset=args.dataset)
+    
+    # --- NEW LOGIC FOR LEGEND ---
+    if args.legend_only:
+        
+        master_colors = {
+            'Passive Learning': 'gray',  
+            'GSx': 'cornflowerblue',  
+            'GSy': 'salmon', 'iGS': 'red',
+            'WiGS (Static w_x=0.75)': 'lightgreen',  
+            'WiGS (Static w_x=0.5)': 'forestgreen',
+            'WiGS (Static w_x=0.25)': 'darkgreen',  
+            'WiGS (Time-Decay, Linear)': 'orange',
+            'WiGS (Time-Decay, Exponential)': 'saddlebrown',  
+            'WiGS (MAB-UCB1, c=0.5)': 'orchid',
+            'WiGS (MAB-UCB1, c=2.0)': 'darkviolet',  
+            'WiGS (MAB-UCB1, c=5.0)': 'indigo',
+            'WiGS (SAC)': 'darkcyan'
+        }
+        master_linestyles = {
+            'Passive Learning': ':',  
+            'GSx': ':',  
+            'GSy': ':', 'iGS': '-',
+            'WiGS (Static w_x=0.75)': '-.',  
+            'WiGS (Static w_x=0.5)': '-.',
+            'WiGS (Static w_x=0.25)': '-.',  
+            'WiGS (Time-Decay, Linear)': '-.',
+            'WiGS (Time-Decay, Exponential)': '-.',  
+            'WiGS (MAB-UCB1, c=0.5)': '-.',
+            'WiGS (MAB-UCB1, c=2.0)': '-.',  
+            'WiGS (MAB-UCB1, c=5.0)': '-.',
+            'WiGS (SAC)': '-'
+        }
+        master_legend = {
+            'Passive Learning': 'Random',  
+            'GSx': 'GSx',  
+            'GSy': 'GSy',  
+            'iGS': 'iGS',
+            'WiGS (Static w_x=0.75)': 'WiGS (Static, $w_x=0.75$)',  
+            'WiGS (Static w_x=0.5)': 'WiGS (Static, $w_x=0.50$)',
+            'WiGS (Static w_x=0.25)': 'WiGS (Static, $w_x=0.25$)',  
+            'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
+            'WiGS (Time-Decay, Exponential)': 'WiGS (Exp. Decay)',
+            'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB)',
+            'WiGS (SAC)': 'WiGS (SAC)'
+        }
+        
+        # Define strategies to *exclude* from the legend (e.g., if you have too many)
+        strategies_to_exclude = {
+            "WiGS (Static w_x=0.5)",
+            'WiGS (MAB-UCB1, c=0.5)',
+            'WiGS (MAB-UCB1, c=2.0)',
+        }
+        
+        # Filter the master legend
+        filtered_legend_mapping = {
+            long: short for long, short in master_legend.items() 
+            if long not in strategies_to_exclude
+        }
+
+        # Define the output path
+        legend_output_path = os.path.join(IMAGE_DIR, "benchmark_legend.png")
+        
+        # Generate the legend
+        generate_legend(
+            legend_mapping=filtered_legend_mapping,
+            colors=master_colors,
+            linestyles=master_linestyles,
+            output_path=legend_output_path,
+            ncol=5
+        )
+
+    else:
+        ## Execute the main plotting function ##
+        generate_all_plots(
+            aggregated_results_dir=AGGREGATED_RESULTS_DIR,  
+            image_dir=IMAGE_DIR,  
+            show_legend=args.show_legend,
+            single_dataset=args.dataset
+        )
