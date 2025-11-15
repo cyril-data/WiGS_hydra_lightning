@@ -28,14 +28,22 @@ def FullPoolErrorFunction(InputModel, df_Train: pd.DataFrame, df_Candidate: pd.D
 
     # 2. Get features and labels from the separate sets.
     _, y_train = get_features_and_target(df_Train, "Y")
-    X_candidate, _ = get_features_and_target(df_Candidate, "Y")
 
-    # 3. Generate predictions for the candidate set.
-    y_pred_candidate = InputModel.predict(X_candidate)
-    y_pred_candidate_series = pd.Series(y_pred_candidate, index=X_candidate.index)
+    # 3. Check if the candidate pool is empty (i.e., final iteration)
+    if df_Candidate.empty:                  # On the last loop, the hybrid vector is just the training labels
+        y_hybrid_predictions = y_train
+    else:                                   # Otherwise, predict on the candidate set
+        X_candidate, _ = get_features_and_target(df_Candidate, "Y")
+        
+        # Check again in case X_candidate is empty but df_Candidate was not
+        if X_candidate.empty:
+            y_hybrid_predictions = y_train
+        else:
+            y_pred_candidate = InputModel.predict(X_candidate)
+            y_pred_candidate_series = pd.Series(y_pred_candidate, index=X_candidate.index)
 
-    # 4. Construct the hybrid prediction vector.
-    y_hybrid_predictions = pd.concat([y_train, y_pred_candidate_series])
+            # 4. Construct the hybrid prediction vector.
+            y_hybrid_predictions = pd.concat([y_train, y_pred_candidate_series])
 
     # 5. Ensure the final vectors are aligned by index.
     y_hybrid_predictions = y_hybrid_predictions.loc[y_true_pool.index]

@@ -379,19 +379,19 @@ def preprocess_and_save_all():
     print("  > Processed: cps_wage")
 
     # 16. Burbridge Dataset (correctly specified)
-    df_dgp_correct = GenerateBurbridgeData(delta=0.0, sigma_epsilon=0.3, seed=42)
-    datasets_to_save['dgp_correct'] = _preprocess_dataframe(df_dgp_correct)
-    print("  > Processed: dgp_correct")
+    df_burbidge_correct = GenerateBurbridgeData(delta=0.0, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['burbidge_correct'] = _preprocess_dataframe(df_burbidge_correct)
+    print("  > Processed: burbidge_correct")
 
     # 17. Burbridge Dataset (correctly misspecified)
-    df_dgp_misspecified = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.3, seed=42)
-    datasets_to_save['dgp_misspecified'] = _preprocess_dataframe(df_dgp_misspecified)
-    print("  > Processed: dgp_misspecified")
+    df_burbidge_misspecified = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['burbidge_misspecified'] = _preprocess_dataframe(df_burbidge_misspecified)
+    print("  > Processed: burbidge_misspecified")
 
     # 18. Burbridge Dataset (correctly low noise)
-    df_dgp_low_noise = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.1, seed=42)
-    datasets_to_save['dgp_low_noise'] = _preprocess_dataframe(df_dgp_low_noise)
-    print("  > Processed: dgp_low_noise")
+    df_burbidge_low_noise = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.1, seed=42)
+    datasets_to_save['burbidge_low_noise'] = _preprocess_dataframe(df_burbidge_low_noise)
+    print("  > Processed: burbidge_low_noise")
 
     # 19. Two-Regime Dataset
     df_dgp_two_regime = generate_two_regime_data(seed=42)

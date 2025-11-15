@@ -175,7 +175,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     ### Set up ###
     metrics_to_plot = ['RMSE', 'MAE', 'R2', 'CC']
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
-    eval_types = ['full_pool']    
+    eval_types = ['trace_plots']    
     strategies_to_exclude = {
         "iRDM", 
         "IDEAL",

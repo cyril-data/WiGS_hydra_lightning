@@ -9,11 +9,11 @@ import argparse
 import sys
 
 ### Function ###
+### Function ###
 def WilcoxonRankSignedTest(SimulationErrorResults: Dict[str, pd.DataFrame],
                            RoundingVal: Optional[int] = 3) -> pd.DataFrame:
     """
     Performs a pairwise Wilcoxon signed-rank test on simulation results.
-    ... (rest of your docstring) ...
     """
 
     ### Set Up ###
@@ -39,22 +39,15 @@ def WilcoxonRankSignedTest(SimulationErrorResults: Dict[str, pd.DataFrame],
     pval_df = pd.DataFrame(PValeMatrix, index=strategies, columns=strategies)
     mask = np.tril(np.ones(pval_df.shape), k=0).astype(bool)
     
-    # --- UPDATED: LaTeX-compatible formatting ---
     def format_pvalue(p):
         if pd.isna(p): 
             return ""  
         if p == 1.0: 
-            return "$1.000$" # <-- CHANGED
-        
-        # Use "<.001" for p-values smaller than 0.001
+            return "$1.000$" 
         if p < 0.001:
-            return "$<$0.001$" # <-- CHANGED
-        
-        # Return formatted string
-        return f"${p:.{RoundingVal}f}$" # <-- CHANGED
-
-    # Use .map (replaces deprecated .applymap)
-    WRSTResults = pval_df.where(mask).map(format_pvalue) # <-- CHANGED
+            return "$<0.001$" 
+        return f"${p:.{RoundingVal}f}$" 
+    WRSTResults = pval_df.where(mask).map(format_pvalue)
 
     ### Return ###
     return WRSTResults

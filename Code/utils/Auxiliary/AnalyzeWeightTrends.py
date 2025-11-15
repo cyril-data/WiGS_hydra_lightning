@@ -10,10 +10,10 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
     Generates a trend graph of the w_x weight for a given selector.
     Plots either a single seed's trend or the average trend across all seeds.
     """
-    # --- 1. Define Paths and Load Data ---
+    ### 1. Define Paths and Load Data ###
     safe_selector_name = selector.replace(' ', '_').replace('(', '').replace(')', '').replace(',', '').replace('=', '').replace(':', '')
     weight_file_path = f"Results/simulation_results/aggregated/{dgp_name}/weight_history/{selector}_WeightHistory.csv"
-    plot_output_dir = os.path.join(output_dir, dgp_name, "weight_trends")
+    plot_output_dir = output_dir
     os.makedirs(plot_output_dir, exist_ok=True)
 
     try:
@@ -25,9 +25,11 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
         print(f"Error loading {weight_file_path}: {e}")
         return
 
-    # --- 2. Determine Plotting Mode (Single Seed or Aggregate) ---
+    ### 2. Determine Plotting Mode (Single Seed or Aggregate) ###
     plot_single_seed = False
     target_seed = None
+    seed_filename_component = ""
+    
     if seed_to_plot.lower() != "all":
         try:
             target_seed = int(seed_to_plot)
@@ -57,29 +59,30 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
     # --- 4. Prepare Data for Plotting ---
     x_axis = df_cleaned.index 
     if plot_single_seed:
-        weights_to_plot = df_cleaned[seed_str]
-        plot_title = f"Weight Trend: {selector}\nDataset: {dgp_name} - Seed: {target_seed}"
-        output_filename = f"{safe_selector_name}_seed_{target_seed}_WeightTrend.png"
+        weights_to_plot = df_cleaned[f"Sim_{target_seed}"] 
+        plot_title = f"Weight Trend: {selector}\nDataset: {dgp_name} - Seed: {target_seed}"        
+        seed_filename_component = f"seed_{target_seed}_WeightTrend"
+        
         if weights_to_plot.isnull().all():
             print("Note: No valid weight data found for this seed. Skipping plot.")
             return
     else: 
         weights_mean = df_cleaned[sim_columns].mean(axis=1)
         weights_std = df_cleaned[sim_columns].std(axis=1)
-        weights_upper = weights_mean + weights_std
-        weights_lower = weights_mean - weights_std
-        weights_upper = weights_upper.clip(0, 1)
-        weights_lower = weights_lower.clip(0, 1)
+        weights_upper = (weights_mean + weights_std).clip(0, 1)
+        weights_lower = (weights_mean - weights_std).clip(0, 1)
 
-        plot_title = f"Average Weight Trend: {selector}\nDataset: {dgp_name} (Avg across {len(sim_columns)} seeds)"
-        output_filename = f"{safe_selector_name}_all_seeds_AvgWeightTrend.png"
+        plot_title = f"Average Weight Trend: {selector}\nDataset: {dgp_name} (Avg across {len(sim_columns)} seeds)"        
+        seed_filename_component = "all_seeds_AvgWeightTrend"
+        
         if weights_mean.isnull().all():
              print("Note: No valid weight data found across any seeds. Skipping plot.")
              return
 
+    output_filename = f"{dgp_name}_{safe_selector_name}_{seed_filename_component}.png"
     output_plot_path = os.path.join(plot_output_dir, output_filename)
 
-    # --- 5. Plot the Graph ---
+    ### 5. Plot the Graph ###
     plt.figure(figsize=(12, 7))
     ax = plt.gca()
 
@@ -89,7 +92,7 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
         ax.plot(x_axis, weights_mean, label=f"Average Weight (±1 Std Dev)", color="#0033A0", linewidth=2)
         ax.fill_between(x_axis, weights_lower, weights_upper, color="#0033A0", alpha=0.2)
 
-    # --- 6. Format and Save ---
+    ### 6. Format and Save ###
     ax.set_title(plot_title, fontsize=16)
     ax.set_xlabel("Iteration", fontsize=12)
     ax.set_ylabel("Weight ($w_x$)", fontsize=12)
@@ -118,7 +121,6 @@ def main():
 
     args = parser.parse_args()
 
-    # --- Define Project Root Dynamically (within main scope) ---
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
@@ -130,6 +132,5 @@ def main():
          absolute_output_dir = args.output_dir
 
     plot_weight_trends(args.dgp_name, args.selector, args.seed, absolute_output_dir)
-
 if __name__ == "__main__":
     main()

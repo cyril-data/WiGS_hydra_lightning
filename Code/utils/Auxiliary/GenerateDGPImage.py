@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+import argparse
 
 ### Directory ###
 try:
@@ -82,7 +83,7 @@ def plot_two_regime(df, save_path=None):
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=200)
-        print(f"Saved plot to: {save_path}")
+        # print(f"Saved plot to: {save_path}")
     plt.show()
 
 def plot_three_regime(df, save_path=None):
@@ -118,26 +119,25 @@ def plot_three_regime(df, save_path=None):
     plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=200)
-        print(f"Saved plot to: {save_path}")
+        # print(f"Saved plot to: {save_path}")
     plt.show()
 
 
 # --- Run & save ---
 if __name__ == "__main__":
-    try:
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-    except NameError:
-        project_root = os.getcwd()
-
-    SAVE_DIR = Path(project_root) / "Results" / "images" / "Presentation"
+    parser = argparse.ArgumentParser(description="Generate and save DGP visualization plots.")
+    parser.add_argument('--output_dir', type=str, required=True,
+                        help='The directory to save the plot images (e.g., Results/images/manuscript)')
+    args = parser.parse_args()    
+    SAVE_DIR = Path(args.output_dir)
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
     print("Generating DGP plots...")
 
     df_two = generate_two_regime_data(n_samples=1200, seed=42)
-    plot_two_regime(df_two, SAVE_DIR / "two_regime_dgp_visualization.png")
+    plot_two_regime(df_two, SAVE_DIR / "dgp_two_regime.png")
 
     df_three = generate_three_regime_data(n_samples=1600, seed=123)
-    plot_three_regime(df_three, SAVE_DIR / "three_regime_dgp_visualization.png")
+    plot_three_regime(df_three, SAVE_DIR / "dgp_three_regime.png")
 
     print(f"Finished generating plots in: {SAVE_DIR.resolve()}")

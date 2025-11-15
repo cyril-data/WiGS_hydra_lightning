@@ -5,7 +5,7 @@ from .GenerateDGPImage import *
 from .GenerateJobs import *
 from .GeneratePlots import *
 from .LoadDataSet import *
-from .PlotAverageWeightHeatmap import *
+from .NearestNeighborVisualization import *
 from .PlotWeightHeatmap import *
 from .PreprocessData import *
 from .VisualizeSelections import *
