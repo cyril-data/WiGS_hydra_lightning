@@ -46,7 +46,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
     selector_model = SelectorClass(**selector_init_args)
 
     ### Algorithm ###
-    while len(SimulationConfigInputUpdated["df_Candidate"]) > 0:
+    while True:
 
         ## 1. Get features and target for the current training set ##
         X_train_df, y_train_series = get_features_and_target(
@@ -73,27 +73,31 @@ def LearningProcedure(SimulationConfigInputUpdated):
         if np.isnan(current_cv_rmse):
             current_cv_rmse = FullPoolErrorOuputs["RMSE"]
 
-        ## 5. Sampling Procedure ##
+        ### 5. Break Condition ###
+        if len(SimulationConfigInputUpdated["df_Candidate"]) == 0:
+            break
+
+        ## 6. Sampling Procedure ##
         SelectorFuncOutput = selector_model.select(df_Candidate=SimulationConfigInputUpdated["df_Candidate"],
                                                 df_Train=SimulationConfigInputUpdated["df_Train"],
                                                 Model=predictor_model,
                                                 current_rmse=current_cv_rmse)
 
-        ## 6. Query selected observation ##
+        ## 7. Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
         QueryObservation = SimulationConfigInputUpdated["df_Candidate"].loc[QueryObservationIndex]
         SelectedObservationHistory.append(QueryObservationIndex)
         # SelectedObservationHistory.append(QueryObservationIndex[0])
 
-        ## 7. Store weights ##
+        ## 8. Store weights ##
         w_x = SelectorFuncOutput.get("w_x", np.nan) 
         WeightHistory.append(w_x)
 
-        ## 8. Update Train and Candidate Sets ##
+        ## 9. Update Train and Candidate Sets ##
         SimulationConfigInputUpdated["df_Train"] = pd.concat([SimulationConfigInputUpdated["df_Train"], QueryObservation])
         SimulationConfigInputUpdated["df_Candidate"] = SimulationConfigInputUpdated["df_Candidate"].drop(QueryObservationIndex)
         
-        ## 9. Increase iteration ##
+        ## 10. Increase iteration ##
         i+=1
 
     ### Output ###
