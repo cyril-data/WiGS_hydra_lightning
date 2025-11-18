@@ -10,13 +10,13 @@ from tqdm import tqdm
 ### SINGLE HEATMAP FUNCTION ###
 def plot_single_seed_heatmap(dgp_name, selector, seed, output_dir, df_data, df_initial, df_selection, df_weight):
     """
-    Generates a scatter plot for a single seed.
-    (This is the logic from your OLD PlotWeightHeatmap.py)
+    Generates a scatter plot for a single seed (EXHAUSTIVE version).
+    Assumes all points are either initial or selected.
     """
     print(f"--- Generating SINGLE SEED weight heatmap for: {dgp_name}, {selector}, Seed: {seed} ---")
     
     safe_selector_name = selector.replace(' ', '_').replace('(', '').replace(')', '').replace(',', '').replace('=', '').replace(':', '')
-    plot_output_dir = os.path.join(output_dir, dgp_name, "weight_heatmaps") # Save to byproducts
+    plot_output_dir = os.path.join(output_dir, dgp_name, "weight_heatmaps")
     os.makedirs(plot_output_dir, exist_ok=True)
     output_plot_path = os.path.join(plot_output_dir, f"{safe_selector_name}_seed_{seed}_WeightHeatmap.png")
 
@@ -58,12 +58,12 @@ def plot_single_seed_heatmap(dgp_name, selector, seed, output_dir, df_data, df_i
     }).set_index('index')
 
     df_plot = df_data[['X1', 'Y']].copy()
-    df_plot['plot_type'] = 'unselected'
-    df_plot.loc[initial_indices, 'plot_type'] = 'initial'
     df_plot = df_plot.join(df_selected_points)
-    df_plot.loc[selection_indices, 'plot_type'] = 'selected'
     
-    df_unselected = df_plot[df_plot['plot_type'] == 'unselected']
+    # --- MODIFIED LOGIC ---
+    df_plot['plot_type'] = 'selected'
+    df_plot.loc[initial_indices, 'plot_type'] = 'initial'
+    df_plot.loc[selection_indices, 'plot_type'] = 'selected'    
     df_initial_plot = df_plot[df_plot['plot_type'] == 'initial']
     df_selected_plot = df_plot[df_plot['plot_type'] == 'selected']
     
@@ -71,12 +71,10 @@ def plot_single_seed_heatmap(dgp_name, selector, seed, output_dir, df_data, df_i
         print("Note: No valid selected points with weights found. Skipping heatmap.")
         return
 
-    # Create the Plot ---
+    # Create the Plot #
     print("Generating plot...")
     fig, ax = plt.subplots(figsize=(14, 10))
-
-    ax.scatter(df_unselected['X1'], df_unselected['Y'], 
-               color='lightgray', alpha=0.2, s=15, label='Unselected')
+    
     ax.scatter(df_initial_plot['X1'], df_initial_plot['Y'], 
                color='dimgray', alpha=0.8, s=25, label='Initial Set', zorder=3)
     sc = ax.scatter(df_selected_plot['X1'], df_selected_plot['Y'], 
@@ -90,7 +88,7 @@ def plot_single_seed_heatmap(dgp_name, selector, seed, output_dir, df_data, df_i
         for xpos in [0.4, 0.7, 0.6]:
             ax.axvline(xpos, linestyle="--", linewidth=1.5, color='dimgray', alpha=0.7)
 
-    # Format and Save ---
+    # Format and Save #
     ax.set_title(f"Weight Distribution Heatmap: {selector}\nSeed: {seed}", fontsize=16)
     ax.set_xlabel("X1", fontsize=12)
     ax.set_ylabel("Y", fontsize=12)
@@ -106,8 +104,8 @@ def plot_single_seed_heatmap(dgp_name, selector, seed, output_dir, df_data, df_i
 ### AVERAGE HEATMAP FUNCTION ###
 def plot_average_heatmap(dgp_name, selector, output_dir, df_data, df_initial_full, df_selection_full, df_weight_full):
     """
-    Generates a single heatmap of the AVERAGE selection weight across all seeds.
-    (This is the logic from your OLD PlotAverageWeightHeatmap.py)
+    Generates a single heatmap of the AVERAGE selection weight (EXHAUSTIVE version).
+    Assumes all points are either initial or selected across all seeds.
     """
     print(f"--- Generating AVERAGE weight heatmap for: {dgp_name}, {selector} ---")
 
@@ -151,18 +149,15 @@ def plot_average_heatmap(dgp_name, selector, output_dir, df_data, df_initial_ful
     df_plot = df_plot.join(avg_weights_by_index.rename('avg_weight'))
     
     initial_indices_flat = df_initial_full[seed_cols].stack().dropna().astype(int).unique()
+    
     initial_set = set(initial_indices_flat)
     selected_set = set(avg_weights_by_index.index.astype(int))
 
-    df_plot['plot_type'] = 'unselected'
-    df_plot.loc[list(initial_set), 'plot_type'] = 'initial'
-    df_plot.loc[list(selected_set), 'plot_type'] = 'selected_avg'
+    df_plot['plot_type'] = 'selected_avg'
     
-    unselected_idx = df_plot[df_plot['plot_type'] == 'unselected'].index
-    was_initial_mask = unselected_idx.isin(initial_set)
-    df_plot.loc[unselected_idx[was_initial_mask], 'plot_type'] = 'initial'
+    only_initial_indices = list(initial_set - selected_set)
+    df_plot.loc[only_initial_indices, 'plot_type'] = 'initial'
 
-    df_unselected = df_plot[df_plot['plot_type'] == 'unselected']
     df_initial_plot = df_plot[df_plot['plot_type'] == 'initial']
     df_selected_plot = df_plot[df_plot['plot_type'] == 'selected_avg']
     
@@ -174,13 +169,21 @@ def plot_average_heatmap(dgp_name, selector, output_dir, df_data, df_initial_ful
     print("Generating plot...")
     fig, ax = plt.subplots(figsize=(14, 10))
 
-    ax.scatter(df_unselected['X1'], df_unselected['Y'],
-               color='lightgray', alpha=0.2, s=15, label='None')
-    ax.scatter(df_initial_plot['X1'], df_initial_plot['Y'],
-               color='dimgray', alpha=0.5, s=25, label='Initial Set (any seed)', zorder=3)
-    sc = ax.scatter(df_selected_plot['X1'], df_selected_plot['Y'],
-                    c=df_selected_plot['avg_weight'], cmap='coolwarm',
-                    s=25, label='Selected (Average)', vmin=0, vmax=1, zorder=2)
+    if not df_initial_plot.empty:
+        print(f"--- Found {len(df_initial_plot)} points that were ONLY initial (never selected) ---")
+        ax.scatter(df_initial_plot['X1'], df_initial_plot['Y'],
+                   color='purple', alpha=0.8, s=50, 
+                   label='Initial Set Only (Never Selected)', zorder=3)
+
+    sc = ax.scatter(df_selected_plot['X1'], 
+                    df_selected_plot['Y'],
+                    c=df_selected_plot['avg_weight'], 
+                    cmap='coolwarm',
+                    s=25, 
+                    label='Selected (Average)', 
+                    vmin=0, 
+                    vmax=1, 
+                    zorder=2)
 
     cbar = plt.colorbar(sc, ax=ax)
     cbar.set_label('Average Selection Weight ($w_x$)', fontsize=12)
@@ -190,10 +193,10 @@ def plot_average_heatmap(dgp_name, selector, output_dir, df_data, df_initial_ful
             ax.axvline(xpos, linestyle="--", linewidth=1.5, color='dimgray', alpha=0.7)
 
     ## Format and Save ##
-    ax.set_title(f"Average Weight Distribution Heatmap: {selector}\n(Averaged across {n_seeds} seeds)", fontsize=16)
+    # ax.set_title(f"Average Weight Distribution Heatmap: {selector}\n(Averaged across {n_seeds} seeds)", fontsize=16)
     ax.set_xlabel("X1", fontsize=12)
     ax.set_ylabel("Y", fontsize=12)
-    ax.legend(loc='upper left')
+    # ax.legend(loc='upper left')
     ax.grid(True, linestyle='--', alpha=0.5)
     
     plt.tight_layout()
@@ -216,7 +219,7 @@ def main():
     
     args = parser.parse_args()
 
-    # --- 1. Define Paths and Load Shared Data ---
+    ### 1. Define Paths and Load Shared Data ###
     base_results_path = f"Results/simulation_results/aggregated/{args.dgp_name}"
     data_path = f"Data/processed/{args.dgp_name}.pkl"
     initial_path = f"{base_results_path}/InitialIndices.csv"
@@ -234,7 +237,7 @@ def main():
         print(f"Missing file: {e.filename}", file=sys.stderr)
         sys.exit(1)
     
-    # --- 2. Route to the correct function ---
+    ### 2. Route to the correct function ###
     if args.seed.lower() == 'avg' or args.seed.lower() == 'all':
         plot_average_heatmap(args.dgp_name, args.selector, args.output_dir,
                              df_data, df_initial_full, df_selection_full, df_weight_full)

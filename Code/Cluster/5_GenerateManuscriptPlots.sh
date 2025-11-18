@@ -31,7 +31,7 @@ mkdir -p "${APP_INDIV_TRENDS_DIR}"
 ### Define Key Parameters ###
 declare -a SYNTHETIC_DGPS=("dgp_two_regime" "dgp_three_regime")
 SELECTOR_FOR_HEATMAP="WiGS (SAC)"
-SEED_TO_PLOT_INDIV="0" 
+SEED_TO_PLOT_INDIV=("0" "1" "2")
 
 # ======================================================
 # --- PART 1: Generate Core Manuscript Figures
@@ -66,13 +66,14 @@ for dgp in "${SYNTHETIC_DGPS[@]}"; do
             --output_dir "${IMG_MANUSCRIPT_DIR}" 
 
         # B. Generate SINGLE SEED Heatmap #
-        echo "  Processing Heatmap (Seed ${SEED_TO_PLOT_INDIV}) for: ${dgp}"
-        python3 "${CODE_DIR}/utils/Auxiliary/PlotWeightHeatmap.py" \
-            --dgp_name "${dgp}" \
-            --selector "${SELECTOR_FOR_HEATMAP}" \
-            --seed "${SEED_TO_PLOT_INDIV}" \
-            --output_dir "${APP_INDIV_HEATMAPS_DIR}" 
-
+        for seed in "${SEED_TO_PLOT_INDIV[@]}"; do
+            echo "  Processing Heatmap (Seed ${seed}) for: ${dgp}"
+            python3 "${CODE_DIR}/utils/Auxiliary/PlotWeightHeatmap.py" \
+                --dgp_name "${dgp}" \
+                --selector "${SELECTOR_FOR_HEATMAP}" \
+                --seed "${seed}" \
+                --output_dir "${APP_INDIV_HEATMAPS_DIR}" 
+        done
     else
         echo "  Skipping Heatmaps: ${dgp} / ${SELECTOR_FOR_HEATMAP} (Weight file not found)"
     fi

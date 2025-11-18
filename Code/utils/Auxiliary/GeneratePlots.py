@@ -175,7 +175,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     ### Set up ###
     metrics_to_plot = ['RMSE', 'MAE', 'R2', 'CC']
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
-    eval_types = ['trace_plots']    
+    eval_types = ['full_pool']    
     strategies_to_exclude = {
         "iRDM", 
         "IDEAL",
@@ -256,9 +256,9 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                                                                         CriticalValue=1.96,
                                                                         initial_train_size=initial_train_size,
                                                                         show_legend=show_legend,
-                                                                        **filtered_results)
-                    
-                    base_plot_path = os.path.join(image_dir, eval_type, metric, folder_name)
+                                                                        **filtered_results)                    
+                    output_eval_name = 'trace_plots' if eval_type == 'full_pool' else eval_type
+                    base_plot_path = os.path.join(image_dir, output_eval_name, metric, folder_name)
                     os.makedirs(os.path.join(base_plot_path, 'trace'), exist_ok=True)
                     os.makedirs(os.path.join(base_plot_path, 'variance'), exist_ok=True)
 
@@ -274,7 +274,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         print(f"Finished all plots for {data_name}.")
     print("\n--- Plot Generation Complete ---")
 
-### NEW FUNCTION TO GENERATE LEGEND ###
+### GENERATE LEGEND ###
 def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
     """
     Generates a standalone legend image from the master style dictionaries.
@@ -320,17 +320,12 @@ def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Generate plots for simulation results.")
-    
     parser.add_argument('--dataset', type=str, required=False,  
                         help="Optional: name of a single dataset folder to process.")
-    
     parser.add_argument('--no-legend', dest='show_legend', action='store_false',
-                        help="Disable legends on individual plots (for later compilation).")
-    
-    # --- NEW ARGUMENT ---
+                        help="Disable legends on individual plots (for later compilation).")    
     parser.add_argument('--legend_only', action='store_true',
                         help="If set, only generate a standalone legend file and exit.")
-    
     args = parser.parse_args()
 
     ## Define Paths ##
@@ -344,7 +339,6 @@ if __name__ == "__main__":
     IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
     
     
-    # --- NEW LOGIC FOR LEGEND ---
     if args.legend_only:
         
         master_colors = {
@@ -389,23 +383,23 @@ if __name__ == "__main__":
             'WiGS (SAC)': 'WiGS (SAC)'
         }
         
-        # Define strategies to *exclude* from the legend (e.g., if you have too many)
+        # Define strategies to *exclude* from the legend #
         strategies_to_exclude = {
             "WiGS (Static w_x=0.5)",
             'WiGS (MAB-UCB1, c=0.5)',
             'WiGS (MAB-UCB1, c=2.0)',
         }
         
-        # Filter the master legend
+        # Filter the master legend #
         filtered_legend_mapping = {
             long: short for long, short in master_legend.items() 
             if long not in strategies_to_exclude
         }
 
-        # Define the output path
+        # Define the output path #
         legend_output_path = os.path.join(IMAGE_DIR, "benchmark_legend.png")
         
-        # Generate the legend
+        # Generate the legend #
         generate_legend(
             legend_mapping=filtered_legend_mapping,
             colors=master_colors,

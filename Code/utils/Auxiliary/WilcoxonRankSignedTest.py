@@ -9,7 +9,6 @@ import argparse
 import sys
 
 ### Function ###
-### Function ###
 def WilcoxonRankSignedTest(SimulationErrorResults: Dict[str, pd.DataFrame],
                            RoundingVal: Optional[int] = 3) -> pd.DataFrame:
     """
@@ -53,7 +52,7 @@ def WilcoxonRankSignedTest(SimulationErrorResults: Dict[str, pd.DataFrame],
     return WRSTResults
 
 # -----------------------------------------------------------------
-# --- MAIN SCRIPT (NOW INCLUDES NAME MAPPING) ---
+# --- MAIN SCRIPT ---
 # -----------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -69,7 +68,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    ### --- Define Paths --- ###
+    ### Define Paths ###
     try:
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
@@ -85,7 +84,7 @@ if __name__ == "__main__":
                                    f"{args.eval_type}_metrics", 
                                    f"{args.metric}.pkl")
 
-    ### --- Load Data --- ###
+    ### Load Data ###
     if not os.path.exists(metric_pkl_path):
         print(f"Error: File not found at path: {metric_pkl_path}", file=sys.stderr)
         sys.exit(1)
@@ -94,8 +93,7 @@ if __name__ == "__main__":
     with open(metric_pkl_path, 'rb') as f:
         simulation_results = pickle.load(f)
 
-    ### --- UPDATED: Apply Name Mapping --- ###
-    # This dictionary maps the long, raw names to short, publication-ready names
+    ### Apply Name Mapping ###
     NAME_MAPPING = {
         'Passive Learning': 'Passive',
         'GSx': 'GSx',
@@ -115,7 +113,6 @@ if __name__ == "__main__":
     # Create a new dictionary, applying the short names
     filtered_results = {}
     for long_name, data in simulation_results.items():
-        # Use the short name if it exists, otherwise keep the long name
         short_name = NAME_MAPPING.get(long_name, long_name)
         filtered_results[short_name] = data
 
@@ -129,16 +126,9 @@ if __name__ == "__main__":
     results_table = WilcoxonRankSignedTest(filtered_results, RoundingVal=3)
     print(results_table)
 
-    # --- Save to LaTeX ---
+    # Save to LaTeX 
     latex_filename = f"{args.dataset}_{args.metric}_{args.eval_type}_wilcoxon.tex"
-    latex_full_path = os.path.join(OUTPUT_TABLE_DIR, latex_filename)
-    
-    # escape=False is CRITICAL to allow the "$" and "<" characters
+    latex_full_path = os.path.join(OUTPUT_TABLE_DIR, latex_filename)    
     results_table.to_latex(latex_full_path, escape=False)
     
     print(f"\n--- LaTeX table saved to: {latex_full_path} ---")
-
-    print("\n--- Notes ---")
-    print("The table shows p-values for the null hypothesis that the two strategies are equivalent.")
-    print("A small p-value (e.g., < 0.05) suggests a statistically significant difference.")
-    print("Each test compares the paired vectors of average RMSE (one avg RMSE per simulation seed).")

@@ -10,3 +10,4 @@ from .PlotWeightHeatmap import *
 from .PreprocessData import *
 from .VisualizeSelections import *
 from .WilcoxonRankSignedTest import *
+from .VerifyEndpoints import *

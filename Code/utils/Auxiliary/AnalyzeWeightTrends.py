@@ -44,7 +44,7 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
 
     print(f"--- Analyzing weight trend for: {dgp_name}, {selector}, Seed(s): {seed_to_plot} ---")
 
-    # --- 3. Clean and Process Data ---
+    ### 3. Clean and Process Data ###
     sim_columns = [col for col in df_full.columns if col.startswith('Sim_')]
     if not sim_columns:
         print(f"Error: No simulation columns (Sim_X) found in {weight_file_path}")
@@ -56,7 +56,7 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
         temp_col = df_cleaned[col].astype(str).str.strip('[]')
         df_cleaned[col] = pd.to_numeric(temp_col, errors='coerce')
 
-    # --- 4. Prepare Data for Plotting ---
+    ### 4. Prepare Data for Plotting ###
     x_axis = df_cleaned.index 
     if plot_single_seed:
         weights_to_plot = df_cleaned[f"Sim_{target_seed}"] 

@@ -19,7 +19,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
 
     print(f"--- Starting visualization for: {dgp_name}, {selector}, Seed: {seed} ---")
 
-    # --- 1. Setup Paths and Parameters ---
+    ## 1. Setup Paths and Parameters ##
     try:
         video_length_sec = float(video_length)
         if video_length_sec <= 0:
@@ -28,7 +28,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         print(f"Warning: Invalid video length '{video_length}'. Defaulting to 30 seconds.")
         video_length_sec = 30.0
 
-    # --- Define Project Root Dynamically ---
+    ## Define Project Root Dynamically ##
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root_local = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
@@ -60,7 +60,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
     os.makedirs(svg_frame_dir, exist_ok=True)
     os.makedirs(png_frame_dir, exist_ok=True)
 
-    # --- 2. Load Data ---
+    ## 2. Load Data ##
     print("Loading data files...")
     try:
         df_data = pd.read_pickle(data_path)
@@ -80,7 +80,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         print(f"Error loading data files: {e}")
         return
 
-    # --- 3. Extract Data for the Specific Seed ---
+    ## 3. Extract Data for the Specific Seed ##
     seed_str = f"Sim_{seed}"
 
     if seed_str not in df_initial.columns:
@@ -93,7 +93,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
     if df_weight is not None and seed_str not in df_weight.columns:
         print(f"Warning: Column '{seed_str}' not found in {weight_path}. Weights will be NaN.")
 
-    # --- Extract initial indices with cleaning ---
+    ## Extract initial indices with cleaning ##
     try:
         initial_indices = (
             df_initial[seed_str]
@@ -108,7 +108,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         print(f"Error cleaning initial indices for seed {seed}: {e}")
         return
 
-    # --- Extract selection indices with cleaning ---
+    ## Extract selection indices with cleaning ##
     try:
         selection_indices = (
             df_selection[seed_str]
@@ -124,7 +124,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         return
 
 
-    # --- Extract weights ---
+    ## Extract weights ##
     weights = []
     if df_weight is not None and seed_str in df_weight.columns:
         cleaned_weights = df_weight[seed_str].replace(r'^\s*$', np.nan, regex=True)
@@ -132,7 +132,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
     else:
         weights = [np.nan] * len(selection_indices) 
 
-    # --- Determine frame count (ensure consistency) ---
+    ## Determine frame count ##
     num_frames = num_iterations_total
     print(f"Targeting {num_frames} frames based on input.")
     if len(selection_indices) > num_frames:
@@ -151,7 +151,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         print("Error: No selection data to plot after adjustments.")
         return
 
-    # --- Calculate FPS based on FINAL frame count ---
+    ## Calculate FPS based on FINAL frame count ##
     fps = num_frames / video_length_sec 
     if fps <= 0:
         print(f"Warning: Invalid fps calculation ({num_frames} / {video_length_sec}). Defaulting to 10 FPS.")
@@ -159,8 +159,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
 
     print(f"Found data for {num_frames} frames. Creating video with {fps:.2f} FPS.")
 
-    # --- 4. Prepare for Plotting ---
-    # Ensure X1 exists, handle potential KeyError
+    ## 4. Prepare for Plotting ##
     if 'X1' not in df_data.columns:
         print(f"Error: 'X1' column not found in {data_path}. Cannot plot.")
         return
@@ -187,19 +186,17 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
     svg_files = []
     png_files = []
 
-    # --- 5. Generate Each Frame (Loop) ---
+    ## 5. Generate Each Frame ##
 
     for i in tqdm(range(num_frames), desc="Generating Frames"):
 
         current_selection = selection_indices[i]
         current_weight = weights[i]
 
-        # Ensure indices are valid before using .loc
         valid_initial_indices = [idx for idx in initial_indices if idx in df_data.index]
         valid_selection_so_far = [idx for idx in selection_indices[:i] if idx in df_data.index]
 
         labeled_so_far_set = set(valid_initial_indices).union(set(valid_selection_so_far))
-        # Check if current selection is valid
         if current_selection not in df_data.index:
              print(f"Warning: Skipping frame {i}, invalid index {current_selection}")
              continue
@@ -207,37 +204,37 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         unlabeled_remaining_set = all_indices_set - labeled_so_far_set - {current_selection}
         valid_unlabeled_remaining = [idx for idx in unlabeled_remaining_set if idx in df_data.index]
 
-        # --- Create the plot for this frame ---
+        ## Create the plot for this frame ##
         fig, ax = plt.subplots(figsize=(14, 10))
 
         ax.set_xlim(plot_xlim)
         ax.set_ylim(plot_ylim)
 
-        # 1. Plot Unlabeled observations (gray)
+        # 1. Plot Unlabeled observations (gray) #
         if valid_unlabeled_remaining:
              ax.scatter(x1_all.loc[valid_unlabeled_remaining], y_all.loc[valid_unlabeled_remaining],
                         color='gray', alpha=0.25, label='Unlabeled', s=25)
 
-        # 2. Plot Previously Labeled observations (red)
+        # 2. Plot Previously Labeled observations (red) #
         valid_labeled_so_far = list(labeled_so_far_set)
         if valid_labeled_so_far:
              ax.scatter(x1_all.loc[valid_labeled_so_far], y_all.loc[valid_labeled_so_far],
                         color='red', alpha=0.6, label='Previously Labeled', s=25)
 
-        # 3. Plot the Newly Selected observation (blue, large, with a circle) - PLOT BLUE LAST (TOP)
+        # 3. Plot the Newly Selected observation #
         ax.scatter(x1_all.loc[current_selection], y_all.loc[current_selection],
                    color='blue', s=105, label='Newly Selected', zorder=5)
         ax.scatter(x1_all.loc[current_selection], y_all.loc[current_selection],
                    facecolors='none', edgecolors='blue', s=210, linewidth=2.0, zorder=5)
 
-        # --- Add Titles and Labels ---
-        ax.set_title(f"Selector: {selector}\nSeed: {seed} - Iteration: {i}/{num_frames-1}", fontsize=16) # Corrected iteration display
+        ## Add Titles and Labels ##
+        ax.set_title(f"Selector: {selector}\nSeed: {seed} - Iteration: {i}/{num_frames-1}", fontsize=16) 
         ax.set_xlabel("X1", fontsize=12)
         ax.set_ylabel("Y", fontsize=12)
         ax.legend(loc='upper left', fontsize=10)
         ax.grid(True, linestyle='--', alpha=0.5)
 
-        # --- Add DGP-specific annotations ---
+        ## Add DGP-specific annotations ##
         if dgp_name == "dgp_two_regime":
             for xpos in [0.5, 0.8, 0.9]:
                 ax.axvline(xpos, linestyle="--", linewidth=1.5, color='dimgray', alpha=0.7)
@@ -252,7 +249,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
             ax.text(0.75, 2.2, "Exploration", fontsize=10, alpha=0.8)
             ax.text(0.602, 2.6, "High-noise trap", fontsize=9, alpha=0.8)
 
-        # --- Add Weight Information ---
+        ## Add Weight Information ##
         if pd.notna(current_weight):
             weight_text = f"Weight ($w_x$): {current_weight:.4f}"
         else:
@@ -263,7 +260,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
                 ha='right', va='top', fontsize=12,
                 bbox=dict(boxstyle='round,pad=0.5', fc='white', alpha=0.8))
 
-        # --- Add Continuous Weight Progress Bar (if applicable) ---
+        ## Add Continuous Weight Progress Bar (if applicable) ##
         if is_continuous_weight and pd.notna(current_weight):
             # Ensure weight is within [0, 1] for bar display
             bar_weight = np.clip(current_weight, 0, 1)
@@ -281,14 +278,13 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         try:
             fig.tight_layout(rect=tight_layout_rect)
         except ValueError:
-             # Sometimes tight_layout fails with annotations outside axes, try without rect
              try:
                   fig.tight_layout()
              except Exception as layout_e:
                   print(f"Warning: tight_layout failed on frame {i}: {layout_e}")
 
 
-        # --- Save the Frames ---
+        ## Save the Frames ##
         frame_basename = f"{safe_selector_name}_seed_{seed}_frame_{i:04d}"
         svg_path = os.path.join(svg_frame_dir, f"{frame_basename}.svg")
         png_path = os.path.join(png_frame_dir, f"{frame_basename}.png")
@@ -304,7 +300,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
 
         plt.close(fig)
 
-    # --- 6. Compile Video (from PNGs) ---
+    ### 6. Compile Video (from PNGs) ###
     if not png_files:
         print("No PNG frames were generated. Skipping video.")
     else:
@@ -347,7 +343,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
             print(f"\n!!!!!!!! ERROR: Video compilation failed! !!!!!!!!!")
             print(f"Error was: {e}")
 
-    # --- 7. Archive Frames to .tar.gz (from SVGs) ---
+    ### 7. Archive Frames to .tar.gz (from SVGs) ###
     if not svg_files:
          print("\nNo SVG frames generated. Skipping archive.")
     else:
@@ -361,7 +357,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         except Exception as e:
             print(f"Error: Failed to create .tar.gz file. {e}")
 
-    # --- 8. Optional Cleanup (Deletes both folders) ---
+    ### 8. Optional Cleanup (Deletes both folders) ###
     if cleanup_frames:
         print(f"\nCleaning up frame directories...")
         try:
@@ -377,7 +373,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
 
 
 def main():
-    # --- 9. Argument Parsing ---
+    ### 9. Argument Parsing ###
     parser = argparse.ArgumentParser(description="Generate Active Learning selection visualizations.")
 
     parser.add_argument('--dgp_name', type=str, required=True,
@@ -397,14 +393,14 @@ def main():
 
     args = parser.parse_args()
 
-    # --- Define Project Root Dynamically (within main scope) ---
+    ### Define Project Root Dynamically ###
     try:
         script_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.abspath(os.path.join(script_dir, '..', '..', '..'))
     except NameError:
         project_root = os.getcwd()
 
-    # --- Make output_dir absolute if it's relative ---
+    ### Make output_dir absolute ###
     if not os.path.isabs(args.output_dir):
          absolute_output_dir = os.path.join(project_root, args.output_dir)
     else:

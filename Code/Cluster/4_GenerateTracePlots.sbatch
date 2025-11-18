@@ -50,7 +50,7 @@ echo "--- Starting Weight Trend Generation for: ${DATASET_TO_PROCESS} ---"
 
 ### Define Parameters ###
 SELECTOR_FOR_TRENDS="WiGS (SAC)"
-SEED_TO_PLOT_INDIV= ("0" "1" "2")
+SEED_TO_PLOT_INDIV=("0" "1" "2")
 
 IMG_AVG_TRENDS_DIR="Results/images/manuscript/average_weight_trends"
 APP_INDIV_TRENDS_DIR="Results/images/appendices/individual_weight_trends"

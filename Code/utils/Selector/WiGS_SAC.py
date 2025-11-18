@@ -243,7 +243,7 @@ class WiGS_SAC_Selector:
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        # --- Soft Update Target Networks ---
+        ## Soft Update Target Networks ##
         for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
             target_param.data.copy_(TAU * param.data + (1.0 - TAU) * target_param.data)
 
@@ -256,12 +256,12 @@ class WiGS_SAC_Selector:
         if df_Candidate.empty:
             return {"IndexRecommendation": []}
 
-        # --- Construct current state and initialize agent on first run ---
+        ## Construct current state and initialize agent on first run ##
         current_state = self._get_state(df_Train, df_Candidate, current_rmse)
         if self.actor is None:
             self._initialize_agent(len(current_state))
         
-        # --- Store experience from the PREVIOUS step and update agent ---
+        ## Store experience from the PREVIOUS step and update agent ##
         if self.last_state is not None:
             reward = self.last_rmse - current_rmse  # Reward is the decrease in RMSE
             done = False  # An episode is a full AL run, so 'done' is always false here.
@@ -269,7 +269,7 @@ class WiGS_SAC_Selector:
             self.replay_buffer.push(self.last_state, self.last_action, reward, current_state, done)
             self.update() # Perform one learning step
 
-        # --- Select an action (w_x) for the CURRENT step ---
+        ## Select an action (w_x) for the CURRENT step ##
         state_tensor = torch.FloatTensor(current_state).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
             action, _ = self.actor.sample(state_tensor)
@@ -279,14 +279,12 @@ class WiGS_SAC_Selector:
         w_x = np.clip(w_x_tensor, 0, 1) # Ensure w_x is in [0, 1]
         w_y = 1.0 - w_x
         
-        # --- Store state and action for the next iteration's update ---
+        ## Store state and action for the next iteration's update ##
         self.last_state = current_state
-        self.last_action = action.cpu().numpy() # Store the raw action in [-1, 1]
+        self.last_action = action.cpu().numpy() 
         self.last_rmse = current_rmse
         
-        ###
-        ### WiGS Point Selection Logic (copied from your WeightedGreedySamplingSelector)
-        ###
+        ### WiGS Point Selection Logic ###
 
         X_Candidate, _ = get_features_and_target(df=df_Candidate, target_column_name="Y")
         X_Train, y_Train = get_features_and_target(df=df_Train, target_column_name="Y")
