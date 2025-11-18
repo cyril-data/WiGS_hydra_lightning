@@ -12,15 +12,15 @@ This entire framework is implemented as a robust, parallelized pipeline on a SLU
 
 Preliminary quantitative results can be seen in the trace plots located in `Results/images/trace_plots/`. For each metric (e.g., RMSE), the `/trace` folder contains the absolute trace plots, while the `/trace_relative_iGS` folder contains the trace plots normalized relative to the iGS baseline.
 
-These plots show that the adaptive **WiGS** methods, particularly those guided by reinforcement learning, generally outperform the static iGS baseline.
+These plots show that the adaptive **WiGS** methods, particularly those guided by reinforcement learning, outperform the static iGS baseline.
 
-A visualization demonstrating the adaptive behavior of the `WiGS (SAC)` agent on the `dgp_three_regime` dataset is shown below. Observe how the agent adjusts its exploration (*w<sub>x</sub>* ≈ 1.0, red) / investigation (*w<sub>x</sub>* ≈ 0.0, blue) strategy in real-time based on the local characteristics of the data.
+<!-- A visualization demonstrating the adaptive behavior of the `WiGS (SAC)` agent on the `dgp_three_regime` dataset is shown below. Observe how the agent adjusts its exploration (*w<sub>x</sub>* ≈ 1.0, red) / investigation (*w<sub>x</sub>* ≈ 0.0, blue) strategy in real-time based on the local characteristics of the data.
 
 <div align="center">
 
 ![WiGS SAC Demo](wigs_sac_demo.gif)
 
-</div>
+</div> -->
 
 ## Setup
 
@@ -42,7 +42,7 @@ This project was developed using **Python 3.9**. A virtual environment is highly
 
 The project is designed as an automated pipeline for a SLURM-based HPC cluster. The scripts in `Code/Cluster/` are numbered in their execution order.
 
-**Note:** Before running, you may need to configure cluster-specific parameters (like partition names) in `Code/Cluster/CreateSimulationSbatch.py` and all `.sbatch` files.
+**Note:** Before running, you may need to configure cluster-specific parameters (like partition names or the number of replications) in `Code/Cluster/CreateSimulationSbatch.py` and all `.sbatch` files.
 
 1. `0_PreprocessData.sh`: Executes `utils/Auxiliary/PreprocessData.py` to download, generate, and clean all 20 datasets, saving them as `.pkl` files in `Data/processed/`.
 
@@ -57,7 +57,7 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
    - **All Weight Trends** (average and individual) for the adaptive agents, saving to `Results/images/manuscript/average_weight_trends/` and `Results/images/appendices/individual_weight_trends/`.
    - **The Wilcoxon Test Table** (`.tex` file) for the dataset, saving to `Results/tables/`.
 
-6. `5_GenerateManuscriptPlots.sh`: A local script that generates the "hero" figures for the manuscript. This is run once, after `3_ProcessResults.sh`. It creates:
+6. `5_GenerateManuscriptPlots.sh`: A local script that generates the figures in our manuscript. This is run once, after `3_ProcessResults.sh`. It creates:
    - The **Nearest Neighbor** conceptual visualization.
    - The **DGP plots** (two-regime and three-regime).
    - The **Weight Heatmaps** (average and individual) for the synthetic datasets.
@@ -97,25 +97,24 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
 
 ### Main Simulation Engine (`Code/utils/Main/`)
 
-- `LearningProcedure.py`: The core active learning loop. It trains a model, calculates both evaluation metrics, selects a point, and updates the datasets. Includes a final evaluation step after the loop to get the 100% labeled result.
-- `RunSimulationFunction.py`: A wrapper that runs *all* selector strategies (Passive, iGS, WiGS-SAC, etc.) for a single seed, allowing for a head-to-head comparison.
+- `LearningProcedure.py`: The core active learning loop. It trains a model, calculates both evaluation metrics, selects a point, and updates the datasets. 
+- `RunSimulationFunction.py`: A wrapper that runs *all* selector strategies (Passive, iGS, WiGS-SAC, etc.) for a single seed.
 - `OneIterationFunction.py`: Sets up the data (loading, initial train/candidate split) for a single strategy run and calls `LearningProcedure`.
-- `TrainCandidateSplit.py`: A helper script that performs the initial `train_test_split`.
+- `TrainCandidateSplit.py`: A helper script that performs the initial split between the training and candidate datasets.
 
 ### Prediction & Evaluation (`Code/utils/Prediction/`)
 
-- `RidgeRegressionPredictor.py`: A standardized wrapper for the `sklearn.linear_model.Ridge` model, providing `.fit()` and `.predict()` methods. (Includes `LinearRegressionPredictor` and `RandomForestRegressorPredictor` as well).
-- `FullPoolError.py`: Calculates the evaluation metric (RMSE, R2, etc.) based on the iGS (2018) paper's "hybrid" method. This is used for the final plots.
+- `RidgeRegressionPredictor.py`, `LinearRegressionPredictor`, `RandomForestRegressorPredictor`: Wrappers for the `sklearn` models, providing `.fit()` and `.predict()` methods
+- `FullPoolError.py`: Calculates the evaluation metric (RMSE, R2, etc.) based on the [iGS (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680) paper's "hybrid" method.
 - `CrossValidation.py`: Calculates the RL reward signal. It gets a data-efficient and stable K-fold `CV_RMSE` using only the labeled training set (*D<sub>tr</sub>*) to prevent data leakage.
 
 ### Selector Strategies (`Code/utils/Selector/`)
 
 - `PassiveLearningSelector.py`: Randomly samples a point (baseline).
-- `GreedySamplingSelector.py`: Implements the `GSx`, `GSy`, and `iGS` baselines from Wu et al. (2018).
+- `GreedySamplingSelector.py`: Implements the `GSx`, `GSy`, and `iGS` baselines from [Wu et al. (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
 - `WeightedGreedySamplingSelector.py`: Implements `WiGS` with static and time-decaying weight heuristics.
 - `WiGS_MAB.py`: Implements `WiGS` with a Multi-Armed Bandit (UCB1) that learns the best average *w<sub>x</sub>* from the `CV_RMSE` reward.
 - `WiGS_SAC.py`: Implements `WiGS` with a Soft Actor-Critic (SAC) agent that learns a *state-dependent policy* to choose the optimal *w<sub>x</sub>* at each step, based on the `CV_RMSE` reward and current state.
-- `IDEALSelector.py` & `iRDMSelector.py`: Other published AL strategies used for comparison.
 
 ### Auxiliary & Plotting (`Code/utils/Auxiliary/`)
 
