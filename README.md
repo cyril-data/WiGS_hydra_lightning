@@ -1,20 +1,20 @@
-# Weighted Improved Greedy Sampling
+# Weighted improved Greedy Sampling (WiGS)
 
 ## Abstract
 
-Active learning for regression aims to reduce labeling costs by intelligently selecting the most informative data points. The state-of-the-art iGS method from [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680) combines input-space diversity (exploration) and output-space uncertainty (exploitation) using a multiplicative approach. This project introduces a novel, more flexible methodology called **Weighted improved Greedy Sampling (WiGS)**, which hypothesizes that the relative importance of exploration and exploitation is not equal and may change depending on the dataset and the stage of learning.
+Active learning for regression aims to reduce labeling costs by intelligently selecting the most informative data points. A prominent active learning method, improved Greedy Sampling (iGS) by [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680), determines which points are informative by balancing the feature space and the predicted output space using a static, multiplicative approach. We hypothesize that the optimal balance between these spaces is not fixed but is instead dynamic, depending on the dataset and the stage of the active learning procedure.
 
-Our framework recasts the selection criterion as a weighted, additive combination of normalized diversity and uncertainty scores. We explore several strategies for determining these weights: static balances, time-based decay heuristics, and, most significantly, adaptive policies learned via reinforcement learning (Multi-Armed Bandits and Soft Actor-Critic). The SAC agent learns a data-driven policy to balance the exploration-exploitation trade-off at each iteration based on the current state of the learning process. This entire workflow is implemented in a robust, parallelized framework using SLURM and evaluated on over 20 benchmark and synthetic regression datasets.
+This paper introduces **Weighted improved Greedy Sampling (WiGS)**, a novel and flexible framework that recasts the selection criterion as a weighted, additive combination of normalized scores from the feature and predictive output space. We investigate several strategies for determining these weights: static balances, time-decay heuristics, and, most significantly, adaptive policies learned via reinforcement learning (Multi-Armed Bandits and Soft Actor-Critic). To ensure methodological rigor, our adaptive agents are trained on a "clean" reward signal based on K-fold cross-validation RMSE, while the final models are evaluated against the baseline using the standard `FullPool_RMSE` metric for a fair comparison. The SAC agent learns a data-driven policy to balance the exploration-exploitation trade-off at each iteration based on the current state of the learning process.
 
-The results demonstrate that the flexible WiGS approach, particularly the adaptive RL methods, can outperform the original iGS, demonstrating the value of adaptively balancing exploration and exploitation throughout the learning process.
+This entire framework is implemented as a robust, parallelized pipeline on a SLURM cluster. We evaluate our methods on 20 benchmark and synthetic regression datasets. The results demonstrate that the flexible WiGS approach, particularly the adaptive RL methods, can outperform the original iGS, demonstrating the value of adaptively balancing exploration and exploitation throughout the learning process.
 
 ## Preliminary Results
 
-Preliminary quantitative results can be seen in the trace plots located in `Results/images/full_pool/RMSE`. The folder [`/trace`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace/trace) contains the typical trace plots, while [`/trace_relative_iGS`](https://github.com/thatswhatsimonsaid/WeightedGreedySampling/tree/a6ba77f8ab02da6166411e08d350926344d4082d/Results/images/full_pool/RMSE/trace_relative_iGS/trace) contains the trace plot relative to [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680)'s iGS method.
+Preliminary quantitative results can be seen in the trace plots located in `Results/images/trace_plots/`. For each metric (e.g., RMSE), the `/trace` folder contains the absolute trace plots, while the `/trace_relative_iGS` folder contains the trace plots normalized relative to the iGS baseline.
 
-These plots show that the adaptive **WiGS** methods, particularly those guided by reinforcement learning methods, generally outperform the static iGS baseline.
+These plots show that the adaptive **WiGS** methods, particularly those guided by reinforcement learning, generally outperform the static iGS baseline.
 
-A visualization demonstrating the adaptive behavior of the WiGS (SAC) agent on the dgp_three_regime dataset is shown below. Observe how the agent adjusts its exploration/exploitation strategy (indicated by the $w_x^{(t)}$ weight) throughout the learning process.
+A visualization demonstrating the adaptive behavior of the `WiGS (SAC)` agent on the `dgp_three_regime` dataset is shown below. Observe how the agent adjusts its exploration (*w<sub>x</sub>* ≈ 1.0, red) / investigation (*w<sub>x</sub>* ≈ 0.0, blue) strategy in real-time based on the local characteristics of the data.
 
 <div align="center">
 
@@ -26,111 +26,106 @@ A visualization demonstrating the adaptive behavior of the WiGS (SAC) agent on t
 
 This project was developed using **Python 3.9**. A virtual environment is highly recommended.
 
-1.  **Create and Activate Environment:**
-    ```bash
-    # Using venv (recommended)
-    python3 -m venv .WiGS_Env
-    source ./.WiGS_Env/bin/activate
+1. **Create and Activate Environment:**
+```bash
+   # Using venv (recommended)
+   python3 -m venv .WiGS_Env
+   source ./.WiGS_Env/bin/activate
+```
 
-    # Or using Conda
-    # conda create -n WiGS_Env python=3.9
-    # conda activate WiGS_Env
-    ```
-
-2.  **Install Requirements:**
-    ```bash
-    pip install -r requirements.txt
-    ```
+2. **Install Requirements:**
+```bash
+   pip install -r requirements.txt
+```
 
 ## Automated Workflow on an HPC Cluster
 
 The project is designed as an automated pipeline for a SLURM-based HPC cluster. The scripts in `Code/Cluster/` are numbered in their execution order.
 
-**Note:** The user can edit to the appropriate parition name (amongst other cluster inputs) in the file `Code/Cluster/CreateSimulationSbatch.py`, `5_ImageGeneration.sbatch`, and `6_CompileAllPlots.sbatch`.
+**Note:** Before running, you may need to configure cluster-specific parameters (like partition names) in `Code/Cluster/CreateSimulationSbatch.py` and all `.sbatch` files.
 
+1. `0_PreprocessData.sh`: Executes `utils/Auxiliary/PreprocessData.py` to download, generate, and clean all 20 datasets, saving them as `.pkl` files in `Data/processed/`.
 
-1.  `1_PreprocessData.sh`: This script executes a Python script that downloads all 20 benchmark datasets from their sources (UCI, Kaggle Hub, StatLib/pmlb), preprocesses them into a clean format, and saves them as `.pkl` files in the `Data/processed/` directory. 
+2. `1_CreateSimulationSbatch.sh`: Runs `CreateSimulationSbatch.py` to create all necessary `Results/` sub-directories and generate the master `.sbatch` files (one for each dataset) in `Code/Cluster/RunSimulations/`.
 
-2.  `2_CreateSimulationSbatch.py`: This Python script automatically discovers all processed datasets and generates a master job script (e.g., `master_job_LinearRegressionPredictor.sbatch`) for each machine learning model you wish to test. Each master script uses a **SLURM job array** to parallelize the simulation across all datasets and all `N` replications. 
+3. `2_RunAllSimulations.sh`: Submits all the `master_job_*.sbatch` files to the SLURM scheduler. Each of these is a job array that runs one job for every *seed* (e.g., 100 replications). This is the main experiment and populates the `Results/simulation_results/raw/` directory.
 
-3.  `3_RunAllSimulations.sh`: Submits all generated master jobs to the SLURM scheduler.
+4. `3_ProcessResults.sh`: **Run this after all simulations complete.** It executes `utils/Auxiliary/AggregateResults.py` to collect all raw `.pkl` files and save them into clean, aggregated `.csv` and `.pkl` files in `Results/simulation_results/aggregated/`.
 
-4.  `4_ProcessResults.sh`: **Run after all cluster jobs complete.** Executes `AggregateResults.py` to collect raw `.pkl` results and save them into organized, per-dataset aggregated files:
-    * Aggregated metrics (`.../full_pool_metrics/*.pkl`).
-    * Selection history (`.../selection_history/*.csv`).
-    * Weight history (`.../weight_history/*.csv`).
-    * Initial training indices (`.../InitialIndices.csv`).
-    * Elapsed times (`.../ElapsedTime.csv`).
+5. `4_GenerateTracePlots.sbatch`: A parallel SLURM job array that runs *per dataset*. This single script efficiently generates three sets of results:
+   - **All Trace Plots** (RMSE, MAE, R2, CC) for the dataset, saving to `Results/images/trace_plots/`.
+   - **All Weight Trends** (average and individual) for the adaptive agents, saving to `Results/images/manuscript/average_weight_trends/` and `Results/images/appendices/individual_weight_trends/`.
+   - **The Wilcoxon Test Table** (`.tex` file) for the dataset, saving to `Results/tables/`.
 
-5.  `5_ImageGeneration.sbatch`: Submits a parallel job array to generate all individual trace plots for every dataset, metric, and evaluation type. 
+6. `5_GenerateManuscriptPlots.sh`: A local script that generates the "hero" figures for the manuscript. This is run once, after `3_ProcessResults.sh`. It creates:
+   - The **Nearest Neighbor** conceptual visualization.
+   - The **DGP plots** (two-regime and three-regime).
+   - The **Weight Heatmaps** (average and individual) for the synthetic datasets.
+   - The standalone **Legend** for the trace plots.
 
-6. `6_GenerateDGPAndTrends.sh`: Executes `GenerateDGPImage.py` to create visualizations of the synthetic datasets (saving to `docs/images/`) and runs `VisualizeWeightTrends.py` to generate plots of the $w_x^{(t)}$ weights over iterations (saving to `Results/visualizations/`).
+7. `6_GenerateSelectionVideos.sbatch`: A 2D SLURM job array that generates the `.mp4` video visualizations for each selector on the synthetic datasets. Saves to `Results/images/appendices/selection_videos/`.
 
-7. `7_GenerateVideos_bySelector.sbatch`: (🚧 Under construction 🚧) Submits a **SLURM job array** where each task generates the video frames and compiles the video (`.mp4`) for a specific selector strategy using `VisualizeSelections.py`. Outputs saved in `Results/visualizations/`.
-
-8.  `8_DeleteAuxiliaryFiles.sh` & `9_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary logs and raw data.
-
-9.  `10_CompileAllPlots.sbatch`: Submits a parallel job array to compile the individual plots into summary grid images, perfect for presentations. This script is highly configurable for different layouts.
-
+8. `7_DeleteAuxiliaryFiles.sh` & `8_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary SLURM logs and the large `raw/` simulation data.
 
 ## Directory Structure
 
-* **`Code/`**: All executable code.
-    * `Cluster/`: SLURM workflow scripts (`.sh`, `.sbatch`, `.py`).
-        * `RunSimulations/`: Holds generated `.sbatch` files and SLURM logs.
-    * `Notebooks/`: Jupyter notebooks for exploration.
-    * `utils/`: Core Python package.
-        * `Auxiliary/`: Helper scripts (preprocessing, aggregation, plotting, visualization).
-        * `Main/`: Main simulation engine (`LearningProcedure.py`).
-        * `Prediction/`: ML model wrappers (`RidgeRegressionPredictor.py`) and error calculation (`FullPoolError.py`).
-        * `Selector/`: Active learning strategies (Random, GSx, iGS, WiGS variants).
-* **`Data/`**:
-    * `processed/`: Preprocessed `.pkl` datasets.
-* **`Results/`**: All simulation outputs.
-    * `images/`: Plots and video frames.
-        * `full_pool/`: Trace plots (absolute and relative to iGS).
-        * `Presentation/`: Images used in our presentation.
-        * `(Planned)` `video_frames/`: Individual frames generated by `VisualizeSelections.py`.
-    * `simulation_results/`: Numerical data.
-        * `raw/`: Individual `.pkl` output from each cluster job.
-    * `aggregated/`: Per-dataset folders containing:
-            * `full_pool_metrics/`: Aggregated metric data (`.pkl`).
-            * `selection_history/`: Order of selected indices (`.csv`).
-            * `weight_history/`: $w_x$ weights used by adaptive methods (`.csv`).
-            * `InitialIndices.csv`: Indices of the initial training set for all seeds (`.csv`).
-            * `ElapsedTime.csv`: Runtimes per strategy/seed (`.csv`).
-    * `visualizations/`: Outputs from visualization scripts
+- **`Code/`**: All executable code.
+  - `Cluster/`: SLURM workflow scripts (`.sh`, `.sbatch`).
+    - `RunSimulations/`: Holds generated `.sbatch` files and SLURM logs.
+  - `utils/`: Core Python package.
+    - `Auxiliary/`: Helper scripts (preprocessing, aggregation, plotting, visualization).
+    - `Main/`: Main simulation engine (`LearningProcedure.py`).
+    - `Prediction/`: ML model wrappers (`RidgeRegressionPredictor.py`) and error calculation (`FullPoolError.py`, `CrossValidation.py`).
+    - `Selector/`: Active learning strategies (Random, GSx, iGS, WiGS variants).
+- **`Data/`**:
+  - `processed/`: Preprocessed `.pkl` datasets.
+- **`Results/`**: All simulation outputs.
+  - `images/`: All visual outputs.
+    - `trace_plots/`: All trace plot results (RMSE, MAE, etc.) for all datasets.
+    - `manuscript/`: The 5-6 core figures for the paper (DGPs, heatmaps, legend).
+      - `average_weight_trends/`: Average *w<sub>x</sub>* trend plots for all datasets.
+    - `appendices/`: Supporting figures for the appendix.
+      - `individual_weight_heatmaps/`: Per-seed heatmaps for DGPs.
+      - `individual_weight_trends/`: Per-seed *w<sub>x</sub>* trend plots.
+      - `selection_videos/`: `.mp4` video visualizations.
+  - `simulation_results/`: Numerical data.
+    - `raw/`: Individual `.pkl` output from each cluster job (temporary).
+    - `aggregated/`: Cleaned, aggregated data (permanent).
+  - `tables/`: Final LaTeX tables for the Wilcoxon test results.
 
 ## Code Overview
 
-#### Main Functions
+### Main Simulation Engine (`Code/utils/Main/`)
 
-* `LearningProcedure.py`: The core active learning loop.
-* `OneIterationFunction.py`: Manages setup (data loading/splitting) and execution for one strategy run. Calls `LearningProcedure`.
-* `RunSimulationFunction.py`: Runs all selector strategies for a single dataset and seed. Called by `RunSimulation.py`.
-* `TrainCandidateSplit.py`: Splits data into initial `df_Train` and `df_Candidate`.
+- `LearningProcedure.py`: The core active learning loop. It trains a model, calculates both evaluation metrics, selects a point, and updates the datasets. Includes a final evaluation step after the loop to get the 100% labeled result.
+- `RunSimulationFunction.py`: A wrapper that runs *all* selector strategies (Passive, iGS, WiGS-SAC, etc.) for a single seed, allowing for a head-to-head comparison.
+- `OneIterationFunction.py`: Sets up the data (loading, initial train/candidate split) for a single strategy run and calls `LearningProcedure`.
+- `TrainCandidateSplit.py`: A helper script that performs the initial `train_test_split`.
 
-#### Prediction Functions
+### Prediction & Evaluation (`Code/utils/Prediction/`)
 
-* `LinearRegressionPredictor.py`, `RidgeRegressionPredictor.py`, and `RandomForestRegressorPredictor.py`: Wrappers for scikit-learn models.
-* `FullPoolError.py`: Calculates performance metrics using the "Full Pool" method from [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
+- `RidgeRegressionPredictor.py`: A standardized wrapper for the `sklearn.linear_model.Ridge` model, providing `.fit()` and `.predict()` methods. (Includes `LinearRegressionPredictor` and `RandomForestRegressorPredictor` as well).
+- `FullPoolError.py`: Calculates the evaluation metric (RMSE, R2, etc.) based on the iGS (2018) paper's "hybrid" method. This is used for the final plots.
+- `CrossValidation.py`: Calculates the RL reward signal. It gets a data-efficient and stable K-fold `CV_RMSE` using only the labeled training set (*D<sub>tr</sub>*) to prevent data leakage.
 
-#### Selector Functions
-* `GreedySamplingSelector.py`: Implements GSx, GSy, and iGS [Wu, Lin, and Huang (2018)](https://www.sciencedirect.com/science/article/abs/pii/S0020025518307680).
-* `PassiveLearningSelector.py`: Random sampling baseline.
-* `WeightedGreedySamplingSelector.py`: Implements **WiGS** with static and time-decay weights. Returns `w_x`.
-* `WiGS_MAB.py`: Implements **WiGS** using a Multi-Armed Bandit (UCB1) to choose weights. Returns `w_x`.
-* `WiGS_SAC.py`: Implements **WiGS** using a Soft Actor-Critic agent to learn a policy for choosing `w_x`. Returns `w_x`.
+### Selector Strategies (`Code/utils/Selector/`)
 
-#### Auxiliary Functions
+- `PassiveLearningSelector.py`: Randomly samples a point (baseline).
+- `GreedySamplingSelector.py`: Implements the `GSx`, `GSy`, and `iGS` baselines from Wu et al. (2018).
+- `WeightedGreedySamplingSelector.py`: Implements `WiGS` with static and time-decaying weight heuristics.
+- `WiGS_MAB.py`: Implements `WiGS` with a Multi-Armed Bandit (UCB1) that learns the best average *w<sub>x</sub>* from the `CV_RMSE` reward.
+- `WiGS_SAC.py`: Implements `WiGS` with a Soft Actor-Critic (SAC) agent that learns a *state-dependent policy* to choose the optimal *w<sub>x</sub>* at each step, based on the `CV_RMSE` reward and current state.
+- `IDEALSelector.py` & `iRDMSelector.py`: Other published AL strategies used for comparison.
 
-* `AggregateResults.py`: Compiles raw `.pkl` results into aggregated `.pkl` (metrics) and `.csv` (history) files.
-* `AnalyzeWeightTrends.py`: Generates plots showing the trend of $w_x^{(T)}$ weights over iterations.
-* `CompilePlots.py.py`: Stitches individual trace plots into combined grid images.
-* `DataFrameUtils.py`: Helper function to split a DataFrame into features (X) and target (y).
-* `GenerateJobs.py`: Creates the content for SLURM master job scripts.
-* `GeneratePlots.py`: Creates trace plots from aggregated metric data.
-* `GenerateDGPImage.py`: Creates visualizations of the synthetic DGP datasets (two-regime, three-regime).
-* `LoadDataSet.py`: Loads a specific `.pkl` dataset.
-* `PreprocessData.py`: Downloads, generates, cleans, and saves all datasets.
-* `(Planned)` `VisualizeSelections.py`: Generates plot frames for videos from aggregated history CSVs.
+### Auxiliary & Plotting (`Code/utils/Auxiliary/`)
+
+- `RunSimulation.py`: (In `Code/`) The main script called by SLURM. It parses the `TaskID` to determine the correct dataset and seed, then calls `RunSimulationFunction`.
+- `AggregateResults.py`: Reads all raw `.pkl` files and combines them into aggregated `.csv` and `.pkl` files.
+- `GeneratePlots.py`: Generates all trace plots for a given dataset. Also has a `--legend_only` mode to create the standalone legend.
+- `PlotWeightHeatmap.py`: A dual-mode script that generates heatmaps.
+  - `--seed 0` (or any int): Plots the heatmap for a single seed.
+  - `--seed avg`: Plots the heatmap of the average *w<sub>x</sub>* across all seeds.
+- `AnalyzeWeightTrends.py`: Generates plots showing the *w<sub>x</sub>* weight over time, supporting both average ("all") and single-seed plots.
+- `WilcoxonRankSignedTest.py`: Runs a pairwise Wilcoxon signed-rank test on the aggregated results and saves a publication-ready `.tex` table.
+- `GenerateDGPImage.py` & `NearestNeighborVisualization.py`: Scripts to generate specific, high-quality figures for the manuscript.
+- `VisualizeSelections.py`: Generates all the `.png` frames and compiles them into a final `.mp4` video.
