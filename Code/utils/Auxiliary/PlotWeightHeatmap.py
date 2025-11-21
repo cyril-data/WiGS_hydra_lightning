@@ -229,6 +229,9 @@ def main():
     print("Loading all data files...")
     try:
         df_data = pd.read_pickle(data_path)
+        x_min = df_data['X1'].min()
+        x_max = df_data['X1'].max()
+        df_data['X1'] = (df_data['X1'] - x_min) / (x_max - x_min)
         df_initial_full = pd.read_csv(initial_path)
         df_selection_full = pd.read_csv(selection_path)
         df_weight_full = pd.read_csv(weight_path)
