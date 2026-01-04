@@ -24,12 +24,12 @@ def MeanVariancePlot(Subtitle=None,
                      show_legend=True, 
                      **SimulationErrorResults):
     """
-    Generates and returns trace plots for the mean and variance of simulation results.
+    Generates trace plots. 
+    If RelativeError is provided, plots the DIFFERENCE (Method - Baseline).
     """
     if initial_train_size is None:
         raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
 
-    ### Set Up ###
     MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector = {}, {}, {}, {}
 
     ### Extract ###
@@ -38,6 +38,8 @@ def MeanVariancePlot(Subtitle=None,
         VarianceVector[Label] = np.var(Results, axis=1)
         n_simulations = Results.shape[1]
         StdErrorVector[Label] = np.std(Results, axis=1) / np.sqrt(n_simulations)
+        
+        # Calculate Variance Bounds
         lower_chi2 = chi2.ppf(0.025, df=n_simulations - 1)
         upper_chi2 = chi2.ppf(0.975, df=n_simulations - 1)
         StdErrorVarianceVector[Label] = {
@@ -45,24 +47,23 @@ def MeanVariancePlot(Subtitle=None,
             "upper": (n_simulations - 1) * VarianceVector[Label] / lower_chi2
         }
 
-    ### Normalize to Relative Error if specified ###
+    ### Calculate Difference (Method - Baseline) if specified ###
     if RelativeError:
         if RelativeError in MeanVector:
-            Y_Label = f"Normalized Error (Baseline: {RelativeError}=1.0)"
+            Y_Label = f"Error Difference (Method - {RelativeError})"
+            
             BaselineMean = MeanVector[RelativeError].copy()
-            with np.errstate(divide='ignore', invalid='ignore'):
-                for Label in MeanVector:
-                    MeanVector[Label] /= BaselineMean
-                    StdErrorVector[Label] /= BaselineMean
-                    
-                    # Manual Clamp for 100% Labeled #
-                    # NOTE: Since both models are identical at 100% data, the ratio is theoretically 1.0.
-                    # NOTE: We force this to remove the numerical instability (0/0) at the end. #
-                    if len(MeanVector[Label]) > 0:
-                        MeanVector[Label][-1] = 1.0
-                        StdErrorVector[Label][-1] = 0.0
+            
+            for Label in MeanVector:
+                MeanVector[Label] -= BaselineMean
+                
+                # Manual Clamp for 100% Labeled
+                # At 100%, Method == Baseline, so Difference must be 0.0
+                if len(MeanVector[Label]) > 0:
+                    MeanVector[Label][-1] = 0.0
+                    StdErrorVector[Label][-1] = 0.0
         else:
-            print(f"  > Warning: Baseline '{RelativeError}' not found for normalization. Skipping.")
+            print(f"  > Warning: Baseline '{RelativeError}' not found. Skipping normalization.")
 
     ### Mean Plot ###
     fig_mean, ax_mean = plt.subplots(figsize=FigSize)
@@ -77,6 +78,7 @@ def MeanVariancePlot(Subtitle=None,
             x = (num_labeled_at_step / total_pool_size) * 100
         else:
             x = []
+            
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ':') if Linestyles else ':'
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
@@ -84,9 +86,14 @@ def MeanVariancePlot(Subtitle=None,
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(x, MeanValues - CriticalValue * StdErrorValues,
                              MeanValues + CriticalValue * StdErrorValues, alpha=TransparencyVal, color=color)
+
     ax_mean.set_xlabel("Percent of Learning Pool Labeled")
     ax_mean.set_ylabel(Y_Label)
-    # ax_mean.set_title(Subtitle, fontsize=12)
+    
+    # 3. Reference Line is now at 0.0 (No Difference)
+    if RelativeError:
+        ax_mean.axhline(y=0.0, color='r', linestyle='-', linewidth=1, alpha=0.5)
+
     if show_legend:
         ax_mean.legend(loc='upper left', bbox_to_anchor=(1.02, 1))
 
@@ -116,16 +123,14 @@ def MeanVariancePlot(Subtitle=None,
             lower_bound = StdErrorVarianceVector[Label]["lower"]
             upper_bound = StdErrorVarianceVector[Label]["upper"]
             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
+        
         ax_var.set_xlabel("Percent of Learning Pool Labeled")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
-        # ax_var.set_title(Subtitle, fontsize=9)
         ax_var.legend(loc='upper right')
         if isinstance(xlim, list):
             ax_var.set_xlim(xlim)
     
     return (fig_mean, fig_var)
-
-
 ### Main Wrapper Function ###
 def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, single_dataset=None):
     """
@@ -163,8 +168,6 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (MAB-UCB1, c=2.0)': '-.', 
         'WiGS (MAB-UCB1, c=5.0)': '-.',
         'WiGS (SAC)': '-'
-        # 'iRDM': '--', 
-        # 'IDEAL': '-'
     }
     master_legend = {
         'Passive Learning': 'Random', 

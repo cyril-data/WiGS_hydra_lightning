@@ -3,7 +3,7 @@
 #SBATCH --partition=short
 #SBATCH --output=RunSimulations/ClusterMessages/out/vidselect_%A_%a.out
 #SBATCH --error=RunSimulations/ClusterMessages/error/vidselect_%A_%a.err
-#SBATCH --time=11:59:00        
+#SBATCH --time=7:59:00        
 #SBATCH --mem-per-cpu=8GB
 #SBATCH --cpus-per-task=1
 #SBATCH --array=0-25   

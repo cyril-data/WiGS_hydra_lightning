@@ -63,7 +63,7 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
    - The **Weight Heatmaps** (average and individual) for the synthetic datasets.
    - The standalone **Legend** for the trace plots.
 
-7. `6_GenerateSelectionVideos.sbatch`: A 2D SLURM job array that generates the `.mp4` video visualizations for each selector on the synthetic datasets. Saves to `Results/images/appendices/selection_videos/`.
+7. `6_GenerateSelectionVideos.sbatch`: A 2D SLURM job array that generates the `.mp4` video visualizations for each selector on the synthetic datasets. Saves to `Results/selection_videos/`.
 
 8. `7_DeleteAuxiliaryFiles.sh` & `8_DeleteRawResults.sh`: Optional cleanup scripts to remove temporary SLURM logs and the large `raw/` simulation data.
 
