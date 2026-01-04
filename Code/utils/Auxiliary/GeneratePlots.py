@@ -50,9 +50,17 @@ def MeanVariancePlot(Subtitle=None,
         if RelativeError in MeanVector:
             Y_Label = f"Normalized Error (Baseline: {RelativeError}=1.0)"
             BaselineMean = MeanVector[RelativeError].copy()
-            for Label in MeanVector:
-                MeanVector[Label] /= BaselineMean
-                StdErrorVector[Label] /= BaselineMean
+            with np.errstate(divide='ignore', invalid='ignore'):
+                for Label in MeanVector:
+                    MeanVector[Label] /= BaselineMean
+                    StdErrorVector[Label] /= BaselineMean
+                    
+                    # Manual Clamp for 100% Labeled #
+                    # NOTE: Since both models are identical at 100% data, the ratio is theoretically 1.0.
+                    # NOTE: We force this to remove the numerical instability (0/0) at the end. #
+                    if len(MeanVector[Label]) > 0:
+                        MeanVector[Label][-1] = 1.0
+                        StdErrorVector[Label][-1] = 0.0
         else:
             print(f"  > Warning: Baseline '{RelativeError}' not found for normalization. Skipping.")
 

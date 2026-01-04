@@ -106,6 +106,7 @@ if __name__ == "__main__":
     AGG_DIR = "Results/simulation_results/aggregated"
     
     check_endpoints(args.dataset, AGG_DIR)
+
 # python ./Code/utils/Auxiliary/VerifyEndpoints.py --dataset "beer"
 # python ./Code/utils/Auxiliary/VerifyEndpoints.py --dataset "burbidge_low_noise"
 # python ./Code/utils/Auxiliary/VerifyEndpoints.py --dataset "concrete_cs"
