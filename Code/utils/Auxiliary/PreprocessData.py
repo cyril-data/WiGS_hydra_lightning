@@ -158,7 +158,7 @@ def generate_three_regime_data(n_samples=1500, seed=None):
     return df
 
 ### Burbridge DGP ###
-def GenerateBurbridgeData(n_samples=500, delta=0.0, sigma_epsilon=0.3, seed=None):
+def GenerateBurbridgeData(n_samples=1000, delta=0.0, sigma_epsilon=0.3, seed=None):
     """
     Generates a synthetic dataset based on the DGP from Burbidge et al. (2007).
 
