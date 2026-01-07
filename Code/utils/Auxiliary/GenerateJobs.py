@@ -44,6 +44,7 @@ def create_master_sbatch(partition_name,
 #SBATCH --cpus-per-task=1
 
 cd {code_dir}
+export PYTHONDONTWRITEBYTECODE=1
 
 python {python_script_name} \\
     --Data "{dataset_name}" \\
