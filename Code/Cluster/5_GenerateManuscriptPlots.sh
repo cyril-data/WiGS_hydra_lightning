@@ -34,6 +34,15 @@ SELECTOR_FOR_HEATMAP="WiGS (SAC)"
 SEED_TO_PLOT_INDIV=("0" "1" "2")
 
 # ======================================================
+# --- PART 0: Generate Tables
+# ======================================================
+
+## Table 1: Dataset Summary Table ##
+echo ""
+echo "--- 0. Generating Dataset Summary Table... ---"
+python3 "${CODE_DIR}/utils/Auxiliary/GenerateDataTable.py"
+
+# ======================================================
 # --- PART 1: Generate Core Manuscript Figures
 # ======================================================
 

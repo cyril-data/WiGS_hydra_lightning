@@ -1,5 +1,5 @@
 from .AggregateResults import *
-from .AnalyzeWeightTrends import *
+from .GenerateDataTable import *
 from .DataFrameUtils import *
 from .GenerateDGPImage import *
 from .GenerateJobs import *
