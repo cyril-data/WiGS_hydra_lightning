@@ -30,7 +30,6 @@ def generate_gmm_x_samples(n_samples=1000, seed=None):
         n_i = component_samples[i]
         mean_i = means[i]
         std_i = stds[i]
-        # Draw n_i samples from a normal distribution
         samples_list.append(rng.normal(loc=mean_i, scale=std_i, size=n_i))
     
     # 4. Combine, shuffle, and clip

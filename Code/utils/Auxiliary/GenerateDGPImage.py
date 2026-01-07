@@ -70,11 +70,6 @@ def plot_two_regime(df, save_path=None):
     for xpos in [0.5, 0.8, 0.9]:
         plt.axvline(xpos, color='dimgray', linestyle="--", linewidth=1) 
 
-    # # Region annotations
-    # plt.text(0.18, 1.6, "Exploration", fontsize=10)
-    # plt.text(0.63, -1.6, "Investigation", fontsize=10)
-    # plt.text(0.805, 1.8, "High-noise trap", fontsize=9)
-
     plt.title("Two Regime DGP")
     plt.xlabel("X1"); plt.ylabel("Y")
     plt.legend(loc="upper left", frameon=False)
@@ -104,12 +99,6 @@ def plot_three_regime(df, save_path=None):
     # Dividing lines at regime and trap bounds 
     for xpos in [0.4, 0.7, 0.6, 0.65]:
         plt.axvline(xpos, color='dimgray', linestyle="--", linewidth=1)
-
-    # # Region annotations
-    # plt.text(0.12, 2.2, "Exploration", fontsize=10)
-    # plt.text(0.47, -2.4, "Investigation", fontsize=10)
-    # plt.text(0.75, 2.2, "Exploration", fontsize=10)
-    # plt.text(0.602, 2.6, "High-noise trap", fontsize=9)
 
     plt.title("Three Regime DGP")
     plt.xlabel("X1"); plt.ylabel("Y")

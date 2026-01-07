@@ -152,8 +152,6 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
         'WiGS (MAB-UCB1, c=5.0)': 'indigo',
         'WiGS (SAC)': 'darkcyan'
-        # 'iRDM': 'darkcyan', 
-        # 'IDEAL': 'deeppink'
     }
     master_linestyles = {
         'Passive Learning': ':', 

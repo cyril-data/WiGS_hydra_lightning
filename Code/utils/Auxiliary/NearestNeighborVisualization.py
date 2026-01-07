@@ -73,7 +73,7 @@ def main(output_file_path):
         
         # First draw all dashed lines
         for m, (lname, lpos) in enumerate(labeled.items()):
-            if m != nn_idx:  # Skip the nearest neighbor for now
+            if m != nn_idx:  
                 ax.plot([lpos[0], upos[0]], [lpos[1], upos[1]], 
                        color='gray', linestyle='--', alpha=0.5, linewidth=1.2, zorder=1)
         
@@ -138,7 +138,6 @@ def main(output_file_path):
                            fontsize=11, ha='center', va='center', style='italic', color='gray')
 
     ### 4. Finalize and Save Plot ###
-    # ax.set_title(r'Pairwise Distances $d_{nm}$ Between Labeled and Unlabeled Points', fontsize=16, pad=20)
     ax.set_xlabel('Dimension 1 (e.g., Feature or Predicted Output)', fontsize=14)
     ax.set_ylabel('Dimension 2 (e.g., Feature or Predicted Output)', fontsize=14)
 
@@ -159,7 +158,6 @@ def main(output_file_path):
     ### 5. Save the file ###
     plt.savefig(output_file_path, dpi=300, bbox_inches='tight')
     plt.close(fig) 
-    # print(f"Nearest Neighbor plot saved to: {output_file_path}")
 
 ### MAIN ###
 if __name__ == "__main__":

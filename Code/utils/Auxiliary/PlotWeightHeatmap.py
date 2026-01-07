@@ -59,8 +59,6 @@ def plot_single_seed_heatmap(dgp_name, selector, seed, output_dir, df_data, df_i
 
     df_plot = df_data[['X1', 'Y']].copy()
     df_plot = df_plot.join(df_selected_points)
-    
-    # --- MODIFIED LOGIC ---
     df_plot['plot_type'] = 'selected'
     df_plot.loc[initial_indices, 'plot_type'] = 'initial'
     df_plot.loc[selection_indices, 'plot_type'] = 'selected'    

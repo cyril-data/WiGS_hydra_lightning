@@ -29,7 +29,7 @@ def FullPoolErrorFunction(InputModel, df_Train: pd.DataFrame, df_Candidate: pd.D
     # 2. Get features and labels from the separate sets.
     _, y_train = get_features_and_target(df_Train, "Y")
 
-    # 3. Check if the candidate pool is empty (i.e., final iteration)
+    # 3. Check if the candidate pool is empty 
     if df_Candidate.empty:                  # On the last loop, the hybrid vector is just the training labels
         y_hybrid_predictions = y_train
     else:                                   # Otherwise, predict on the candidate set

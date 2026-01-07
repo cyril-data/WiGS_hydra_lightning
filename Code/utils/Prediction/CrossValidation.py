@@ -20,7 +20,6 @@ def get_cv_rmse(model_object, X_train, y_train, k=5):
     model_to_cv = model_object
 
     ### Define the scoring ###
-    # NOTE: cross_val_score maximizes, so use 'neg_root_mean_squared_error' and then flip the sign.
     scores = cross_val_score(model_to_cv, 
                              X_train, 
                              y_train, 

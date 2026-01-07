@@ -89,13 +89,8 @@ if __name__ == "__main__":
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
     except NameError:
-        # Fallback if running from root
         PROJECT_ROOT = os.getcwd() 
-    
-    # Change to project root so relative paths (e.g., "Results/...") work
-    # This check is good practice
     if os.path.basename(PROJECT_ROOT) != 'WeightedGreedySampling':
-        # If the script is run from inside Code/utils/Auxiliary, go up
         PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..', '..'))
         if os.path.basename(PROJECT_ROOT) != 'WeightedGreedySampling':
              print("Error: Could not find project root. Run this script from the project root directory.")
