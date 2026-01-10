@@ -5,7 +5,7 @@ import pickle
 import kagglehub
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler, QuantileTransformer
 
 import numpy as np
 
@@ -213,7 +213,9 @@ def _preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     X_encoded = pd.get_dummies(X, drop_first=True)
     
     ### Standardize all features ###
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
+    scaler = RobustScaler()   
+    # scaler = QuantileTransformer(output_distribution='uniform') 
     X_scaled_array = scaler.fit_transform(X_encoded)
     
     ### Convert scaled features back to a DataFrame ###
