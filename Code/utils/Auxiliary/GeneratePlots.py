@@ -151,7 +151,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (MAB-UCB1, c=0.5)': 'orchid',
         'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
         'WiGS (MAB-UCB1, c=5.0)': 'indigo',
-        'WiGS (SAC)': 'darkcyan'
+        'WiGS (SAC)': 'darkcyan',
+        'QBC': 'red'   
     }
     master_linestyles = {
         'Passive Learning': ':', 
@@ -165,7 +166,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (MAB-UCB1, c=0.5)': '-.',
         'WiGS (MAB-UCB1, c=2.0)': '-.', 
         'WiGS (MAB-UCB1, c=5.0)': '-.',
-        'WiGS (SAC)': '-'
+        'WiGS (SAC)': '-',
+        'QBC': '-.' 
     }
     master_legend = {
         'Passive Learning': 'Random', 
@@ -178,7 +180,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
         'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
         'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB)',
-        'WiGS (SAC)': 'WiGS (SAC)'
+        'WiGS (SAC)': 'WiGS (SAC)',
+        'QBC': 'QBC',
     }
     
     ### Set up ###

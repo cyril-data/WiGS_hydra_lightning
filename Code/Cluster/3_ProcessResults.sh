@@ -7,4 +7,3 @@ cd "$SCRIPT_DIR/.."
 
 ### Run script ###
 python utils/Auxiliary/AggregateResults.py
-echo "--- Aggregation complete. ---"
