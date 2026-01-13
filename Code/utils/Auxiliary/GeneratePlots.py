@@ -152,7 +152,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
         'WiGS (MAB-UCB1, c=5.0)': 'indigo',
         'WiGS (SAC)': 'darkcyan',
-        'QBC': 'red'   
+        'QBC': 'goldenrod'   
     }
     master_linestyles = {
         'Passive Learning': ':', 
@@ -179,7 +179,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
         'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
         'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
-        'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB)',
+        'WiGS (MAB-UCB1, c=2.0)': 'MAB-UCB1, c=2.0',
+        'WiGS (MAB-UCB1, c=5.0)': 'MAB-UCB1, c=5.0',
         'WiGS (SAC)': 'WiGS (SAC)',
         'QBC': 'QBC',
     }
@@ -189,11 +190,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
     eval_types = ['full_pool']    
     strategies_to_exclude = {
-        "iRDM", 
-        "IDEAL",
         "WiGS (Static w_x=0.5)",
-        'WiGS (MAB-UCB1, c=0.5)',
-        'WiGS (MAB-UCB1, c=2.0)',
+        'WiGS (MAB-UCB1, c=0.5)'
     }
 
 
@@ -417,7 +415,7 @@ if __name__ == "__main__":
             colors=master_colors,
             linestyles=master_linestyles,
             output_path=legend_output_path,
-            ncol=5
+            ncol=6
         )
 
     else:

@@ -48,7 +48,7 @@ def RunSimulationFunction(DataFileInput,
         'WiGS (MAB-UCB1, c=2.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 2.0},
         'WiGS (MAB-UCB1, c=5.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 5.0},
         'WiGS (SAC)': {'SelectorType': 'WiGS_SAC_Selector'},
-        'QBC': {'SelectorType': 'QBCSelector'}
+        'QBC': {'SelectorType': 'QBCSelector', 'n_committee': 5},
         }
     
     ### Loop Through Strategies ###

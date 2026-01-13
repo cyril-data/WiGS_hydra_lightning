@@ -1,43 +1,37 @@
+### Libraries ###
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.svm import SVR
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import Ridge
+from sklearn.utils import resample
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 
+### Query-By-Bagging (QBB) / Query-By-Committee (QBC) ###
 class QBCSelector:
     """
-    Implements Heterogeneous Query-By-Committee (QBC).
+    Implements Query-By-Bagging (QBB) / Query-By-Committee (QBC) with Ridge Regression.
     
-    The 'committee' consists of distinct model architectures representing
-    different inductive biases. All members are trained on the FULL current
-    dataset (no bootstrapping).
+    The 'committee' consists of multiple Ridge Regression models trained on 
+    bootstrap samples of the labeled data. The acquisition function selects 
+    the candidate point with the highest variance in predictions across the 
+    committee members.
     """
 
-    def __init__(self, seed=None, **kwargs):
+    def __init__(self, n_committee=5, alpha=0.01, seed=None, **kwargs):
         """
         Args:
+            n_committee (int): Number of models in the committee.
+            alpha (float): Regularization strength for the Ridge members.
             seed (int): Random seed for reproducibility.
             **kwargs: Ignored arguments.
         """
+        self.n_committee = int(n_committee)
+        self.alpha = float(alpha)
         self.seed = seed
         self.rng = np.random.default_rng(seed)
-        
-        # Define Committee #
-        self.committee_members = [
-            LinearRegression(),                                                    # 1. Linear Baseline
-            DecisionTreeRegressor(max_depth=5, random_state=seed),                 # 2. Single Tree (Step functions)
-            KNeighborsRegressor(n_neighbors=5),                                    # 3. Instance-based (Local averaging)
-            SVR(kernel='rbf', C=1.0),                                              # 4. SVR (Smooth curves, Kernel)
-            GradientBoostingRegressor(n_estimators=20, max_depth=3, random_state=seed) # 5. Boosting (Ensemble)
-        ]
 
     def select(self, df_Candidate: pd.DataFrame, df_Train: pd.DataFrame, **kwargs) -> dict:
         """
-        Selects the candidate with the highest prediction variance across 
-        the heterogeneous committee.
+        Selects the candidate with the highest prediction variance.
         """
         if df_Candidate.empty:
             return {"IndexRecommendation": []}
@@ -47,20 +41,18 @@ class QBCSelector:
         X_cand, _ = get_features_and_target(df_Candidate, "Y")
         
         # 2. Train Committee
-        predictions = [] # Shape: (n_members, n_candidates)
+        predictions = [] # Shape: (n_committee, n_candidates)
         
-        for model in self.committee_members:
-            # Train on FULL current data
-            model.fit(X_train, y_train)
-            
-            # Predict
+        for i in range(self.n_committee):
+            member_seed = self.seed + i if self.seed is not None else None            
+            X_boot, y_boot = resample(X_train, y_train, replace=True, random_state=member_seed)            
+            model = Ridge(alpha=self.alpha)
+            model.fit(X_boot, y_boot)
             preds = model.predict(X_cand)
             predictions.append(preds)
 
         # 3. Calculate Variance across Committee
-        committee_preds = np.vstack(predictions)
-        
-        # Variance across the different algorithms
+        committee_preds = np.vstack(predictions)        
         prediction_variance = np.var(committee_preds, axis=0)
         
         # 4. Select Max Variance
