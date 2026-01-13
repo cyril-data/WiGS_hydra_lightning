@@ -96,5 +96,11 @@ python3 "${CODE_DIR}/utils/Auxiliary/GeneratePlots.py" --legend_only
 mv "Results/images/benchmark_legend.png" "${IMG_MANUSCRIPT_DIR}/benchmark_legend.png"
 echo "Legend saved to ${IMG_MANUSCRIPT_DIR}/"
 
+## Plot 7: AUC Heatmap ##
+echo ""
+echo "--- 5. Generating AUC Performance Heatmap... ---"
+python3 "${CODE_DIR}/utils/Auxiliary/GenerateAUCTable.py"
+echo "AUC Heatmap saved to ${IMG_MANUSCRIPT_DIR}/"
+
 echo ""
 echo "--- ALL MANUSCRIPT PLOTS ARE GENERATED ---"
