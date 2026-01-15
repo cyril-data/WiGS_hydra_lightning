@@ -1,4 +1,3 @@
-### LIBRARIES ####
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -8,8 +7,9 @@ import sys
 
 ### CONFIGURATION ###
 METRIC = 'RMSE'  # Options: 'RMSE', 'MAE', 'R2', 'CC'
-BASELINE_METHOD = 'iGS'  # iGS, Random
-OUTPUT_FILENAME = 'AUC_Performance_Heatmap'
+TARGET_BASELINES = ['Passive Learning', 'iGS', 'QBC', 'WiGS (SAC)', None]
+
+OUTPUT_FILENAME_BASE = 'AUC_Performance_Heatmap'
 
 def load_and_calculate_auc_from_dirs(data_dir):
     """
@@ -51,13 +51,11 @@ def load_and_calculate_auc_from_dirs(data_dir):
             
             for selector, val in data.items():
                 if isinstance(val, pd.DataFrame):
-                    # Priority 1: Use pre-calculated 'mean' column
                     if 'mean' in val.columns:
                         selector_means[selector] = val['mean']
                     elif 'Mean' in val.columns:
                         selector_means[selector] = val['Mean']
                     else:
-                        # Priority 2: Calculate mean across all seed columns
                         selector_means[selector] = val.mean(axis=1)
                         
                 elif isinstance(val, pd.Series):
@@ -99,9 +97,11 @@ def load_and_calculate_auc_from_dirs(data_dir):
 
     return pd.DataFrame(auc_records)
 
-def generate_heatmap(auc_df, output_dir):
+def generate_heatmap(auc_df, output_dir, baseline_method):
     """
-    Generates the relative performance heatmap.
+    Generates the performance heatmap. 
+    If baseline_method is None, plots Absolute values.
+    If baseline_method is a string, plots Relative ratio.
     """
     if auc_df.empty:
         print("Error: No AUC data calculated.")
@@ -110,50 +110,76 @@ def generate_heatmap(auc_df, output_dir):
     # 1. Pivot to get Matrix: Index=Dataset, Columns=Selector
     pivot_df = auc_df.pivot(index='Dataset', columns='Selector', values='AUC')
     
-    # 2. Check if Baseline exists
-    if BASELINE_METHOD not in pivot_df.columns:
-        print(f"Error: Baseline method '{BASELINE_METHOD}' not found in data.")
-        print(f"Available methods: {pivot_df.columns.tolist()}")
-        return
-
-    # 3. Calculate Ratio relative to Baseline (Method / Baseline)
-    ratio_df = pivot_df.div(pivot_df[BASELINE_METHOD], axis=0)        
-    plot_data = ratio_df.T
-    
-    #  REORDERING LOGIC
-    plot_data = plot_data.sort_index(axis=1)
-    
-    # Sort Methods so BASELINE_METHOD is at the TOP, others alphabetical
-    selectors = plot_data.index.tolist()
-    if BASELINE_METHOD in selectors:
-        selectors.remove(BASELINE_METHOD)
-        selectors.sort()
-        new_order = [BASELINE_METHOD] + selectors
-        plot_data = plot_data.reindex(new_order)
-
-    # 4. Plotting
+    # Setup for Plotting
     plt.figure(figsize=(24, 12))     
-    cmap = sns.diverging_palette(240, 10, as_cmap=True, center='light')
     
-    sns.heatmap(plot_data, 
-                     annot=True, 
-                     fmt=".3f", 
-                     cmap=cmap, 
-                     center=1.0, 
-                     vmin=0.90, vmax=1.10, 
-                     linewidths=.5,
-                     cbar_kws={'label': f'Relative AUC ({METRIC}) vs {BASELINE_METHOD}'})
+    if baseline_method is None:
+        print(f"\n--- Generating Heatmap (Absolute AUC) ---")
+        plot_data = pivot_df.T
+        plot_data = plot_data.sort_index(axis=1) 
+        cmap = "viridis_r" 
+        
+        # Plot
+        sns.heatmap(plot_data, 
+                         annot=True, 
+                         fmt=".1f", 
+                         cmap=cmap, 
+                         linewidths=.5,
+                         cbar_kws={'label': f'Absolute Total AUC ({METRIC})'})
+        
+        title_str = f'Active Learning Performance: Absolute Total {METRIC} AUC (Lower is Better)'
+        filename = f"{OUTPUT_FILENAME_BASE}_Absolute.png"
 
-    # plt.title(f'Active Learning Performance: Relative {METRIC} AUC vs {BASELINE_METHOD} (Lower is Better)', fontsize=16)
+    else:
+        # --- RELATIVE BASELINE MODE ---
+        print(f"\n--- Generating Heatmap vs {baseline_method} ---")
+        
+        if baseline_method not in pivot_df.columns:
+            print(f"  [Warning] Baseline method '{baseline_method}' not found in data.")
+            return
+
+        # Calculate Ratio
+        ratio_df = pivot_df.div(pivot_df[baseline_method], axis=0)        
+        plot_data = ratio_df.T
+        plot_data = plot_data.sort_index(axis=1)
+        
+        # Reorder to put baseline on top
+        selectors = plot_data.index.tolist()
+        if baseline_method in selectors:
+            selectors.remove(baseline_method)
+            selectors.sort()
+            new_order = [baseline_method] + selectors
+            plot_data = plot_data.reindex(new_order)
+
+        # Use Diverging colormap
+        cmap = sns.diverging_palette(240, 10, as_cmap=True, center='light')
+        
+        # Plot
+        sns.heatmap(plot_data, 
+                         annot=True, 
+                         fmt=".3f", 
+                         cmap=cmap, 
+                         center=1.0, 
+                         vmin=0.90, vmax=1.10, 
+                         linewidths=.5,
+                         cbar_kws={'label': f'Relative AUC ({METRIC}) vs {baseline_method}'})
+
+        title_str = f'Active Learning Performance: Relative {METRIC} AUC vs {baseline_method} (Lower is Better)'
+        safe_baseline = baseline_method.replace(" ", "_").replace("(", "").replace(")", "")
+        filename = f"{OUTPUT_FILENAME_BASE}_vs_{safe_baseline}.png"
+
+    # Common Plot Settings
     plt.xlabel('Dataset', fontsize=12)
     plt.ylabel('Selection Strategy', fontsize=12)
     plt.xticks(rotation=45, ha='right')
+    # plt.title(title_str, fontsize=16)
     plt.tight_layout()
     
-    # 5. Save
-    save_path_png = os.path.join(output_dir, f'{OUTPUT_FILENAME}.png')
+    # Save
+    save_path_png = os.path.join(output_dir, filename)
     plt.savefig(save_path_png, dpi=300, bbox_inches='tight')
-    print(f"\nHeatmap saved to:\n  {save_path_png}")
+    plt.close()
+    print(f"  Saved to: {save_path_png}")
 
 def main():
     try:
@@ -163,15 +189,16 @@ def main():
         PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
         
     DATA_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
-    OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images', 'manuscript')
+    OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images', 'manuscript', 'AUC_Tables')
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     print(f"Scanning {DATA_DIR}...")
     
-    auc_df = load_and_calculate_auc_from_dirs(DATA_DIR)
+    auc_df = load_and_calculate_auc_from_dirs(DATA_DIR)    
+    for baseline in TARGET_BASELINES:
+        generate_heatmap(auc_df, OUTPUT_DIR, baseline)
     
-    print("Generating Heatmap...")
-    generate_heatmap(auc_df, OUTPUT_DIR)
+    print("\nAll heatmaps generated.")
 
 if __name__ == "__main__":
     main()

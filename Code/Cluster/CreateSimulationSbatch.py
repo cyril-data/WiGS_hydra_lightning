@@ -18,8 +18,8 @@ if __name__ == "__main__":
 
     ## Cluster Parameters ##
     partition_name_input = "short"
-    time_limit_input='11:59:59'
-    memory_input='3000MB'
+    time_limit_input='5:59:59'
+    memory_input='1500MB'
     
     ## Define Simulation Parameters ##
     N_REPLICATIONS = 100

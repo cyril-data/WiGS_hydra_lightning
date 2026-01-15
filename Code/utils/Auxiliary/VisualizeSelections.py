@@ -1,3 +1,4 @@
+### Libraries ###
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +12,7 @@ import subprocess
 import imageio_ffmpeg
 import sys
 
+### Create visualization ###
 def create_visualization(dgp_name, selector, seed, video_length, output_dir, cleanup_frames, num_iterations_total):
     """
     Generates a video and frame archive visualizing the active learning
@@ -46,7 +48,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
     weight_path = os.path.join(base_results_path, "weight_history", f"{selector}_WeightHistory.csv")
 
     # Define output directories relative to specified *absolute* output_dir passed in
-    safe_selector_name = selector.replace(' ', '_').replace('(', '').replace(')', '').replace(',', '').replace('=', '').replace(':', '')
+    safe_selector_name = selector.replace(' ', '_').replace('(', '').replace(')', '').replace(',', '').replace('=', '').replace(':', '').replace('.', '')
     base_output_dir = os.path.join(output_dir, dgp_name, safe_selector_name, f"seed_{seed}") 
 
     # Create separate folders for SVG and PNG frames
@@ -151,7 +153,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         print("Error: No selection data to plot after adjustments.")
         return
 
-    ## Calculate FPS based on FINAL frame count ##
+    ## Calculate FPS based on final frame count ##
     fps = num_frames / video_length_sec 
     if fps <= 0:
         print(f"Warning: Invalid fps calculation ({num_frames} / {video_length_sec}). Defaulting to 10 FPS.")
@@ -187,7 +189,6 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
     png_files = []
 
     ## 5. Generate Each Frame ##
-
     for i in tqdm(range(num_frames), desc="Generating Frames"):
 
         current_selection = selection_indices[i]
@@ -242,7 +243,7 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
             ax.text(0.63, -1.6, "Investigation-heavy", fontsize=10, alpha=0.8)
             ax.text(0.805, 1.8, "High-noise trap", fontsize=9, alpha=0.8)
         elif dgp_name == "dgp_three_regime":
-            for xpos in [0.4, 0.7, 0.6, 0.65]: # Added 0.65
+            for xpos in [0.4, 0.7, 0.6, 0.65]: 
                 ax.axvline(xpos, linestyle="--", linewidth=1.5, color='dimgray', alpha=0.7)
             ax.text(0.12, 2.2, "Exploration", fontsize=10, alpha=0.8)
             ax.text(0.47, -2.4, "Investigation", fontsize=10, alpha=0.8)
@@ -262,7 +263,6 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
 
         ## Add Continuous Weight Progress Bar (if applicable) ##
         if is_continuous_weight and pd.notna(current_weight):
-            # Ensure weight is within [0, 1] for bar display
             bar_weight = np.clip(current_weight, 0, 1)
             bar_ax = fig.add_axes([0.15, 0.02, 0.7, 0.03])
             bar_ax.barh([0], [1.0], height=1, color='lightgray', alpha=0.7)
@@ -290,8 +290,8 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
         png_path = os.path.join(png_frame_dir, f"{frame_basename}.png")
 
         try:
-            fig.savefig(svg_path, format='svg', bbox_inches='tight') # Added bbox_inches
-            fig.savefig(png_path, dpi=100, bbox_inches='tight') # Added bbox_inches
+            fig.savefig(svg_path, format='svg', bbox_inches='tight') 
+            fig.savefig(png_path, dpi=100) 
 
             svg_files.append(svg_path)
             png_files.append(png_path)
@@ -326,13 +326,13 @@ def create_visualization(dgp_name, selector, seed, video_length, output_dir, cle
             ]
 
             # Run the command
-            result = subprocess.run(command, check=False, capture_output=True, text=True) # Changed check to False
+            result = subprocess.run(command, check=False, capture_output=True, text=True)
 
             # Check result manually
             if result.returncode != 0:
                 print(f"\n!!!!!!!! ERROR: ffmpeg execution failed! !!!!!!!!!")
                 print("--- ffmpeg command: ---")
-                print(" ".join(command)) # Print the command that failed
+                print(" ".join(command)) 
                 print("--- ffmpeg error output: ---")
                 print(result.stderr)
                 print("------------------------------")

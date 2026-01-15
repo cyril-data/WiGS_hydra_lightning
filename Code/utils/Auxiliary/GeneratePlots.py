@@ -285,11 +285,10 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     print("\n--- Plot Generation Complete ---")
 
 ### GENERATE LEGEND ###
-def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
+def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=4):
     """
     Generates a standalone legend image from the master style dictionaries.
     """
-    print(f"--- Generating standalone legend at {output_path} ---")
     
     # Create dummy plot handles for the legend
     handles = []
@@ -306,7 +305,9 @@ def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
         line = plt.Line2D([0], [0], color=color, linestyle=ls, label=short_name)
         handles.append(line)
         labels.append(short_name)
-    fig = plt.figure(figsize=(15, 2)) 
+
+    # Figure height needs to be slightly taller for 3 rows
+    fig = plt.figure(figsize=(16, 3)) 
     
     # Create the legend
     fig_legend = fig.legend(
@@ -314,7 +315,7 @@ def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
         labels, 
         loc='center', 
         frameon=True, 
-        ncol=ncol
+        ncol=ncol 
     )    
     plt.gca().axis('off')    
     fig.savefig(
@@ -324,7 +325,7 @@ def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=5):
         transparent=True 
     )
     plt.close(fig)
-    print(f"--- Legend generation complete: {output_path} ---")
+    print(f"--- Legend generation complete ---")
 
 ### MAIN ###
 if __name__ == "__main__":
@@ -350,53 +351,61 @@ if __name__ == "__main__":
     
     
     if args.legend_only:
-        
         master_colors = {
-            'Passive Learning': 'gray',  
-            'GSx': 'cornflowerblue',  
-            'GSy': 'salmon', 'iGS': 'red',
-            'WiGS (Static w_x=0.75)': 'lightgreen',  
+            'Passive Learning': 'gray', 
+            'GSx': 'cornflowerblue', 
+            'GSy': 'salmon', 
+            'iGS': 'red',
+            'WiGS (Static w_x=0.75)': 'lightgreen', 
             'WiGS (Static w_x=0.5)': 'forestgreen',
-            'WiGS (Static w_x=0.25)': 'darkgreen',  
+            'WiGS (Static w_x=0.25)': 'darkgreen', 
             'WiGS (Time-Decay, Linear)': 'orange',
-            'WiGS (Time-Decay, Exponential)': 'saddlebrown',  
+            'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
             'WiGS (MAB-UCB1, c=0.5)': 'orchid',
-            'WiGS (MAB-UCB1, c=2.0)': 'darkviolet',  
+            'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
             'WiGS (MAB-UCB1, c=5.0)': 'indigo',
-            'WiGS (SAC)': 'darkcyan'
+            'WiGS (SAC)': 'darkcyan',
+            'QBC': 'goldenrod'
         }
+
         master_linestyles = {
-            'Passive Learning': ':',  
-            'GSx': ':',  
-            'GSy': ':', 'iGS': '-',
-            'WiGS (Static w_x=0.75)': '-.',  
+            'Passive Learning': ':', 
+            'GSx': ':', 
+            'GSy': ':', 
+            'iGS': '-',
+            'WiGS (Static w_x=0.75)': '-.', 
             'WiGS (Static w_x=0.5)': '-.',
-            'WiGS (Static w_x=0.25)': '-.',  
+            'WiGS (Static w_x=0.25)': '-.', 
             'WiGS (Time-Decay, Linear)': '-.',
-            'WiGS (Time-Decay, Exponential)': '-.',  
+            'WiGS (Time-Decay, Exponential)': '-.', 
             'WiGS (MAB-UCB1, c=0.5)': '-.',
-            'WiGS (MAB-UCB1, c=2.0)': '-.',  
+            'WiGS (MAB-UCB1, c=2.0)': '-.', 
             'WiGS (MAB-UCB1, c=5.0)': '-.',
-            'WiGS (SAC)': '-'
+            'WiGS (SAC)': '-',
+            'QBC': '-.' 
         }
+
         master_legend = {
-            'Passive Learning': 'Random',  
-            'GSx': 'GSx',  
-            'GSy': 'GSy',  
+            'Passive Learning': 'Random', 
+            'GSx': 'GSx', 
+            'GSy': 'GSy', 
             'iGS': 'iGS',
-            'WiGS (Static w_x=0.75)': 'WiGS (Static, $w_x=0.75$)',  
-            'WiGS (Static w_x=0.5)': 'WiGS (Static, $w_x=0.50$)',
-            'WiGS (Static w_x=0.25)': 'WiGS (Static, $w_x=0.25$)',  
+            'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)',
+            'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
+            'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
             'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
-            'WiGS (Time-Decay, Exponential)': 'WiGS (Exp. Decay)',
-            'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB)',
-            'WiGS (SAC)': 'WiGS (SAC)'
+            'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
+            'WiGS (MAB-UCB1, c=0.5)': 'WiGS (MAB, c=0.5)', 
+            'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)',
+            'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)',
+            'WiGS (SAC)': 'WiGS (SAC)',
+            'QBC': 'QBC',
         }
         
         # Define strategies to *exclude* from the legend #
         strategies_to_exclude = {
             "WiGS (Static w_x=0.5)",
-            'WiGS (MAB-UCB1, c=0.5)',
+            # 'WiGS (MAB-UCB1, c=0.5)',
             'WiGS (MAB-UCB1, c=2.0)',
         }
         
