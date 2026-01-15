@@ -24,3 +24,7 @@ slurm_logs/
 
 # Ignore raw simulation results
 Results/simulation_results/raw
+Results/selection_videos/**/frames_png_for_video/
+Results/selection_videos/**/*.png
+Results/selection_videos/**/*.svg
+

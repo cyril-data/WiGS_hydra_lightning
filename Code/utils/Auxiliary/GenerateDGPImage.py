@@ -70,7 +70,7 @@ def plot_two_regime(df, save_path=None):
     for xpos in [0.5, 0.8, 0.9]:
         plt.axvline(xpos, color='dimgray', linestyle="--", linewidth=1) 
 
-    plt.title("Two Regime DGP")
+    # plt.title("Two Regime DGP")
     plt.xlabel("X1"); plt.ylabel("Y")
     plt.legend(loc="upper left", frameon=False)
     plt.grid(True, linestyle=':', alpha=0.6) 
@@ -100,7 +100,7 @@ def plot_three_regime(df, save_path=None):
     for xpos in [0.4, 0.7, 0.6, 0.65]:
         plt.axvline(xpos, color='dimgray', linestyle="--", linewidth=1)
 
-    plt.title("Three Regime DGP")
+    # plt.title("Three Regime DGP")
     plt.xlabel("X1"); plt.ylabel("Y")
     plt.legend(loc="upper left", frameon=False)
     plt.grid(True, linestyle=':', alpha=0.6)

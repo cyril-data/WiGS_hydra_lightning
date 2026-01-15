@@ -93,9 +93,9 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
         ax.fill_between(x_axis, weights_lower, weights_upper, color="#0033A0", alpha=0.2)
 
     ### 6. Format and Save ###
-    ax.set_title(plot_title, fontsize=16)
-    ax.set_xlabel("Iteration", fontsize=12)
-    ax.set_ylabel("Weight ($w_x$)", fontsize=12)
+    # ax.set_title(plot_title, fontsize=16)
+    ax.set_xlabel("Iteration", fontsize=16)
+    ax.set_ylabel("Weight ($w_x$)", fontsize=16)
     ax.legend()
     ax.grid(True, linestyle='--', alpha=0.6)
     ax.set_ylim(-0.05, 1.05) 
