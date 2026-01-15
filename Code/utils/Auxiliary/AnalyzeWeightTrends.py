@@ -60,7 +60,7 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
     x_axis = df_cleaned.index 
     if plot_single_seed:
         weights_to_plot = df_cleaned[f"Sim_{target_seed}"] 
-        plot_title = f"Weight Trend: {selector}\nDataset: {dgp_name} - Seed: {target_seed}"        
+        # plot_title = f"Weight Trend: {selector}\nDataset: {dgp_name} - Seed: {target_seed}"        
         seed_filename_component = f"seed_{target_seed}_WeightTrend"
         
         if weights_to_plot.isnull().all():
@@ -72,7 +72,7 @@ def plot_weight_trends(dgp_name, selector, seed_to_plot, output_dir):
         weights_upper = (weights_mean + weights_std).clip(0, 1)
         weights_lower = (weights_mean - weights_std).clip(0, 1)
 
-        plot_title = f"Average Weight Trend: {selector}\nDataset: {dgp_name} (Avg across {len(sim_columns)} seeds)"        
+        # plot_title = f"Average Weight Trend: {selector}\nDataset: {dgp_name} (Avg across {len(sim_columns)} seeds)"        
         seed_filename_component = "all_seeds_AvgWeightTrend"
         
         if weights_mean.isnull().all():

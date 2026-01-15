@@ -126,7 +126,8 @@ def MeanVariancePlot(Subtitle=None,
         
         ax_var.set_xlabel("Percent of Learning Pool Labeled")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
-        ax_var.legend(loc='upper right')
+        if show_legend:
+            ax_var.legend(loc='upper right')
         if isinstance(xlim, list):
             ax_var.set_xlim(xlim)
     
