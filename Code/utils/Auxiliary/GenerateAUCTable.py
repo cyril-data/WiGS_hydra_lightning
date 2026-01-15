@@ -169,8 +169,8 @@ def generate_heatmap(auc_df, output_dir, baseline_method):
         filename = f"{OUTPUT_FILENAME_BASE}_vs_{safe_baseline}.png"
 
     # Common Plot Settings
-    plt.xlabel('Dataset', fontsize=12)
-    plt.ylabel('Selection Strategy', fontsize=12)
+    plt.xlabel('Dataset', fontsize=14)
+    plt.ylabel('Selection Strategy', fontsize=14)
     plt.xticks(rotation=45, ha='right')
     # plt.title(title_str, fontsize=16)
     plt.tight_layout()
