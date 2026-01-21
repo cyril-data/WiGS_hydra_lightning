@@ -18,11 +18,11 @@ if __name__ == "__main__":
 
     ## Cluster Parameters ##
     partition_name_input = "short"
-    time_limit_input='5:59:59'
-    memory_input='1500MB'
+    time_limit_input='8:59:59'
+    memory_input='2000MB'
     
     ## Define Simulation Parameters ##
-    N_REPLICATIONS = 100
+    N_REPLICATIONS = 3
     CANDIDATE_PROPORTION = 0.95
     models_to_run = [
         'RidgeRegressionPredictor'

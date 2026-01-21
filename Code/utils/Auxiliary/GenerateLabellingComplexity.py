@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 ### CONFIGURATION ###
-RESULTS_DIR = "/homes/simondn/WeightedGreedySampling/Results/simulation_results/aggregated/"
-OUTPUT_DIR = "/homes/simondn/WeightedGreedySampling/Results/images/manuscript/"
+RESULTS_DIR = "Results/simulation_results/aggregated/" 
+OUTPUT_DIR = "Results/images/manuscript/"
 TARGET_PERCENTAGES = [0.7, 0.8] 
 BASELINE_NAME = "iGS"
 
@@ -16,17 +16,16 @@ NAME_MAPPING = {
     'Passive Learning': 'Random', 
     'GSx': 'GSx', 
     'GSy': 'GSy', 
+    'Uncertainty Sampling': 'Uncertainty',
     'iGS': 'iGS',
+    'QBC': 'QBC',
+    'Information Density': 'Information Density',
     'WiGS (Static w_x=0.75)': 'WiGS (Static, 0.75)',
-    'WiGS (Static w_x=0.5)': 'WiGS (Static, 0.5)',
     'WiGS (Static w_x=0.25)': 'WiGS (Static, 0.25)', 
     'WiGS (Time-Decay, Linear)': 'WiGS (Linear)',
     'WiGS (Time-Decay, Exponential)': 'WiGS (Exp)',
-    'WiGS (MAB-UCB1, c=0.5)': 'WiGS (MAB, c=0.5)', 
     'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)',
-    'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)',
-    'WiGS (SAC)': 'WiGS (SAC)',
-    'QBC': 'QBC',
+    'WiGS (SAC)': 'WiGS (SAC)'
 }
 
 ### Calculate relative N ###
@@ -58,6 +57,8 @@ def calculate_n_rel(results_dir):
             for method_name, sim_df in metrics_dict.items():
                 if isinstance(sim_df, pd.DataFrame):
                     mean_traces[method_name] = sim_df.mean(axis=1)
+                elif isinstance(sim_df, pd.Series):
+                    mean_traces[method_name] = sim_df
             
             df = pd.DataFrame(mean_traces)
             
@@ -109,7 +110,10 @@ def plot_efficiency_boxplot(df):
         print("No data found to plot.")
         return
     sns.set_style("whitegrid")    
+    
+    # Define order explicitly based on mapping keys to keep consistency
     order = [NAME_MAPPING[m] for m in NAME_MAPPING if m in NAME_MAPPING and NAME_MAPPING[m] in df["Method"].unique()]
+    
     plt.figure(figsize=(10, 8)) 
     
     sns.boxplot(
@@ -127,8 +131,6 @@ def plot_efficiency_boxplot(df):
     baseline_pretty = NAME_MAPPING.get(BASELINE_NAME, BASELINE_NAME)
     line_label = f"{baseline_pretty} Baseline (1.0)"
     plt.axvline(1.0, color="red", linestyle="--", linewidth=1.5, label=line_label)    
-    # targets_str = " & ".join([t.replace(" Gain", "") for t in df["Target"].unique()])
-    # plt.title(f"Label Efficiency to Reach {targets_str} Performance Gains", fontsize=15, fontweight='bold')    
     plt.xlabel(f"Labels Needed Relative to {baseline_pretty} Baseline ($N_{{rel}}$)", fontsize=13)
     plt.ylabel("")
     plt.legend(title="Performance Target", loc="upper right")    
@@ -139,6 +141,17 @@ def plot_efficiency_boxplot(df):
     
 ### Main ###
 if __name__ == "__main__":
+    # Define Project Root Dynamically
+    try:
+        SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+        PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
+    except NameError:
+        PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
+        
+    # Update paths to use project root
+    RESULTS_DIR = os.path.join(PROJECT_ROOT, "Results", "simulation_results", "aggregated")
+    OUTPUT_DIR = os.path.join(PROJECT_ROOT, "Results", "images", "manuscript")
+
     print("Calculating relative efficiency...")
     df_ratios = calculate_n_rel(RESULTS_DIR)
     print(f"Processed {len(df_ratios)} data points.")
