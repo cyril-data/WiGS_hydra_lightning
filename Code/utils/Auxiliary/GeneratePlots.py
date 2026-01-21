@@ -145,13 +145,10 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSx': 'cornflowerblue', 
         'GSy': 'salmon', 'iGS': 'red',
         'WiGS (Static w_x=0.75)': 'lightgreen', 
-        'WiGS (Static w_x=0.5)': 'forestgreen',
         'WiGS (Static w_x=0.25)': 'darkgreen', 
         'WiGS (Time-Decay, Linear)': 'orange',
         'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
-        'WiGS (MAB-UCB1, c=0.5)': 'orchid',
         'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
-        'WiGS (MAB-UCB1, c=5.0)': 'indigo',
         'WiGS (SAC)': 'darkcyan',
         'QBC': 'goldenrod'   
     }
@@ -160,13 +157,10 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSx': ':', 
         'GSy': ':', 'iGS': '-',
         'WiGS (Static w_x=0.75)': '-.', 
-        'WiGS (Static w_x=0.5)': '-.',
         'WiGS (Static w_x=0.25)': '-.', 
         'WiGS (Time-Decay, Linear)': '-.',
         'WiGS (Time-Decay, Exponential)': '-.', 
-        'WiGS (MAB-UCB1, c=0.5)': '-.',
         'WiGS (MAB-UCB1, c=2.0)': '-.', 
-        'WiGS (MAB-UCB1, c=5.0)': '-.',
         'WiGS (SAC)': '-',
         'QBC': '-.' 
     }
@@ -176,12 +170,10 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSy': 'GSy', 
         'iGS': 'iGS',
         'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)', 
-        'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
         'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
         'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
         'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
         'WiGS (MAB-UCB1, c=2.0)': 'MAB-UCB1, c=2.0',
-        'WiGS (MAB-UCB1, c=5.0)': 'MAB-UCB1, c=5.0',
         'WiGS (SAC)': 'WiGS (SAC)',
         'QBC': 'QBC',
     }
@@ -191,8 +183,6 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
     eval_types = ['full_pool']    
     strategies_to_exclude = {
-        "WiGS (Static w_x=0.5)",
-        'WiGS (MAB-UCB1, c=0.5)'
     }
 
 
@@ -358,15 +348,14 @@ if __name__ == "__main__":
             'GSy': 'salmon', 
             'iGS': 'red',
             'WiGS (Static w_x=0.75)': 'lightgreen', 
-            'WiGS (Static w_x=0.5)': 'forestgreen',
             'WiGS (Static w_x=0.25)': 'darkgreen', 
             'WiGS (Time-Decay, Linear)': 'orange',
             'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
-            'WiGS (MAB-UCB1, c=0.5)': 'orchid',
             'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
-            'WiGS (MAB-UCB1, c=5.0)': 'indigo',
             'WiGS (SAC)': 'darkcyan',
-            'QBC': 'goldenrod'
+            'QBC': 'goldenrod',
+            'Uncertainty Sampling': 'black',
+            'Information Density': 'brown'
         }
 
         master_linestyles = {
@@ -375,15 +364,14 @@ if __name__ == "__main__":
             'GSy': ':', 
             'iGS': '-',
             'WiGS (Static w_x=0.75)': '-.', 
-            'WiGS (Static w_x=0.5)': '-.',
             'WiGS (Static w_x=0.25)': '-.', 
             'WiGS (Time-Decay, Linear)': '-.',
             'WiGS (Time-Decay, Exponential)': '-.', 
-            'WiGS (MAB-UCB1, c=0.5)': '-.',
             'WiGS (MAB-UCB1, c=2.0)': '-.', 
-            'WiGS (MAB-UCB1, c=5.0)': '-.',
             'WiGS (SAC)': '-',
-            'QBC': '-.' 
+            'QBC': '-.' ,
+            'Uncertainty Sampling': '--',
+            'Information Density': '--'
         }
 
         master_legend = {
@@ -392,22 +380,19 @@ if __name__ == "__main__":
             'GSy': 'GSy', 
             'iGS': 'iGS',
             'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)',
-            'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
             'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
             'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
             'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
-            'WiGS (MAB-UCB1, c=0.5)': 'WiGS (MAB, c=0.5)', 
             'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)',
-            'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)',
             'WiGS (SAC)': 'WiGS (SAC)',
             'QBC': 'QBC',
+            'Uncertainty Sampling': 'Uncertainty Sampling',
+            'Information Density': 'Information Density'
+
         }
         
         # Define strategies to *exclude* from the legend #
         strategies_to_exclude = {
-            "WiGS (Static w_x=0.5)",
-            # 'WiGS (MAB-UCB1, c=0.5)',
-            'WiGS (MAB-UCB1, c=2.0)',
         }
         
         # Filter the master legend #

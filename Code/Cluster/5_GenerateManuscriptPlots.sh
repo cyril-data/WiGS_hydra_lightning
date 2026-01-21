@@ -42,6 +42,10 @@ echo ""
 echo "--- 0. Generating Dataset Summary Table... ---"
 python3 "${CODE_DIR}/utils/Auxiliary/GenerateDataTable.py"
 
+## Table 2: Runtime Table ##
+echo "Generating Runtime Comparison Table..."
+python3 Code/utils/Auxiliary/GenerateRuntimeTable.py
+
 # ======================================================
 # --- PART 1: Generate Core Manuscript Figures
 # ======================================================
@@ -101,6 +105,10 @@ echo ""
 echo "--- 5. Generating AUC Performance Heatmap... ---"
 python3 "${CODE_DIR}/utils/Auxiliary/GenerateAUCTable.py"
 echo "AUC Heatmap saved to ${IMG_MANUSCRIPT_DIR}/AUC_Tables"
+
+## Plot 8: Labeling Complexity ##
+echo "Generating Labelling Complexity Plot..."
+python3 Code/utils/Auxiliary/GenerateLabellingComplexity.py
 
 echo ""
 echo "--- ALL MANUSCRIPT PLOTS ARE GENERATED ---"
