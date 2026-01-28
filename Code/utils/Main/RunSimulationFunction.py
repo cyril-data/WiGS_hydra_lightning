@@ -53,6 +53,7 @@ def RunSimulationFunction(DataFileInput,
         'Information Density': {'SelectorType': 'InformationDensitySelector', 
                                 'alpha': 0.01, 
                                 'beta': 1.0},
+        'EMCM': {'SelectorType': 'EMCMSelector', 'alpha': 0.01},
         }
     
     ### Loop Through Strategies ###

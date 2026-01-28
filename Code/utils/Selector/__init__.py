@@ -1,3 +1,4 @@
+from .EMCMSelector import *
 from .GreedySamplingSelector import *
 from .InformationDensitySelector import *
 from .PassiveLearningSelector import *

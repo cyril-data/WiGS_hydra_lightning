@@ -276,7 +276,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     print("\n--- Plot Generation Complete ---")
 
 ### GENERATE LEGEND ###
-def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=4):
+def generate_legend(legend_mapping, colors, linestyles, output_path, ncol):
     """
     Generates a standalone legend image from the master style dictionaries.
     """
@@ -355,7 +355,8 @@ if __name__ == "__main__":
             'WiGS (SAC)': 'darkcyan',
             'QBC': 'goldenrod',
             'Uncertainty Sampling': 'black',
-            'Information Density': 'brown'
+            'Information Density': 'brown',
+            'EMCM': 'teal'
         }
 
         master_linestyles = {
@@ -371,7 +372,8 @@ if __name__ == "__main__":
             'WiGS (SAC)': '-',
             'QBC': '-.' ,
             'Uncertainty Sampling': '--',
-            'Information Density': '--'
+            'Information Density': '--',
+            'EMCM': '--'
         }
 
         master_legend = {
@@ -387,7 +389,8 @@ if __name__ == "__main__":
             'WiGS (SAC)': 'WiGS (SAC)',
             'QBC': 'QBC',
             'Uncertainty Sampling': 'Uncertainty Sampling',
-            'Information Density': 'Information Density'
+            'Information Density': 'Information Density',
+            'EMCM': 'EMCM'
 
         }
         
@@ -410,7 +413,7 @@ if __name__ == "__main__":
             colors=master_colors,
             linestyles=master_linestyles,
             output_path=legend_output_path,
-            ncol=6
+            ncol=7
         )
 
     else:

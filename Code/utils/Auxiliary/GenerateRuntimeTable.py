@@ -4,8 +4,11 @@ import pandas as pd
 import numpy as np
 
 ### CONFIGURATION ###
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../../../"))
+try:
+    SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+    PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../../../"))
+except NameError:
+    PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "Results", "simulation_results", "aggregated")
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "Results", "tables")
 OUTPUT_FILENAME = "RuntimeTable.tex"
@@ -16,40 +19,38 @@ COLUMN_GROUPS = [
     {
         "group_name": "Baselines",
         "columns": [
-            ("Passive Learning", "Random"),
+            ("Passive Learning", "Rand."),
             ("GSx", "GSx"),
             ("GSy", "GSy"),
-            ("iGS", "iGS"),
-            ("QBC", "QBC") 
+            ("iGS", "iGS")
         ]
     },
     {
-        "group_name": "WiGS (Static)",
+        "group_name": "Advanced Baselines",
+        "columns": [
+            ("QBC", "QBC"),
+            ("Uncertainty Sampling", "Uncert."),
+            ("EMCM", "EMCM"),
+            ("Information Density", "InfoDen")
+        ]
+    },
+    {
+        "group_name": "WiGS (Static/Decay)",
         "columns": [
             ("WiGS (Static w_x=0.25)", "0.25"),
-            ("WiGS (Static w_x=0.5)", "0.50"),
-            ("WiGS (Static w_x=0.75)", "0.75")
-        ]
-    },
-    {
-        "group_name": "WiGS (Decay)",
-        "columns": [
-            ("WiGS (Time-Decay, Linear)", "Linear"),
+            ("WiGS (Static w_x=0.75)", "0.75"),
+            ("WiGS (Time-Decay, Linear)", "Lin."),
             ("WiGS (Time-Decay, Exponential)", "Exp.")
         ]
     },
     {
         "group_name": "WiGS (Adaptive)",
         "columns": [
-            ("WiGS (MAB-UCB1, c=0.5)", "MAB (0.5)"),
-            ("WiGS (MAB-UCB1, c=2.0)", "MAB (2.0)"),
+            ("WiGS (MAB-UCB1, c=2.0)", "MAB(2)"),
             ("WiGS (SAC)", "SAC")
         ]
     }
 ]
-
-# Columns to ignore during initial read (standard cleanup)
-IGNORE_COLS = ["Simulation", "Unnamed: 0"]
 
 def main():
     if not os.path.exists(RESULTS_DIR):
@@ -74,14 +75,17 @@ def main():
             try:
                 df = pd.read_csv(file_path)
                 
-                # Format Dataset Name
+                # Format Dataset Name for LaTeX
                 ds_name = dataset.replace("concrete", "Conc.").replace("burbidge", "Burb.").replace("wine", "Wine").title().replace("_", " ")
+                # Escape underscores for LaTeX
+                ds_name = ds_name.replace("_", "\\_")
+                
                 row = {"Dataset": ds_name}
                 
-                # Extract Means
+                # Extract Median
                 for col in all_target_cols:
                     if col in df.columns:
-                        row[col] = df[col].mean()
+                        row[col] = df[col].median()
                     else:
                         row[col] = float('nan') 
                 
@@ -92,25 +96,25 @@ def main():
     # Create DataFrame
     df = pd.DataFrame(results)
     
-    # Calculate Average
+    # Calculate Median Row
     if not df.empty:
-        avg_row = df.mean(numeric_only=True)
-        avg_row["Dataset"] = "AVERAGE"
+        avg_row = df.median(numeric_only=True)
+        avg_row["Dataset"] = "\\textbf{MEDIAN}"
         df = pd.concat([df, pd.DataFrame([avg_row])], ignore_index=True)
 
     ### GENERATE LATEX ###
-    latex_content = r"\begin{table}[htbp]" + "\n"
+    latex_content = r"\begin{table*}[htbp]" + "\n" # Use table* for wide table spanning both columns
     latex_content += r"    \centering" + "\n"
     latex_content += r"    \scriptsize" + "\n"
-    latex_content += r"    \setlength{\tabcolsep}{3pt}" + "\n" # Tighten space between columns
+    latex_content += r"    \setlength{\tabcolsep}{2pt}" + "\n" # Tighten space
     
-    # Build alignment string: l (Dataset) + r (Data)...
+    # Build alignment string
     total_data_cols = sum(len(g["columns"]) for g in COLUMN_GROUPS)
     latex_content += f"    \\begin{{tabular}}{{l {'r' * total_data_cols}}}" + "\n"
     latex_content += r"        \toprule" + "\n"
     
     ## HEADER ROW 1: GROUPS ##
-    header1 = "        " # Empty cell for 'Dataset'
+    header1 = "        " 
     cmidrules = ""
     current_col_idx = 2 # Start at 2 because col 1 is Dataset
     
@@ -118,10 +122,8 @@ def main():
         group_name = group["group_name"]
         num_sub_cols = len(group["columns"])
         
-        # Add the multicell header
         header1 += f" & \\multicolumn{{{num_sub_cols}}}{{c}}{{\\textbf{{{group_name}}}}}"
         
-        # Add the line underneath it (trim left and right to make gaps)
         end_col_idx = current_col_idx + num_sub_cols - 1
         cmidrules += f" \\cmidrule(lr){{{current_col_idx}-{end_col_idx}}}"
         
@@ -142,12 +144,8 @@ def main():
     for _, row in df.iterrows():
         ds_name = row['Dataset']
         
-        # Bold the AVERAGE row
-        if ds_name == "AVERAGE":
-            latex_content += r"        \midrule" + "\n"
-            latex_content += r"        \textbf{AVERAGE}"
-        else:
-            latex_content += f"        {ds_name}"
+        # Bold the MEDIAN row logic is handled by the name being bolded already
+        latex_content += f"        {ds_name}"
             
         # Iterate through groups to maintain order
         for group in COLUMN_GROUPS:
@@ -157,18 +155,22 @@ def main():
                 if pd.isna(val):
                     latex_content += " & -"
                 else:
-                    if ds_name == "AVERAGE":
-                        latex_content += f" & \\textbf{{{val:.2f}}}"
+                    if "MEDIAN" in ds_name:
+                        latex_content += f" & \\textbf{{{val:.1f}}}" # 1 decimal for space saving
                     else:
-                        latex_content += f" & {val:.2f}"
+                        latex_content += f" & {val:.1f}"
                         
         latex_content += r" \\" + "\n"
+        
+        # Add a midrule before the final MEDIAN row
+        if _ == len(df) - 2:
+             latex_content += r"        \midrule" + "\n"
 
     latex_content += r"        \bottomrule" + "\n"
     latex_content += r"    \end{tabular}" + "\n"
-    latex_content += r"    \caption{Average runtime (seconds) across 100 simulations.}" + "\n"
+    latex_content += r"    \caption{Median runtime (seconds) across simulation seeds. `Uncert.' denotes Uncertainty Sampling, `InfoDen' denotes Information Density.}" + "\n"
     latex_content += r"    \label{tab:RuntimeComparison}" + "\n"
-    latex_content += r"\end{table}" + "\n"
+    latex_content += r"\end{table*}" + "\n"
 
     ### Write to File ###
     output_path = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME)
