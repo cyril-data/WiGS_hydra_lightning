@@ -347,16 +347,16 @@ if __name__ == "__main__":
             'GSx': 'cornflowerblue', 
             'GSy': 'salmon', 
             'iGS': 'red',
+            'QBC': 'goldenrod',
+            'Uncertainty Sampling': 'black',
+            'EGAL': 'brown',
+            'EMCM': 'teal',
             'WiGS (Static w_x=0.75)': 'lightgreen', 
             'WiGS (Static w_x=0.25)': 'darkgreen', 
             'WiGS (Time-Decay, Linear)': 'orange',
             'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
             'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
-            'WiGS (SAC)': 'darkcyan',
-            'QBC': 'goldenrod',
-            'Uncertainty Sampling': 'black',
-            'Information Density': 'brown',
-            'EMCM': 'teal'
+            'WiGS (SAC)': 'darkcyan'
         }
 
         master_linestyles = {
@@ -364,16 +364,16 @@ if __name__ == "__main__":
             'GSx': ':', 
             'GSy': ':', 
             'iGS': '-',
+            'QBC': '-.' ,
+            'Uncertainty Sampling': '--',
+            'EGAL Density': '--',
+            'EMCM': '--',
             'WiGS (Static w_x=0.75)': '-.', 
             'WiGS (Static w_x=0.25)': '-.', 
             'WiGS (Time-Decay, Linear)': '-.',
             'WiGS (Time-Decay, Exponential)': '-.', 
             'WiGS (MAB-UCB1, c=2.0)': '-.', 
-            'WiGS (SAC)': '-',
-            'QBC': '-.' ,
-            'Uncertainty Sampling': '--',
-            'Information Density': '--',
-            'EMCM': '--'
+            'WiGS (SAC)': '-'
         }
 
         master_legend = {
@@ -381,17 +381,16 @@ if __name__ == "__main__":
             'GSx': 'GSx', 
             'GSy': 'GSy', 
             'iGS': 'iGS',
+            'QBC': 'QBC',
+            'Uncertainty Sampling': 'Uncertainty Sampling',
+            'EGAL': 'EGAL',
+            'EMCM': 'EMCM',
             'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)',
             'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
             'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
             'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
             'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)',
-            'WiGS (SAC)': 'WiGS (SAC)',
-            'QBC': 'QBC',
-            'Uncertainty Sampling': 'Uncertainty Sampling',
-            'Information Density': 'Information Density',
-            'EMCM': 'EMCM'
-
+            'WiGS (SAC)': 'WiGS (SAC)'
         }
         
         # Define strategies to *exclude* from the legend #
