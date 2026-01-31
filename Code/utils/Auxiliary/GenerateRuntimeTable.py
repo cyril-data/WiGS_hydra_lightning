@@ -31,7 +31,7 @@ COLUMN_GROUPS = [
             ("QBC", "QBC"),
             ("Uncertainty Sampling", "Uncert."),
             ("EMCM", "EMCM"),
-            ("Information Density", "InfoDen")
+            ("EGAL", "EGAL")
         ]
     },
     {

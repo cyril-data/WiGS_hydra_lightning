@@ -50,7 +50,8 @@ def RunSimulationFunction(DataFileInput,
         'WiGS (SAC)': {'SelectorType': 'WiGS_SAC_Selector'},
         'QBC': {'SelectorType': 'QBCSelector', 'n_committee': 5},
         'Uncertainty Sampling': {'SelectorType': 'UncertaintySamplingSelector_Ridge', 'alpha': 0.01},
-        'EGAL': {'SelectorType': 'EGALSelector'}
+        'EGAL': {'SelectorType': 'EGALSelector'},
+        'EMCM': {'SelectorType': 'EMCMSelector', 'alpha': 0.01},
         }
     
     ### Loop Through Strategies ###
