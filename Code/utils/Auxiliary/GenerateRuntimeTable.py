@@ -168,7 +168,7 @@ def main():
 
     latex_content += r"        \bottomrule" + "\n"
     latex_content += r"    \end{tabular}" + "\n"
-    latex_content += r"    \caption{Median runtime (seconds) across simulation seeds. `Uncert.' denotes Uncertainty Sampling, `InfoDen' denotes Information Density.}" + "\n"
+    latex_content += r"    \caption{Median runtime (seconds) across simulation seeds. `Uncert.' denotes Uncertainty Sampling.}" + "\n"
     latex_content += r"    \label{tab:RuntimeComparison}" + "\n"
     latex_content += r"\end{table*}" + "\n"
 
