@@ -110,12 +110,14 @@ def plot_efficiency_boxplot(df):
     if df.empty:
         print("No data found to plot.")
         return
+    sns.set_context("talk", font_scale=1.5) 
     sns.set_style("whitegrid")    
     
     # Define order explicitly based on mapping keys to keep consistency
     order = [NAME_MAPPING[m] for m in NAME_MAPPING if m in NAME_MAPPING and NAME_MAPPING[m] in df["Method"].unique()]
     
-    plt.figure(figsize=(10, 8)) 
+    # plt.figure(figsize=(10, 8)) 
+    plt.figure(figsize=(24, 12))     
     
     sns.boxplot(
         data=df,
@@ -126,15 +128,25 @@ def plot_efficiency_boxplot(df):
         orient="h",
         palette="viridis",
         showfliers=False,
-        width=0.7
+        width=0.7,
+        linewidth=2.5
     )
     
     baseline_pretty = NAME_MAPPING.get(BASELINE_NAME, BASELINE_NAME)
     line_label = f"{baseline_pretty} Baseline (1.0)"
-    plt.axvline(1.0, color="red", linestyle="--", linewidth=1.5, label=line_label)    
-    plt.xlabel(f"Labels Needed Relative to {baseline_pretty} Baseline ($N_{{rel}}$)", fontsize=13)
+    plt.axvline(1.0, color="red", linestyle="--", linewidth=3.0, label=line_label)
+  
+    # Larger Font Sizes
+    plt.xlabel(f"Labels Needed Relative to {baseline_pretty} Baseline ($N_{{rel}}$)", fontsize=28)
     plt.ylabel("")
-    plt.legend(title="Performance Target", loc="upper right")    
+    
+    # Larger Ticks
+    plt.xticks(fontsize=22)
+    plt.yticks(fontsize=22)
+    
+    # Larger Legend
+    plt.legend(title="Performance Target", loc="upper right", fontsize=20, title_fontsize=22)    
+    
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     output_path = os.path.join(OUTPUT_DIR, "DataEfficiency_Grouped.png")
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
