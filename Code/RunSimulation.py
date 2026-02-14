@@ -6,7 +6,8 @@ from utils.Main.RunSimulationFunction import RunSimulationFunction
 
 ### Models ###
 MODEL_LIST = [
-    'RidgeRegressionPredictor'
+    # 'RidgeRegressionPredictor'
+    'GaussianProcessRegressorPredictor'
 ]
 
 ### Get Directory Paths ###
