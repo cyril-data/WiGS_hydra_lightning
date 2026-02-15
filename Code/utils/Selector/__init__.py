@@ -3,7 +3,7 @@ from .EMCMSelector import *
 from .GreedySamplingSelector import *
 from .PassiveLearningSelector import *
 from .QBCSelector import *
-from .UncertaintySamplingSelector_Ridge import *
+from .UncertaintySamplingSelector import *
 from .WeightedGreedySamplingSelector import *
 from .WiGS_MAB import * 
 from .WiGS_SAC import *

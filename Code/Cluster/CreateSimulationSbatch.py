@@ -22,10 +22,13 @@ if __name__ == "__main__":
     memory_input='3000MB'
     
     ## Define Simulation Parameters ##
-    N_REPLICATIONS = 100
+    N_REPLICATIONS = 25
     CANDIDATE_PROPORTION = 0.95
+
+    ## Models to run - MUST BE IN SYNC WITH RuunSimulation.py ##
     models_to_run = [
-        'RidgeRegressionPredictor'
+        # 'RidgeRegressionPredictor'
+        'GaussianProcessRegressorPredictor'
     ]
     
     ## Data sets ##
