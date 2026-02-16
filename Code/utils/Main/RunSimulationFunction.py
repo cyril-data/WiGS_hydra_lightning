@@ -13,7 +13,7 @@ def RunSimulationFunction(DataFileInput,
         DataFileInput (str): The file path for the dataset to be loaded.
         Seed (int): Seed
         machine_learning_model (str): A string identifier for the machine learning model to be used.
-            Expected values include 'RidgeRegressionPredictor' or 'GaussianProcessRegressorPredictor'.
+            Expected values include 'LinearRegressionPredictor', 'RandomForestRegressorPredictor', or 'RidgeRegressionPredictor'.
         candidate_proportion (float): The fraction of the data to be used as the unlabeled candidate pool.
     Returns:
         dict: A nested dictionary containing the simulation results for the single seed. 
@@ -31,9 +31,9 @@ def RunSimulationFunction(DataFileInput,
         'WiGS (Static w_x=0.25)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                    'weight_strategy': 'static',
                                    'w_x': 0.25},
-        # 'WiGS (Static w_x=0.5)': {'SelectorType': 'WeightedGreedySamplingSelector',
-        #                           'weight_strategy': 'static',
-        #                           'w_x': 0.5},
+        'WiGS (Static w_x=0.5)': {'SelectorType': 'WeightedGreedySamplingSelector',
+                                  'weight_strategy': 'static',
+                                  'w_x': 0.5},
         'WiGS (Static w_x=0.75)': {'SelectorType': 'WeightedGreedySamplingSelector',
                                    'weight_strategy': 'static',
                                    'w_x': 0.75},
@@ -44,14 +44,11 @@ def RunSimulationFunction(DataFileInput,
                                            'weight_strategy': 'time_decay',
                                            'decay_type': 'exponential',
                                            'decay_constant': 5.0},
-        # 'WiGS (MAB-UCB1, c=0.5)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 0.5},
+        'WiGS (MAB-UCB1, c=0.5)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 0.5},
         'WiGS (MAB-UCB1, c=2.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 2.0},
-        # 'WiGS (MAB-UCB1, c=5.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 5.0},
+        'WiGS (MAB-UCB1, c=5.0)': {'SelectorType': 'WiGS_MAB_Selector', 'mab_c': 5.0},
         'WiGS (SAC)': {'SelectorType': 'WiGS_SAC_Selector'},
         'QBC': {'SelectorType': 'QBCSelector', 'n_committee': 5},
-        'Uncertainty Sampling': {'SelectorType': 'UncertaintySamplingSelector', 'alpha': 0.01},
-        'EGAL': {'SelectorType': 'EGALSelector'}
-        # 'EMCM': {'SelectorType': 'EMCMSelector', 'alpha': 0.01},
         }
     
     ### Loop Through Strategies ###

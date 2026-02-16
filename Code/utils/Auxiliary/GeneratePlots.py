@@ -126,8 +126,7 @@ def MeanVariancePlot(Subtitle=None,
         
         ax_var.set_xlabel("Percent of Learning Pool Labeled")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
-        if show_legend:
-            ax_var.legend(loc='upper right')
+        ax_var.legend(loc='upper right')
         if isinstance(xlim, list):
             ax_var.set_xlim(xlim)
     
@@ -145,10 +144,13 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSx': 'cornflowerblue', 
         'GSy': 'salmon', 'iGS': 'red',
         'WiGS (Static w_x=0.75)': 'lightgreen', 
+        'WiGS (Static w_x=0.5)': 'forestgreen',
         'WiGS (Static w_x=0.25)': 'darkgreen', 
         'WiGS (Time-Decay, Linear)': 'orange',
         'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
+        'WiGS (MAB-UCB1, c=0.5)': 'orchid',
         'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
+        'WiGS (MAB-UCB1, c=5.0)': 'indigo',
         'WiGS (SAC)': 'darkcyan',
         'QBC': 'goldenrod'   
     }
@@ -157,10 +159,13 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSx': ':', 
         'GSy': ':', 'iGS': '-',
         'WiGS (Static w_x=0.75)': '-.', 
+        'WiGS (Static w_x=0.5)': '-.',
         'WiGS (Static w_x=0.25)': '-.', 
         'WiGS (Time-Decay, Linear)': '-.',
         'WiGS (Time-Decay, Exponential)': '-.', 
+        'WiGS (MAB-UCB1, c=0.5)': '-.',
         'WiGS (MAB-UCB1, c=2.0)': '-.', 
+        'WiGS (MAB-UCB1, c=5.0)': '-.',
         'WiGS (SAC)': '-',
         'QBC': '-.' 
     }
@@ -170,10 +175,12 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSy': 'GSy', 
         'iGS': 'iGS',
         'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)', 
+        'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
         'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
         'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
         'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
         'WiGS (MAB-UCB1, c=2.0)': 'MAB-UCB1, c=2.0',
+        'WiGS (MAB-UCB1, c=5.0)': 'MAB-UCB1, c=5.0',
         'WiGS (SAC)': 'WiGS (SAC)',
         'QBC': 'QBC',
     }
@@ -183,6 +190,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
     eval_types = ['full_pool']    
     strategies_to_exclude = {
+        "WiGS (Static w_x=0.5)",
+        'WiGS (MAB-UCB1, c=0.5)'
     }
 
 
@@ -276,7 +285,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     print("\n--- Plot Generation Complete ---")
 
 ### GENERATE LEGEND ###
-def generate_legend(legend_mapping, colors, linestyles, output_path, ncol):
+def generate_legend(legend_mapping, colors, linestyles, output_path, ncol=4):
     """
     Generates a standalone legend image from the master style dictionaries.
     """
@@ -347,16 +356,16 @@ if __name__ == "__main__":
             'GSx': 'cornflowerblue', 
             'GSy': 'salmon', 
             'iGS': 'red',
-            'QBC': 'goldenrod',
-            'Uncertainty Sampling': 'black',
-            'EGAL': 'brown',
-            'EMCM': 'teal',
             'WiGS (Static w_x=0.75)': 'lightgreen', 
+            'WiGS (Static w_x=0.5)': 'forestgreen',
             'WiGS (Static w_x=0.25)': 'darkgreen', 
             'WiGS (Time-Decay, Linear)': 'orange',
             'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
+            'WiGS (MAB-UCB1, c=0.5)': 'orchid',
             'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
-            'WiGS (SAC)': 'darkcyan'
+            'WiGS (MAB-UCB1, c=5.0)': 'indigo',
+            'WiGS (SAC)': 'darkcyan',
+            'QBC': 'goldenrod'
         }
 
         master_linestyles = {
@@ -364,16 +373,16 @@ if __name__ == "__main__":
             'GSx': ':', 
             'GSy': ':', 
             'iGS': '-',
-            'QBC': '-.' ,
-            'Uncertainty Sampling': '--',
-            'EGAL Density': '--',
-            'EMCM': '--',
             'WiGS (Static w_x=0.75)': '-.', 
+            'WiGS (Static w_x=0.5)': '-.',
             'WiGS (Static w_x=0.25)': '-.', 
             'WiGS (Time-Decay, Linear)': '-.',
             'WiGS (Time-Decay, Exponential)': '-.', 
+            'WiGS (MAB-UCB1, c=0.5)': '-.',
             'WiGS (MAB-UCB1, c=2.0)': '-.', 
-            'WiGS (SAC)': '-'
+            'WiGS (MAB-UCB1, c=5.0)': '-.',
+            'WiGS (SAC)': '-',
+            'QBC': '-.' 
         }
 
         master_legend = {
@@ -381,20 +390,23 @@ if __name__ == "__main__":
             'GSx': 'GSx', 
             'GSy': 'GSy', 
             'iGS': 'iGS',
-            'QBC': 'QBC',
-            'Uncertainty Sampling': 'Uncertainty Sampling',
-            'EGAL': 'EGAL',
-            'EMCM': 'EMCM',
             'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)',
+            'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
             'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
             'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
             'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
+            'WiGS (MAB-UCB1, c=0.5)': 'WiGS (MAB, c=0.5)', 
             'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)',
-            'WiGS (SAC)': 'WiGS (SAC)'
+            'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB, c=5.0)',
+            'WiGS (SAC)': 'WiGS (SAC)',
+            'QBC': 'QBC',
         }
         
         # Define strategies to *exclude* from the legend #
         strategies_to_exclude = {
+            "WiGS (Static w_x=0.5)",
+            # 'WiGS (MAB-UCB1, c=0.5)',
+            'WiGS (MAB-UCB1, c=2.0)',
         }
         
         # Filter the master legend #
@@ -412,7 +424,7 @@ if __name__ == "__main__":
             colors=master_colors,
             linestyles=master_linestyles,
             output_path=legend_output_path,
-            ncol=7
+            ncol=6
         )
 
     else:
