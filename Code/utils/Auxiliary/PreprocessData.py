@@ -5,7 +5,53 @@ import pickle
 import kagglehub
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler, PowerTransformer
+
+import numpy as np
+
+def generate_gmm_x_samples(n_samples=1000, seed=None):
+    """
+    Generates 1D data sampled from a Gaussian Mixture Model (GMM)
+    and clipped to the [0, 1] range.
+    """
+    # Initialize a random number generator
+    rng = np.random.default_rng(seed)
+    weights = [0.4, 0.3, 0.3]   # (weights): Proportions of data in each clump. Must sum to 1.
+    means = [0.2, 0.5, 0.85]    # (means): The centers of the clumps on the [0, 1] axis.
+    stds = [0.07, 0.1, 0.05]    # (stds): The spread (standard deviation) of each clump.
+    
+    # Determine how many samples to draw from each component
+    n_components = len(weights)
+    component_samples = rng.multinomial(n_samples, weights)
+    
+    # Draw the samples for each component
+    samples_list = []
+    for i in range(n_components):
+        n_i = component_samples[i]
+        mean_i = means[i]
+        std_i = stds[i]
+        samples_list.append(rng.normal(loc=mean_i, scale=std_i, size=n_i))
+    
+    # 4. Combine, shuffle, and clip
+    x_samples = np.concatenate(samples_list)
+    rng.shuffle(x_samples) 
+    x_samples_clipped = np.clip(x_samples, 0, 1)
+    
+    return x_samples_clipped
+
+def generate_normal_x_samples(n_samples=1000, seed=None):
+    """
+    Generates 1D data sampled from a single Normal (Gaussian) distribution
+    and clipped to the [0, 1] range.
+    """
+    # Initialize a random number generator
+    rng = np.random.default_rng(seed)
+    mean = 0.5
+    std = 0.25
+    x_samples = rng.normal(loc=mean, scale=std, size=n_samples)
+    x_samples_clipped = np.clip(x_samples, 0, 1)
+    
+    return x_samples_clipped
 
 ### Two regime DGP ###
 def generate_two_regime_data(n_samples=1000, seed=None):
@@ -27,10 +73,10 @@ def generate_two_regime_data(n_samples=1000, seed=None):
     if seed is not None:
         np.random.seed(seed)
     
-    ### Generation ###
-    x = np.random.uniform(low=0, high=1, size=n_samples) # Covariates
-    y = np.zeros(n_samples)                              # Target 
-    noise = np.zeros(n_samples)                          # Noise 
+    ### Generate Normal-distributed inputs ###
+    x = generate_normal_x_samples(n_samples=n_samples, seed=seed)   # Variables
+    y = np.zeros(n_samples)                                         # Target 
+    noise = np.zeros(n_samples)                                     # Noise 
     
     ### Two regimes ###
     
@@ -77,10 +123,10 @@ def generate_three_regime_data(n_samples=1500, seed=None):
     if seed is not None:
         np.random.seed(seed)
     
-    ### Generate uniformly distributed inputs ###
-    x = np.random.uniform(low=0, high=1, size=n_samples) # Variables 
-    y = np.zeros(n_samples)                              # Target
-    noise = np.zeros(n_samples)                          # Noise
+    ### Generate Normal-distributed inputs ###
+    x = generate_normal_x_samples(n_samples=n_samples, seed=seed)   # Variables
+    y = np.zeros(n_samples)                                         # Target
+    noise = np.zeros(n_samples)                                      # Noise
     
     ### Three regimes ###
     
@@ -111,7 +157,7 @@ def generate_three_regime_data(n_samples=1500, seed=None):
     return df
 
 ### Burbridge DGP ###
-def GenerateBurbridgeData(n_samples=500, delta=0.0, sigma_epsilon=0.3, seed=None):
+def GenerateBurbridgeData(n_samples=1000, delta=0.0, sigma_epsilon=0.3, seed=None):
     """
     Generates a synthetic dataset based on the DGP from Burbidge et al. (2007).
 
@@ -167,7 +213,9 @@ def _preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     X_encoded = pd.get_dummies(X, drop_first=True)
     
     ### Standardize all features ###
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
+    scaler = RobustScaler()   
+    # scaler = PowerTransformer(method='yeo-johnson')
     X_scaled_array = scaler.fit_transform(X_encoded)
     
     ### Convert scaled features back to a DataFrame ###
@@ -332,19 +380,19 @@ def preprocess_and_save_all():
     print("  > Processed: cps_wage")
 
     # 16. Burbridge Dataset (correctly specified)
-    df_dgp_correct = GenerateBurbridgeData(delta=0.0, sigma_epsilon=0.3, seed=42)
-    datasets_to_save['dgp_correct'] = _preprocess_dataframe(df_dgp_correct)
-    print("  > Processed: dgp_correct")
+    df_burbidge_correct = GenerateBurbridgeData(delta=0.0, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['burbidge_correct'] = _preprocess_dataframe(df_burbidge_correct)
+    print("  > Processed: burbidge_correct")
 
     # 17. Burbridge Dataset (correctly misspecified)
-    df_dgp_misspecified = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.3, seed=42)
-    datasets_to_save['dgp_misspecified'] = _preprocess_dataframe(df_dgp_misspecified)
-    print("  > Processed: dgp_misspecified")
+    df_burbidge_misspecified = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.3, seed=42)
+    datasets_to_save['burbidge_misspecified'] = _preprocess_dataframe(df_burbidge_misspecified)
+    print("  > Processed: burbidge_misspecified")
 
     # 18. Burbridge Dataset (correctly low noise)
-    df_dgp_low_noise = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.1, seed=42)
-    datasets_to_save['dgp_low_noise'] = _preprocess_dataframe(df_dgp_low_noise)
-    print("  > Processed: dgp_low_noise")
+    df_burbidge_low_noise = GenerateBurbridgeData(delta=0.05, sigma_epsilon=0.1, seed=42)
+    datasets_to_save['burbidge_low_noise'] = _preprocess_dataframe(df_burbidge_low_noise)
+    print("  > Processed: burbidge_low_noise")
 
     # 19. Two-Regime Dataset
     df_dgp_two_regime = generate_two_regime_data(seed=42)
@@ -368,3 +416,4 @@ def preprocess_and_save_all():
 
 if __name__ == "__main__":
     preprocess_and_save_all()
+    

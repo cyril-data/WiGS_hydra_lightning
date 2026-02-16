@@ -4,9 +4,10 @@ import os
 import pickle
 from utils.Main.RunSimulationFunction import RunSimulationFunction
 
-### Models ###
+### Models - MUST BE IN SYNC WITH CreateSimulationSbatch ###
 MODEL_LIST = [
-    'RidgeRegressionPredictor'
+    # 'RidgeRegressionPredictor'
+    'GaussianProcessRegressorPredictor'
 ]
 
 ### Get Directory Paths ###

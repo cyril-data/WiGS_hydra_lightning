@@ -27,7 +27,7 @@ except ImportError as e:
     sys.exit(1)
 
 
-### White backgrounds (on-screen and saved) ###
+### White backgrounds ###
 plt.rcParams["savefig.facecolor"] = "white"
 plt.rcParams["figure.facecolor"] = "white"
 plt.rcParams["axes.facecolor"] = "white"
@@ -51,7 +51,7 @@ def noiseless_three_regime(x):
     return y
 
 
-### Plot helpers (square, white) with dividing lines (no labels) ###
+### Plot helpers with dividing lines ###
 def plot_two_regime(df, save_path=None):
     x = df["X1"].values
     y = df["Y"].values
@@ -66,16 +66,11 @@ def plot_two_regime(df, save_path=None):
     grid = np.linspace(0, 1, 400)
     plt.plot(grid, noiseless_two_regime(grid), color='black', linewidth=2, label="Underlying function") 
 
-    # Dividing lines at regime and trap bounds (no text labels)
+    # Dividing lines at regime and trap bounds 
     for xpos in [0.5, 0.8, 0.9]:
         plt.axvline(xpos, color='dimgray', linestyle="--", linewidth=1) 
 
-    # Region annotations
-    plt.text(0.18, 1.6, "Exploration", fontsize=10)
-    plt.text(0.63, -1.6, "Investigation", fontsize=10)
-    plt.text(0.805, 1.8, "High-noise trap", fontsize=9)
-
-    plt.title("Two Regime DGP")
+    # plt.title("Two Regime DGP")
     plt.xlabel("X1"); plt.ylabel("Y")
     plt.legend(loc="upper left", frameon=False)
     plt.grid(True, linestyle=':', alpha=0.6) 
@@ -101,17 +96,11 @@ def plot_three_regime(df, save_path=None):
     grid = np.linspace(0, 1, 500)
     plt.plot(grid, noiseless_three_regime(grid), color='black', linewidth=2, label="Underlying function") # Changed color
 
-    # Dividing lines at regime and trap bounds (no text labels)
+    # Dividing lines at regime and trap bounds 
     for xpos in [0.4, 0.7, 0.6, 0.65]:
         plt.axvline(xpos, color='dimgray', linestyle="--", linewidth=1)
 
-    # Region annotations
-    plt.text(0.12, 2.2, "Exploration", fontsize=10)
-    plt.text(0.47, -2.4, "Investigation", fontsize=10)
-    plt.text(0.75, 2.2, "Exploration", fontsize=10)
-    plt.text(0.602, 2.6, "High-noise trap", fontsize=9)
-
-    plt.title("Three Regime DGP")
+    # plt.title("Three Regime DGP")
     plt.xlabel("X1"); plt.ylabel("Y")
     plt.legend(loc="upper left", frameon=False)
     plt.grid(True, linestyle=':', alpha=0.6)
@@ -122,14 +111,14 @@ def plot_three_regime(df, save_path=None):
     plt.show()
 
 
-# --- Run & save ---
+### MAIN ###
 if __name__ == "__main__":
     try:
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
     except NameError:
         project_root = os.getcwd()
 
-    SAVE_DIR = Path(project_root) / "Results" / "images" / "Presentation"
+    SAVE_DIR = Path(project_root) / "Results" / "images" / "manuscript"
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
     print("Generating DGP plots...")

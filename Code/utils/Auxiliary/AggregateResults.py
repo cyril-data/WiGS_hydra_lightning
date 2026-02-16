@@ -37,9 +37,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         error_df_template = first_result[strategies[0]]['ErrorVecs']
         eval_types = list(error_df_template.columns)  
         metrics = list(error_df_template.index)      
-
-        all_initial_indices = {}
-        
+                
         aggregated_data = {
             s: {
                 'ErrorVecs': {
@@ -130,7 +128,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         else:
             print(f"  > No WeightHistory CSVs needed.")
 
-        # Save InitialIndices file per dataset ---
+        # Save InitialIndices file per dataset #
         if all_initial_indices_list:
             try:
                 indices_df = pd.DataFrame(all_initial_indices_list).transpose()

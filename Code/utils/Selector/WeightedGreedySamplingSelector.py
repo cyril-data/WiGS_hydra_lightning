@@ -102,7 +102,7 @@ class WeightedGreedySamplingSelector:
         d_prime_nmY = (d_nmY - d_nmY.min()) / (d_nmY.max() - d_nmY.min() + epsilon)
 
         ## Weights ##
-        w_x, w_y = 0.5, 0.5                         # Default weights
+        w_x, w_y = 0.5, 0.5                         
         if self.weight_strategy == 'static':
             w_x, w_y = self.w_x, self.w_y
         

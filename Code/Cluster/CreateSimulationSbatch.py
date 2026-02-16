@@ -18,14 +18,17 @@ if __name__ == "__main__":
 
     ## Cluster Parameters ##
     partition_name_input = "short"
-    time_limit_input='11:59:59'
-    memory_input='750MB'
+    time_limit_input='7:59:59'
+    memory_input='3000MB'
     
     ## Define Simulation Parameters ##
-    N_REPLICATIONS = 100
-    CANDIDATE_PROPORTION = 0.8
+    N_REPLICATIONS = 25
+    CANDIDATE_PROPORTION = 0.95
+
+    ## Models to run - MUST BE IN SYNC WITH RuunSimulation.py ##
     models_to_run = [
-        'RidgeRegressionPredictor'
+        # 'RidgeRegressionPredictor'
+        'GaussianProcessRegressorPredictor'
     ]
     
     ## Data sets ##

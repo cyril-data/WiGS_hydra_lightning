@@ -19,17 +19,17 @@ def MeanVariancePlot(Subtitle=None,
                      Y_Label=None,
                      VarInput=False,
                      initial_train_size: int = None,
-                     FigSize=(10, 5),
+                     FigSize=(9,12),
                      LegendMapping=None,
                      show_legend=True, 
                      **SimulationErrorResults):
     """
-    Generates and returns trace plots for the mean and variance of simulation results.
+    Generates trace plots. 
+    If RelativeError is provided, plots the DIFFERENCE (Method - Baseline).
     """
     if initial_train_size is None:
         raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
 
-    ### Set Up ###
     MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector = {}, {}, {}, {}
 
     ### Extract ###
@@ -38,6 +38,8 @@ def MeanVariancePlot(Subtitle=None,
         VarianceVector[Label] = np.var(Results, axis=1)
         n_simulations = Results.shape[1]
         StdErrorVector[Label] = np.std(Results, axis=1) / np.sqrt(n_simulations)
+        
+        # Calculate Variance Bounds
         lower_chi2 = chi2.ppf(0.025, df=n_simulations - 1)
         upper_chi2 = chi2.ppf(0.975, df=n_simulations - 1)
         StdErrorVarianceVector[Label] = {
@@ -45,16 +47,23 @@ def MeanVariancePlot(Subtitle=None,
             "upper": (n_simulations - 1) * VarianceVector[Label] / lower_chi2
         }
 
-    ### Normalize to Relative Error if specified ###
+    ### Calculate Difference (Method - Baseline) if specified ###
     if RelativeError:
         if RelativeError in MeanVector:
-            Y_Label = f"Normalized Error (Baseline: {RelativeError}=1.0)"
+            Y_Label = f"Error Difference (Method - {RelativeError})"
+            
             BaselineMean = MeanVector[RelativeError].copy()
+            
             for Label in MeanVector:
-                MeanVector[Label] /= BaselineMean
-                StdErrorVector[Label] /= BaselineMean
+                MeanVector[Label] -= BaselineMean
+                
+                # Manual Clamp for 100% Labeled
+                # At 100%, Method == Baseline, so Difference must be 0.0
+                if len(MeanVector[Label]) > 0:
+                    MeanVector[Label][-1] = 0.0
+                    StdErrorVector[Label][-1] = 0.0
         else:
-            print(f"  > Warning: Baseline '{RelativeError}' not found for normalization. Skipping.")
+            print(f"  > Warning: Baseline '{RelativeError}' not found. Skipping normalization.")
 
     ### Mean Plot ###
     fig_mean, ax_mean = plt.subplots(figsize=FigSize)
@@ -69,6 +78,7 @@ def MeanVariancePlot(Subtitle=None,
             x = (num_labeled_at_step / total_pool_size) * 100
         else:
             x = []
+            
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ':') if Linestyles else ':'
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
@@ -76,9 +86,14 @@ def MeanVariancePlot(Subtitle=None,
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(x, MeanValues - CriticalValue * StdErrorValues,
                              MeanValues + CriticalValue * StdErrorValues, alpha=TransparencyVal, color=color)
+
     ax_mean.set_xlabel("Percent of Learning Pool Labeled")
     ax_mean.set_ylabel(Y_Label)
-    ax_mean.set_title(Subtitle, fontsize=12)
+    
+    # 3. Reference Line is now at 0.0 (No Difference)
+    if RelativeError:
+        ax_mean.axhline(y=0.0, color='r', linestyle='-', linewidth=1, alpha=0.5)
+
     if show_legend:
         ax_mean.legend(loc='upper left', bbox_to_anchor=(1.02, 1))
 
@@ -108,16 +123,15 @@ def MeanVariancePlot(Subtitle=None,
             lower_bound = StdErrorVarianceVector[Label]["lower"]
             upper_bound = StdErrorVarianceVector[Label]["upper"]
             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
+        
         ax_var.set_xlabel("Percent of Learning Pool Labeled")
         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
-        ax_var.set_title(Subtitle, fontsize=9)
-        ax_var.legend(loc='upper right')
+        if show_legend:
+            ax_var.legend(loc='upper right')
         if isinstance(xlim, list):
             ax_var.set_xlim(xlim)
     
     return (fig_mean, fig_var)
-
-
 ### Main Wrapper Function ###
 def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, single_dataset=None):
     """
@@ -131,32 +145,24 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSx': 'cornflowerblue', 
         'GSy': 'salmon', 'iGS': 'red',
         'WiGS (Static w_x=0.75)': 'lightgreen', 
-        'WiGS (Static w_x=0.5)': 'forestgreen',
         'WiGS (Static w_x=0.25)': 'darkgreen', 
         'WiGS (Time-Decay, Linear)': 'orange',
         'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
-        'WiGS (MAB-UCB1, c=0.5)': 'orchid',
         'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
-        'WiGS (MAB-UCB1, c=5.0)': 'indigo',
-        'WiGS (SAC)': 'darkcyan'
-        # 'iRDM': 'darkcyan', 
-        # 'IDEAL': 'deeppink'
+        'WiGS (SAC)': 'darkcyan',
+        'QBC': 'goldenrod'   
     }
     master_linestyles = {
         'Passive Learning': ':', 
         'GSx': ':', 
         'GSy': ':', 'iGS': '-',
         'WiGS (Static w_x=0.75)': '-.', 
-        'WiGS (Static w_x=0.5)': '-.',
         'WiGS (Static w_x=0.25)': '-.', 
         'WiGS (Time-Decay, Linear)': '-.',
         'WiGS (Time-Decay, Exponential)': '-.', 
-        'WiGS (MAB-UCB1, c=0.5)': '-.',
         'WiGS (MAB-UCB1, c=2.0)': '-.', 
-        'WiGS (MAB-UCB1, c=5.0)': '-.',
-        'WiGS (SAC)': '-'
-        # 'iRDM': '--', 
-        # 'IDEAL': '-'
+        'WiGS (SAC)': '-',
+        'QBC': '-.' 
     }
     master_legend = {
         'Passive Learning': 'Random', 
@@ -164,12 +170,12 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         'GSy': 'GSy', 
         'iGS': 'iGS',
         'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)', 
-        'WiGS (Static w_x=0.5)': 'WiGS (Static, w_x=0.5)',
         'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
         'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
         'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
-        'WiGS (MAB-UCB1, c=5.0)': 'WiGS (MAB)',
-        'WiGS (SAC)': 'WiGS (SAC)'
+        'WiGS (MAB-UCB1, c=2.0)': 'MAB-UCB1, c=2.0',
+        'WiGS (SAC)': 'WiGS (SAC)',
+        'QBC': 'QBC',
     }
     
     ### Set up ###
@@ -177,11 +183,6 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     plot_types = {'trace': None, 'trace_relative_iGS': 'iGS'}
     eval_types = ['full_pool']    
     strategies_to_exclude = {
-        "iRDM", 
-        "IDEAL",
-        "WiGS (Static w_x=0.5)",
-        'WiGS (MAB-UCB1, c=0.5)',
-        'WiGS (MAB-UCB1, c=2.0)',
     }
 
 
@@ -256,9 +257,9 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                                                                         CriticalValue=1.96,
                                                                         initial_train_size=initial_train_size,
                                                                         show_legend=show_legend,
-                                                                        **filtered_results)
-                    
-                    base_plot_path = os.path.join(image_dir, eval_type, metric, folder_name)
+                                                                        **filtered_results)                    
+                    output_eval_name = 'trace_plots' if eval_type == 'full_pool' else eval_type
+                    base_plot_path = os.path.join(image_dir, output_eval_name, metric, folder_name)
                     os.makedirs(os.path.join(base_plot_path, 'trace'), exist_ok=True)
                     os.makedirs(os.path.join(base_plot_path, 'variance'), exist_ok=True)
 
@@ -274,14 +275,59 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
         print(f"Finished all plots for {data_name}.")
     print("\n--- Plot Generation Complete ---")
 
+### GENERATE LEGEND ###
+def generate_legend(legend_mapping, colors, linestyles, output_path, ncol):
+    """
+    Generates a standalone legend image from the master style dictionaries.
+    """
+    
+    # Create dummy plot handles for the legend
+    handles = []
+    labels = []
+    
+    for long_name, short_name in legend_mapping.items():
+        color = colors.get(long_name)
+        ls = linestyles.get(long_name, '-')
+        
+        if color is None:
+            continue
+            
+        # Create a dummy line object
+        line = plt.Line2D([0], [0], color=color, linestyle=ls, label=short_name)
+        handles.append(line)
+        labels.append(short_name)
+
+    # Figure height needs to be slightly taller for 3 rows
+    fig = plt.figure(figsize=(16, 3)) 
+    
+    # Create the legend
+    fig_legend = fig.legend(
+        handles, 
+        labels, 
+        loc='center', 
+        frameon=True, 
+        ncol=ncol 
+    )    
+    plt.gca().axis('off')    
+    fig.savefig(
+        output_path, 
+        bbox_inches=fig_legend.get_window_extent().transformed(fig.dpi_scale_trans.inverted()),
+        dpi=300,
+        transparent=True 
+    )
+    plt.close(fig)
+    print(f"--- Legend generation complete ---")
+
 ### MAIN ###
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description="Generate plots for a specific dataset.")
-    parser.add_argument('--dataset', type=str, required=False, 
+    parser = argparse.ArgumentParser(description="Generate plots for simulation results.")
+    parser.add_argument('--dataset', type=str, required=False,  
                         help="Optional: name of a single dataset folder to process.")
     parser.add_argument('--no-legend', dest='show_legend', action='store_false',
-                        help="Disable legends on individual plots (for later compilation).")
+                        help="Disable legends on individual plots (for later compilation).")    
+    parser.add_argument('--legend_only', action='store_true',
+                        help="If set, only generate a standalone legend file and exit.")
     args = parser.parse_args()
 
     ## Define Paths ##
@@ -294,8 +340,86 @@ if __name__ == "__main__":
     AGGREGATED_RESULTS_DIR = os.path.join(PROJECT_ROOT, 'Results', 'simulation_results', 'aggregated')
     IMAGE_DIR = os.path.join(PROJECT_ROOT, 'Results', 'images')
     
-    ## Execute the main function ##
-    generate_all_plots(aggregated_results_dir=AGGREGATED_RESULTS_DIR, 
-                       image_dir=IMAGE_DIR, 
-                       show_legend=args.show_legend,
-                       single_dataset=args.dataset)
+    
+    if args.legend_only:
+        master_colors = {
+            'Passive Learning': 'gray', 
+            'GSx': 'cornflowerblue', 
+            'GSy': 'salmon', 
+            'iGS': 'red',
+            'QBC': 'goldenrod',
+            'Uncertainty Sampling': 'black',
+            'EGAL': 'brown',
+            'EMCM': 'teal',
+            'WiGS (Static w_x=0.75)': 'lightgreen', 
+            'WiGS (Static w_x=0.25)': 'darkgreen', 
+            'WiGS (Time-Decay, Linear)': 'orange',
+            'WiGS (Time-Decay, Exponential)': 'saddlebrown', 
+            'WiGS (MAB-UCB1, c=2.0)': 'darkviolet', 
+            'WiGS (SAC)': 'darkcyan'
+        }
+
+        master_linestyles = {
+            'Passive Learning': ':', 
+            'GSx': ':', 
+            'GSy': ':', 
+            'iGS': '-',
+            'QBC': '-.' ,
+            'Uncertainty Sampling': '--',
+            'EGAL Density': '--',
+            'EMCM': '--',
+            'WiGS (Static w_x=0.75)': '-.', 
+            'WiGS (Static w_x=0.25)': '-.', 
+            'WiGS (Time-Decay, Linear)': '-.',
+            'WiGS (Time-Decay, Exponential)': '-.', 
+            'WiGS (MAB-UCB1, c=2.0)': '-.', 
+            'WiGS (SAC)': '-'
+        }
+
+        master_legend = {
+            'Passive Learning': 'Random', 
+            'GSx': 'GSx', 
+            'GSy': 'GSy', 
+            'iGS': 'iGS',
+            'QBC': 'QBC',
+            'Uncertainty Sampling': 'Uncertainty Sampling',
+            'EGAL': 'EGAL',
+            'EMCM': 'EMCM',
+            'WiGS (Static w_x=0.75)': 'WiGS (Static, w_x=0.75)',
+            'WiGS (Static w_x=0.25)': 'WiGS (Static, w_x=0.25)', 
+            'WiGS (Time-Decay, Linear)': 'WiGS (Linear Decay)',
+            'WiGS (Time-Decay, Exponential)': 'WiGS (Exponential Decay)',
+            'WiGS (MAB-UCB1, c=2.0)': 'WiGS (MAB, c=2.0)',
+            'WiGS (SAC)': 'WiGS (SAC)'
+        }
+        
+        # Define strategies to *exclude* from the legend #
+        strategies_to_exclude = {
+        }
+        
+        # Filter the master legend #
+        filtered_legend_mapping = {
+            long: short for long, short in master_legend.items() 
+            if long not in strategies_to_exclude
+        }
+
+        # Define the output path #
+        legend_output_path = os.path.join(IMAGE_DIR, "benchmark_legend.png")
+        
+        # Generate the legend #
+        generate_legend(
+            legend_mapping=filtered_legend_mapping,
+            colors=master_colors,
+            linestyles=master_linestyles,
+            output_path=legend_output_path,
+            ncol=7
+        )
+
+    else:
+        ## Execute the main plotting function ##
+        generate_all_plots(
+            aggregated_results_dir=AGGREGATED_RESULTS_DIR,  
+            image_dir=IMAGE_DIR,  
+            show_legend=args.show_legend,
+            single_dataset=args.dataset
+        )
