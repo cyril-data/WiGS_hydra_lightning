@@ -125,7 +125,9 @@ def generate_heatmap(auc_df, output_dir, baseline_method):
                          fmt=".1f", 
                          cmap=cmap, 
                          linewidths=.5,
-                         cbar_kws={'label': f'Absolute Total AUC ({METRIC})'})
+                         cbar_kws={'label': f'Absolute Total AUC ({METRIC})', 'pad': 0.01, 'shrink': 0.8}
+                         )
+                         
         
         title_str = f'Active Learning Performance: Absolute Total {METRIC} AUC (Lower is Better)'
         filename = f"{OUTPUT_FILENAME_BASE}_Absolute.png"
@@ -162,15 +164,15 @@ def generate_heatmap(auc_df, output_dir, baseline_method):
                          center=1.0, 
                          vmin=0.90, vmax=1.10, 
                          linewidths=.5,
-                         cbar_kws={'label': f'Relative AUC ({METRIC}) vs {baseline_method}'})
+                         cbar_kws={'label': f'Relative AUC of {METRIC} vs {baseline_method}'})
 
         title_str = f'Active Learning Performance: Relative {METRIC} AUC vs {baseline_method} (Lower is Better)'
         safe_baseline = baseline_method.replace(" ", "_").replace("(", "").replace(")", "")
         filename = f"{OUTPUT_FILENAME_BASE}_vs_{safe_baseline}.png"
 
     # Common Plot Settings
-    plt.xlabel('Dataset', fontsize=14)
-    plt.ylabel('Selection Strategy', fontsize=14)
+    # plt.xlabel('Dataset', fontsize=14)
+    # plt.ylabel('Selection Strategy', fontsize=14)
     plt.xticks(rotation=45, ha='right')
     # plt.title(title_str, fontsize=16)
     plt.tight_layout()

@@ -67,8 +67,8 @@ def calculate_n_rel(results_dir):
                 continue
 
             # 3. Calculate Global Target
-            rmse_min = df.min().min() # Best error achieved by ANY method
-            rmse_start = df[BASELINE_NAME].iloc[0] # Starting error
+            rmse_min = df.min().min() 
+            rmse_start = df[BASELINE_NAME].iloc[0]
             total_gap = rmse_start - rmse_min
             
             if total_gap < 1e-9: continue 
@@ -113,10 +113,7 @@ def plot_efficiency_boxplot(df):
     sns.set_context("talk", font_scale=1.5) 
     sns.set_style("whitegrid")    
     
-    # Define order explicitly based on mapping keys to keep consistency
-    order = [NAME_MAPPING[m] for m in NAME_MAPPING if m in NAME_MAPPING and NAME_MAPPING[m] in df["Method"].unique()]
-    
-    # plt.figure(figsize=(10, 8)) 
+    order = [NAME_MAPPING[m] for m in NAME_MAPPING if m in NAME_MAPPING and NAME_MAPPING[m] in df["Method"].unique()]    
     plt.figure(figsize=(24, 12))     
     
     sns.boxplot(
@@ -154,14 +151,12 @@ def plot_efficiency_boxplot(df):
     
 ### Main ###
 if __name__ == "__main__":
-    # Define Project Root Dynamically
     try:
         SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
         PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(SCRIPT_DIR)))
     except NameError:
         PROJECT_ROOT = os.path.abspath(os.path.join(os.getcwd(), '..', '..'))
         
-    # Update paths to use project root
     RESULTS_DIR = os.path.join(PROJECT_ROOT, "Results", "simulation_results", "aggregated")
     OUTPUT_DIR = os.path.join(PROJECT_ROOT, "Results", "images", "manuscript")
 

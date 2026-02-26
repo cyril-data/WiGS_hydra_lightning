@@ -122,11 +122,8 @@ if __name__ == "__main__":
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', 1000)
 
-    # Pass the dictionary with short names to the function
     results_table = WilcoxonRankSignedTest(filtered_results, RoundingVal=3)
     print(results_table)
-
-    # Save to LaTeX 
     latex_filename = f"{args.dataset}_{args.metric}_{args.eval_type}_wilcoxon.tex"
     latex_full_path = os.path.join(OUTPUT_TABLE_DIR, latex_filename)    
     results_table.to_latex(latex_full_path, escape=False)

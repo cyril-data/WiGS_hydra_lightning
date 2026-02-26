@@ -6,9 +6,9 @@ from utils.Main.RunSimulationFunction import RunSimulationFunction
 
 ### Models - MUST BE IN SYNC WITH CreateSimulationSbatch ###
 MODEL_LIST = [
-    # 'RidgeRegressionPredictor'
+    'RidgeRegressionPredictor'
     # 'GaussianProcessRegressorPredictor'
-    'RandomForestRegressorPredictor'
+    # 'RandomForestRegressorPredictor'
 ]
 
 ### Get Directory Paths ###

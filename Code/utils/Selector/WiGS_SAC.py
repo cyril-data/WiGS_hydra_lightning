@@ -20,7 +20,7 @@ GAMMA = 0.99              # Discount factor for future rewards
 TAU = 0.005               # Target network soft update rate
 ALPHA = 0.2               # Entropy regularization coefficient (the "temperature")
 
-# --- Device Configuration ---
+# Device Configuration
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ### Actor and Critic Network ###
@@ -90,7 +90,6 @@ class Critic(nn.Module):
         return q1, q2
 
 ### Replay Buffer ###
-
 class ReplayBuffer:
     """A simple replay buffer to store experience tuples."""
     def __init__(self, max_size):
@@ -107,10 +106,9 @@ class ReplayBuffer:
         return len(self.buffer)
 
 ### Main WiGS SAC Selector Class ###
-
 class WiGS_SAC_Selector:
     """
-    Implements a WiGS selector using a Soft Actor-Critic (SAC) agent for weight selection. 🤖
+    Implements a WiGS selector using a Soft Actor-Critic (SAC) agent for weight selection. 
     """
     def __init__(self, initial_candidate_size: int, Seed: int = None, **kwargs):
         """
@@ -125,9 +123,8 @@ class WiGS_SAC_Selector:
             np.random.seed(Seed)
             random.seed(Seed)
 
-        # We will determine state_dim later, once we see the first dataframe
         self.state_dim = None
-        self.action_dim = 1  # w_x is a single continuous value
+        self.action_dim = 1 
 
         # SAC components
         self.actor = None
@@ -166,7 +163,7 @@ class WiGS_SAC_Selector:
         """
         X_train, y_train = get_features_and_target(df=df_Train, target_column_name="Y")
 
-        # --- State Features ---
+        
         # 1. Current model performance
         state_rmse = np.array([current_rmse])
         # 2. AL Process Progress
@@ -175,9 +172,7 @@ class WiGS_SAC_Selector:
         labeled_features_mean = X_train.mean().values
         labeled_features_std = X_train.std().values
         labeled_target_mean = np.array([y_train.mean()])
-        labeled_target_std = np.array([y_train.std()])
-        
-        # Replace NaNs that might occur in std dev at the start
+        labeled_target_std = np.array([y_train.std()])        
         labeled_features_std = np.nan_to_num(labeled_features_std, nan=0.0)
         labeled_target_std = np.nan_to_num(labeled_target_std, nan=0.0)
 
@@ -205,7 +200,7 @@ class WiGS_SAC_Selector:
         state = torch.FloatTensor(state).to(DEVICE)
         next_state = torch.FloatTensor(next_state).to(DEVICE)
         action = torch.FloatTensor(action).to(DEVICE)
-        action = action.reshape(-1, self.action_dim) # <-- ADD THIS LINE TO FIX SHAPE
+        action = action.reshape(-1, self.action_dim)
         reward = torch.FloatTensor(reward).unsqueeze(1).to(DEVICE)
         done = torch.FloatTensor(done).unsqueeze(1).to(DEVICE)
         # --- Update Critic ---
@@ -254,11 +249,11 @@ class WiGS_SAC_Selector:
         
         ## Store experience from the PREVIOUS step and update agent ##
         if self.last_state is not None:
-            reward = self.last_rmse - current_rmse  # Reward is the decrease in RMSE
-            done = False  # An episode is a full AL run, so 'done' is always false here.
+            reward = self.last_rmse - current_rmse  
+            done = False 
             
             self.replay_buffer.push(self.last_state, self.last_action, reward, current_state, done)
-            self.update() # Perform one learning step
+            self.update()
 
         ## Select an action (w_x) for the CURRENT step ##
         state_tensor = torch.FloatTensor(current_state).unsqueeze(0).to(DEVICE)
@@ -267,7 +262,7 @@ class WiGS_SAC_Selector:
         
         # Action is in [-1, 1], scale to [0, 1] for w_x
         w_x_tensor = (action.cpu().numpy().flatten()[0] + 1) / 2
-        w_x = np.clip(w_x_tensor, 0, 1) # Ensure w_x is in [0, 1]
+        w_x = np.clip(w_x_tensor, 0, 1)
         w_y = 1.0 - w_x
         
         ## Store state and action for the next iteration's update ##
@@ -276,7 +271,6 @@ class WiGS_SAC_Selector:
         self.last_rmse = current_rmse
         
         ### WiGS Point Selection Logic ###
-
         X_Candidate, _ = get_features_and_target(df=df_Candidate, target_column_name="Y")
         X_Train, y_Train = get_features_and_target(df=df_Train, target_column_name="Y")
     

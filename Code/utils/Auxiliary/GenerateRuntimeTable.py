@@ -77,7 +77,6 @@ def main():
                 
                 # Format Dataset Name for LaTeX
                 ds_name = dataset.replace("concrete", "Conc.").replace("burbidge", "Burb.").replace("wine", "Wine").title().replace("_", " ")
-                # Escape underscores for LaTeX
                 ds_name = ds_name.replace("_", "\\_")
                 
                 row = {"Dataset": ds_name}
@@ -103,10 +102,10 @@ def main():
         df = pd.concat([df, pd.DataFrame([avg_row])], ignore_index=True)
 
     ### GENERATE LATEX ###
-    latex_content = r"\begin{table*}[htbp]" + "\n" # Use table* for wide table spanning both columns
+    latex_content = r"\begin{table*}[htbp]" + "\n" 
     latex_content += r"    \centering" + "\n"
     latex_content += r"    \scriptsize" + "\n"
-    latex_content += r"    \setlength{\tabcolsep}{2pt}" + "\n" # Tighten space
+    latex_content += r"    \setlength{\tabcolsep}{2pt}" + "\n"
     
     # Build alignment string
     total_data_cols = sum(len(g["columns"]) for g in COLUMN_GROUPS)
@@ -116,8 +115,7 @@ def main():
     ## HEADER ROW 1: GROUPS ##
     header1 = "        " 
     cmidrules = ""
-    current_col_idx = 2 # Start at 2 because col 1 is Dataset
-    
+    current_col_idx = 2 
     for group in COLUMN_GROUPS:
         group_name = group["group_name"]
         num_sub_cols = len(group["columns"])
@@ -144,10 +142,7 @@ def main():
     for _, row in df.iterrows():
         ds_name = row['Dataset']
         
-        # Bold the MEDIAN row logic is handled by the name being bolded already
-        latex_content += f"        {ds_name}"
-            
-        # Iterate through groups to maintain order
+        latex_content += f"        {ds_name}"            
         for group in COLUMN_GROUPS:
             for col_key, _ in group["columns"]:
                 val = row[col_key]
@@ -156,13 +151,11 @@ def main():
                     latex_content += " & -"
                 else:
                     if "MEDIAN" in ds_name:
-                        latex_content += f" & \\textbf{{{val:.1f}}}" # 1 decimal for space saving
+                        latex_content += f" & \\textbf{{{val:.1f}}}" 
                     else:
                         latex_content += f" & {val:.1f}"
                         
-        latex_content += r" \\" + "\n"
-        
-        # Add a midrule before the final MEDIAN row
+        latex_content += r" \\" + "\n"        
         if _ == len(df) - 2:
              latex_content += r"        \midrule" + "\n"
 

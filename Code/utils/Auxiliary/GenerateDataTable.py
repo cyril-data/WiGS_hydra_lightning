@@ -1,15 +1,11 @@
 import pandas as pd
 import os
 
-# === CONFIGURATION ===
-# Path to your processed datasets
-# Assuming script is run from project root 'WeightedGreedySampling'
+
 DATA_DIR = "Data/processed/" 
 OUTPUT_DIR = "Results/tables/"
 OUTPUT_FILENAME = "DatasetTable.tex"
 
-# Map KEYS (Actual Filenames without extension) to (Display Name, Source)
-# The KEY on the left must match the filename in 'ls' exactly!
 META_INFO = {
     "mpg":                   ("AutoMPG",                  "UCI ML Repository"),
     "beer":                  ("Beer",                     "Kaggle"),
@@ -72,7 +68,7 @@ def generate_latex_table():
         except Exception as e:
             print(f"Error reading {file_key}: {e}")
 
-    # === Generate LaTeX String ===
+    # Generate LaTeX String
     latex_content = r"""\begin{table}[htbp]
     \centering
     \begin{tabular}{lllll}
@@ -92,7 +88,7 @@ def generate_latex_table():
 \end{table}
 """
 
-    # === Write to File ===
+    # Write to File
     output_path = os.path.join(OUTPUT_DIR, OUTPUT_FILENAME)
     with open(output_path, "w") as f:
         f.write(latex_content)
