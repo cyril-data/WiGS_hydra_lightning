@@ -5,14 +5,15 @@ from sklearn.linear_model import Ridge
 from sklearn.utils import resample
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 
+
 ### Query-By-Bagging (QBB) / Query-By-Committee (QBC) ###
 class QBCSelector:
     """
     Implements Query-By-Bagging (QBB) / Query-By-Committee (QBC) with Ridge Regression.
-    
-    The 'committee' consists of multiple Ridge Regression models trained on 
-    bootstrap samples of the labeled data. The acquisition function selects 
-    the candidate point with the highest variance in predictions across the 
+
+    The 'committee' consists of multiple Ridge Regression models trained on
+    bootstrap samples of the labeled data. The acquisition function selects
+    the candidate point with the highest variance in predictions across the
     committee members.
     """
 
@@ -29,7 +30,9 @@ class QBCSelector:
         self.seed = seed
         self.rng = np.random.default_rng(seed)
 
-    def select(self, df_Candidate: pd.DataFrame, df_Train: pd.DataFrame, **kwargs) -> dict:
+    def select(
+        self, df_Candidate: pd.DataFrame, df_Train: pd.DataFrame, y_size: int, **kwargs
+    ) -> dict:
         """
         Selects the candidate with the highest prediction variance.
         """
@@ -37,24 +40,24 @@ class QBCSelector:
             return {"IndexRecommendation": []}
 
         # 1. Prepare Data
-        X_train, y_train = get_features_and_target(df_Train, "Y")
-        X_cand, _ = get_features_and_target(df_Candidate, "Y")
-        
+        X_train, y_train = get_features_and_target(df_Train, y_size)
+        X_cand, _ = get_features_and_target(df_Candidate, y_size)
+
         # 2. Train Committee
-        predictions = [] # Shape: (n_committee, n_candidates)
-        
+        predictions = []  # Shape: (n_committee, n_candidates)
+
         for i in range(self.n_committee):
-            member_seed = self.seed + i if self.seed is not None else None            
-            X_boot, y_boot = resample(X_train, y_train, replace=True, random_state=member_seed)            
+            member_seed = self.seed + i if self.seed is not None else None
+            X_boot, y_boot = resample(X_train, y_train, replace=True, random_state=member_seed)
             model = Ridge(alpha=self.alpha)
             model.fit(X_boot, y_boot)
             preds = model.predict(X_cand)
             predictions.append(preds)
 
         # 3. Calculate Variance across Committee
-        committee_preds = np.vstack(predictions)        
+        committee_preds = np.vstack(predictions)
         prediction_variance = np.var(committee_preds, axis=0)
-        
+
         # 4. Select Max Variance
         best_idx_loc = np.argmax(prediction_variance)
         IndexRecommendation = df_Candidate.iloc[[best_idx_loc]].index[0]

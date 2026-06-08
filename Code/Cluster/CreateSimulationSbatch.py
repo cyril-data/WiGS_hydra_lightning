@@ -11,50 +11,53 @@ from utils.Auxiliary.GenerateJobs import create_master_sbatch
 
 ### Execute ###
 if __name__ == "__main__":
-    
+
     ## Directories ##
     PROJECT_ROOT = os.path.dirname(CODE_DIR)
-    DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'Data', 'processed')
+    DATA_DIRECTORY = os.path.join(PROJECT_ROOT, "Data", "processed")
 
     ## Cluster Parameters ##
     partition_name_input = "short"
-    time_limit_input='11:59:59'
-    memory_input='3000MB'
-    
+    time_limit_input = "11:59:59"
+    memory_input = "3000MB"
+
     ## Define Simulation Parameters ##
     N_REPLICATIONS = 25
     CANDIDATE_PROPORTION = 0.95
 
     ## Models to run - MUST BE IN SYNC WITH RuunSimulation.py ##
     models_to_run = [
-        'RidgeRegressionPredictor'
+        "MLPRegressionPredictor",
+        "RidgeRegressionPredictor",
         # 'GaussianProcessRegressorPredictor'
         # 'RandomForestRegressorPredictor'
     ]
-    
+
     ## Data sets ##
-    pkl_files = [f for f in os.listdir(DATA_DIRECTORY) if f.endswith('.pkl')]
+    pkl_files = [f for f in os.listdir(DATA_DIRECTORY) if f.endswith(".pkl")]
     datasets_to_run = sorted([os.path.splitext(f)[0] for f in pkl_files])
-    
+
     print("--- Starting sbatch file generation ---")
-    
+
     ## Loop through datasets ##
     for dataset_name in datasets_to_run:
         print(f"Generating job file for dataset: {dataset_name}...")
-        
+
         # Create path #
-        model_sbatch_path = os.path.join(CODE_DIR, 'Cluster', 'RunSimulations', f"master_job_{dataset_name}.sbatch")
-        
+        model_sbatch_path = os.path.join(
+            CODE_DIR, "Cluster", "RunSimulations", f"master_job_{dataset_name}.sbatch"
+        )
+
         # Create master sbatch #
         create_master_sbatch(
-            partition_name = partition_name_input,
+            partition_name=partition_name_input,
             time_limit=time_limit_input,
             memory=memory_input,
             sbatch_path=model_sbatch_path,
             n_replications=N_REPLICATIONS,
-            n_models=len(models_to_run), 
-            dataset_name=dataset_name,   
+            n_models=len(models_to_run),
+            dataset_name=dataset_name,
             candidate_prop=CANDIDATE_PROPORTION,
-            code_dir=CODE_DIR
+            code_dir=CODE_DIR,
         )
     print("--- Finished ---")

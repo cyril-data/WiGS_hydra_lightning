@@ -12,16 +12,17 @@ from collections import deque
 import random
 
 # --- Hyperparameters ---
-HIDDEN_SIZE = 64          # Number of neurons in hidden layers
-BUFFER_SIZE = 10000       # Max size of the replay buffer
-BATCH_SIZE = 64           # Number of samples to train on from the buffer
-LEARNING_RATE = 3e-4      # Learning rate for actor and critic networks
-GAMMA = 0.99              # Discount factor for future rewards
-TAU = 0.005               # Target network soft update rate
-ALPHA = 0.2               # Entropy regularization coefficient (the "temperature")
+HIDDEN_SIZE = 64  # Number of neurons in hidden layers
+BUFFER_SIZE = 10000  # Max size of the replay buffer
+BATCH_SIZE = 64  # Number of samples to train on from the buffer
+LEARNING_RATE = 3e-4  # Learning rate for actor and critic networks
+GAMMA = 0.99  # Discount factor for future rewards
+TAU = 0.005  # Target network soft update rate
+ALPHA = 0.2  # Entropy regularization coefficient (the "temperature")
 
 # Device Configuration
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 ### Actor and Critic Network ###
 class Actor(nn.Module):
@@ -29,13 +30,14 @@ class Actor(nn.Module):
     The Actor (Policy) network. It maps a state to an action.
     It outputs the parameters of a distribution from which the action is sampled.
     """
+
     def __init__(self, state_dim, action_dim):
         super(Actor, self).__init__()
         self.network = nn.Sequential(
             nn.Linear(state_dim, HIDDEN_SIZE),
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
-            nn.ReLU()
+            nn.ReLU(),
         )
         self.mean = nn.Linear(HIDDEN_SIZE, action_dim)
         self.log_std = nn.Linear(HIDDEN_SIZE, action_dim)
@@ -51,19 +53,21 @@ class Actor(nn.Module):
         mean, log_std = self.forward(state)
         std = log_std.exp()
         normal = Normal(mean, std)
-        x_t = normal.rsample()  
-        y_t = torch.tanh(x_t)   
+        x_t = normal.rsample()
+        y_t = torch.tanh(x_t)
         action = y_t
         log_prob = normal.log_prob(x_t)
         log_prob -= torch.log(1 - y_t.pow(2) + 1e-6)
         log_prob = log_prob.sum(1, keepdim=True)
         return action, log_prob
 
+
 class Critic(nn.Module):
     """
     The Critic (Q-Value) network. It maps a (state, action) pair to a Q-value.
     SAC uses a "twin critic" setup, so we define one class and instantiate it twice.
     """
+
     def __init__(self, state_dim, action_dim):
         super(Critic, self).__init__()
         # Critic 1
@@ -72,7 +76,7 @@ class Critic(nn.Module):
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
-            nn.Linear(HIDDEN_SIZE, 1)
+            nn.Linear(HIDDEN_SIZE, 1),
         )
         # Critic 2
         self.q2 = nn.Sequential(
@@ -80,7 +84,7 @@ class Critic(nn.Module):
             nn.ReLU(),
             nn.Linear(HIDDEN_SIZE, HIDDEN_SIZE),
             nn.ReLU(),
-            nn.Linear(HIDDEN_SIZE, 1)
+            nn.Linear(HIDDEN_SIZE, 1),
         )
 
     def forward(self, state, action):
@@ -89,9 +93,11 @@ class Critic(nn.Module):
         q2 = self.q2(sa)
         return q1, q2
 
+
 ### Replay Buffer ###
 class ReplayBuffer:
     """A simple replay buffer to store experience tuples."""
+
     def __init__(self, max_size):
         self.buffer = deque(maxlen=max_size)
 
@@ -100,18 +106,26 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         state, action, reward, next_state, done = zip(*random.sample(self.buffer, batch_size))
-        return np.array(state), np.array(action), np.array(reward), np.array(next_state), np.array(done)
+        return (
+            np.array(state),
+            np.array(action),
+            np.array(reward),
+            np.array(next_state),
+            np.array(done),
+        )
 
     def __len__(self):
         return len(self.buffer)
 
+
 ### Main WiGS SAC Selector Class ###
 class WiGS_SAC_Selector:
     """
-    Implements a WiGS selector using a Soft Actor-Critic (SAC) agent for weight selection. 
+    Implements a WiGS selector using a Soft Actor-Critic (SAC) agent for weight selection.
     """
-    def __init__(self, initial_candidate_size: int, Seed: int = None, **kwargs):
-        """
+
+    def __init__(self, initial_candidate_size: int, Seed: int = None, k_top_candidate=1, **kwargs):
+        """+
         Initializes the WiGS_SAC_Selector.
         Args:
             initial_candidate_size (int): The total number of candidates at the start.
@@ -124,7 +138,7 @@ class WiGS_SAC_Selector:
             random.seed(Seed)
 
         self.state_dim = None
-        self.action_dim = 1 
+        self.action_dim = 1
 
         # SAC components
         self.actor = None
@@ -141,6 +155,8 @@ class WiGS_SAC_Selector:
         self.last_action = None
         self.last_rmse = None
 
+        self.k_top_candidate = k_top_candidate
+
     def _initialize_agent(self, state_dim: int):
         """Initializes all networks and optimizers once the state dimension is known."""
         print(f"SAC Agent Initializing with State Dimension: {state_dim}")
@@ -156,14 +172,20 @@ class WiGS_SAC_Selector:
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=LEARNING_RATE)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=LEARNING_RATE)
 
-    def _get_state(self, df_Train: pd.DataFrame, df_Candidate: pd.DataFrame, current_rmse: float) -> np.ndarray:
+    def _get_state(
+        self,
+        df_Train: pd.DataFrame,
+        df_Candidate: pd.DataFrame,
+        current_rmse: float,
+        y_size: int = 1,
+    ) -> np.ndarray:
         """
         Constructs the state vector from the current AL environment.
         This is a critical part of the design and can be expanded.
         """
-        X_train, y_train = get_features_and_target(df=df_Train, target_column_name="Y")
+        # X_train, y_train = get_features_and_target(df_Train, "y_size")
+        X_train, y_train = get_features_and_target(df_Train, "Y")
 
-        
         # 1. Current model performance
         state_rmse = np.array([current_rmse])
         # 2. AL Process Progress
@@ -171,31 +193,42 @@ class WiGS_SAC_Selector:
         # 3. Labeled set statistics (captures data distribution)
         labeled_features_mean = X_train.mean().values
         labeled_features_std = X_train.std().values
-        labeled_target_mean = np.array([y_train.mean()])
-        labeled_target_std = np.array([y_train.std()])        
+        labeled_target_mean = np.array([y_train.mean()]).flatten()
+        labeled_target_std = np.array([y_train.std()]).flatten()
         labeled_features_std = np.nan_to_num(labeled_features_std, nan=0.0)
         labeled_target_std = np.nan_to_num(labeled_target_std, nan=0.0)
 
+        # TODO WARNING .flatten() IS NOT GOOD, check the good scalar for multiouput target
+
+        # print("labeled_features_mean", type(labeled_features_mean), labeled_features_mean.shape)
+        # print("labeled_features_std", type(labeled_features_std), labeled_features_std.shape)
+        # print("labeled_target_mean", type(labeled_target_mean), labeled_target_mean.shape)
+        # print("labeled_target_std", type(labeled_target_std), labeled_target_std.shape)
+        # print("labeled_features_std", type(labeled_features_std), labeled_features_std.shape)
+        # print("labeled_target_std", type(labeled_target_std), labeled_target_std.shape)
+
         # Concatenate all features into a single state vector
-        state = np.concatenate([
-            state_rmse,
-            progress,
-            labeled_features_mean,
-            labeled_features_std,
-            labeled_target_mean,
-            labeled_target_std
-        ]).flatten()
-        
+        state = np.concatenate(
+            [
+                state_rmse,
+                progress,
+                labeled_features_mean,
+                labeled_features_std,
+                labeled_target_mean,
+                labeled_target_std,
+            ]
+        ).flatten()
+
         return state
 
     def update(self):
         """Samples a batch from the replay buffer and updates the agent's networks."""
         if len(self.replay_buffer) < BATCH_SIZE:
-            return  
-        
+            return
+
         # Sample a batch
         state, action, reward, next_state, done = self.replay_buffer.sample(BATCH_SIZE)
-        
+
         # Convert to PyTorch tensors
         state = torch.FloatTensor(state).to(DEVICE)
         next_state = torch.FloatTensor(next_state).to(DEVICE)
@@ -213,7 +246,7 @@ class WiGS_SAC_Selector:
 
         current_q1, current_q2 = self.critic(state, action)
         critic_loss = F.mse_loss(current_q1, target_q) + F.mse_loss(current_q2, target_q)
-        
+
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
@@ -233,8 +266,14 @@ class WiGS_SAC_Selector:
         for target_param, param in zip(self.critic_target.parameters(), self.critic.parameters()):
             target_param.data.copy_(TAU * param.data + (1.0 - TAU) * target_param.data)
 
-
-    def select(self, df_Candidate: pd.DataFrame, Model=None, df_Train: pd.DataFrame = None, current_rmse: float = None) -> dict:
+    def select(
+        self,
+        df_Candidate: pd.DataFrame,
+        y_size: int,
+        Model=None,
+        df_Train: pd.DataFrame = None,
+        current_rmse: float = None,
+    ) -> dict:
         """
         Selects a point by first choosing a weight `w_x` via the SAC agent.
         """
@@ -246,12 +285,12 @@ class WiGS_SAC_Selector:
         current_state = self._get_state(df_Train, df_Candidate, current_rmse)
         if self.actor is None:
             self._initialize_agent(len(current_state))
-        
+
         ## Store experience from the PREVIOUS step and update agent ##
         if self.last_state is not None:
-            reward = self.last_rmse - current_rmse  
-            done = False 
-            
+            reward = self.last_rmse - current_rmse
+            done = False
+
             self.replay_buffer.push(self.last_state, self.last_action, reward, current_state, done)
             self.update()
 
@@ -259,24 +298,28 @@ class WiGS_SAC_Selector:
         state_tensor = torch.FloatTensor(current_state).unsqueeze(0).to(DEVICE)
         with torch.no_grad():
             action, _ = self.actor.sample(state_tensor)
-        
+
         # Action is in [-1, 1], scale to [0, 1] for w_x
         w_x_tensor = (action.cpu().numpy().flatten()[0] + 1) / 2
         w_x = np.clip(w_x_tensor, 0, 1)
         w_y = 1.0 - w_x
-        
+
         ## Store state and action for the next iteration's update ##
         self.last_state = current_state
-        self.last_action = action.cpu().numpy() 
+        self.last_action = action.cpu().numpy()
         self.last_rmse = current_rmse
-        
+
         ### WiGS Point Selection Logic ###
-        X_Candidate, _ = get_features_and_target(df=df_Candidate, target_column_name="Y")
-        X_Train, y_Train = get_features_and_target(df=df_Train, target_column_name="Y")
-    
-        d_nmX = cdist(X_Candidate.values, X_Train.values, metric='euclidean')
+        # X_Candidate, _ = get_features_and_target(df_Candidate, y_size)
+        # X_Train, y_Train = get_features_and_target(df_Train, y_size)
+        X_Candidate, _ = get_features_and_target(df_Candidate, None)
+        X_Train, y_Train = get_features_and_target(df_Train, "Y")
+
+        d_nmX = cdist(X_Candidate.values, X_Train.values, metric="euclidean")
         Predictions = Model.predict(X_Candidate)
-        d_nmY = cdist(Predictions.reshape(-1, 1), y_Train.values.reshape(-1, 1), metric='euclidean')
+        d_nmY = cdist(
+            Predictions.reshape(-1, 1), y_Train.values.reshape(-1, 1), metric="euclidean"
+        )
 
         epsilon = 1e-8
         d_prime_nmX = (d_nmX - d_nmX.min()) / (d_nmX.max() - d_nmX.min() + epsilon)
@@ -284,9 +327,13 @@ class WiGS_SAC_Selector:
 
         score_matrix = (w_x * d_prime_nmX) + (w_y * d_prime_nmY)
         final_scores = score_matrix.min(axis=1)
-        best_candidate_iloc = np.argmax(final_scores)
+        # best_candidate_iloc = np.argmax(final_scores)
+        top_k_number = self.k_top_candidate
+        if len(final_scores) < self.k_top_candidate:
+            top_k_number = len(final_scores)
+        best_candidate_iloc = np.argpartition(final_scores, -top_k_number)
 
         self.iteration += 1
 
-        IndexRecommendation = df_Candidate.iloc[[best_candidate_iloc]].index[0]
+        IndexRecommendation = df_Candidate.iloc[best_candidate_iloc].index[0]
         return {"IndexRecommendation": [float(IndexRecommendation)], "w_x": w_x}
