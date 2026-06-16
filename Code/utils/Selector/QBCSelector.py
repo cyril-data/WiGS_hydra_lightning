@@ -41,7 +41,7 @@ class QBCSelector:
 
         # 1. Prepare Data
         X_train, y_train = get_features_and_target(df_Train, y_size)
-        X_cand, _ = get_features_and_target(df_Candidate, y_size)
+        X_cand, _ = get_features_and_target(df_Candidate, y_size=None)
 
         # 2. Train Committee
         predictions = []  # Shape: (n_committee, n_candidates)

@@ -51,6 +51,7 @@ class WiGS_MAB_Selector:
         Model=None,
         df_Train: pd.DataFrame = None,
         current_rmse: float = None,
+        **kwargs,
     ) -> dict:
         """
         Selects a point by first choosing a weight `w_x` via the MAB algorithm.
@@ -84,7 +85,7 @@ class WiGS_MAB_Selector:
         if df_Candidate.empty:
             return {"IndexRecommendation": []}
 
-        X_Candidate, _ = get_features_and_target(df_Candidate, y_size)
+        X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
         X_Train, y_Train = get_features_and_target(df_Train, y_size)
         d_nmX = cdist(X_Candidate.values, X_Train.values, metric="euclidean")
         Predictions = Model.predict(X_Candidate)

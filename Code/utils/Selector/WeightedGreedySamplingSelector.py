@@ -95,10 +95,12 @@ class WeightedGreedySamplingSelector:
             return {"IndexRecommendation": []}
 
         ## Get correct features ##
-        X_Candidate, _ = get_features_and_target(df_Candidate, y_size)
-        X_Train, y_Train = get_features_and_target(df_Train, y_size)
+        # X_Candidate, _ = get_features_and_target(df_Candidate, y_size)
+        # X_Train, y_Train = get_features_and_target(df_Train, y_size)
 
-        ## Calculate pairwise distances ##
+        X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
+        X_Train, y_Train = get_features_and_target(df_Train, y_size=y_size)
+
         d_nmX = cdist(X_Candidate.values, X_Train.values, metric="euclidean")
         Predictions = Model.predict(X_Candidate)
         d_nmY = cdist(
