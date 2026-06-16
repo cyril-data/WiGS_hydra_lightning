@@ -3,6 +3,20 @@ from sklearn.model_selection import cross_val_score, KFold
 from sklearn.metrics import make_scorer, mean_squared_error
 
 
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
+from utils.Prediction.LightHydra import (
+    get_hl_cfg,
+    get_hl_modules,
+    get_hl_datamodules,
+    train_datamodule_to_pd,
+    val_datamodule_to_pd,
+    update_scheduler,
+)
+
+
 def get_cv_rmse(model_object, X_train, y_train, k=5):
     """
     Calculates the K-fold CV RMSE for the current training set.
@@ -28,12 +42,35 @@ def get_cv_rmse(model_object, X_train, y_train, k=5):
         cv=KFold(n_splits=k, shuffle=True, random_state=42),
         scoring="neg_root_mean_squared_error",
     )
+
     return -np.mean(scores)
 
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
+def get_cv_rmse_hl(predictor_model, hl_model, datamodule, hl_cfg):
+    saved_train_labels = list(datamodule.train_data.labels)  # ← labels pandas
+    saved_val_labels = list(datamodule.val_data.labels)
+
+    kf = KFold(n_splits=hl_cfg.get("k_fold"), shuffle=True, random_state=42)
+    scores = []
+
+    for cv_train_pos, cv_val_pos in kf.split(saved_train_labels):
+        cv_train_labels = [saved_train_labels[i] for i in cv_train_pos]
+        cv_val_labels = [saved_train_labels[i] for i in cv_val_pos]
+
+        datamodule.train_data.update_indices(cv_train_labels)
+        datamodule.val_data.update_indices(cv_val_labels)
+
+        predictor_model, hl_model = get_hl_modules(hl_cfg, datamodule)
+        predictor_model.fit(model=hl_model, datamodule=datamodule, ckpt_path=None)
+
+        metric_dict = {**predictor_model.callback_metrics}
+        rse = metric_dict["val/reg_loss"] + metric_dict["val/reg_time_loss"]
+        scores.append(-torch.sqrt(rse).numpy())
+
+    # Restaurer
+    datamodule.train_data.update_indices(saved_train_labels)
+    datamodule.val_data.update_indices(saved_val_labels)
+    return -np.mean(scores)
 
 
 def get_cv_rmse_NN(model_object, X_train, y_train, k=5, epochs=50, batch_size=32, lr=0.001):

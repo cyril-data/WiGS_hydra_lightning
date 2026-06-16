@@ -62,18 +62,13 @@ class GreedySamplingSelector:
 
         ## Set up candidate features ##
 
-        X_Candidate, _ = get_features_and_target(df_Candidate, target_column_name=None)
+        X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
 
-        # X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
-        # print("X_Candidate", X_Candidate.isnull().to_list(), X_Candidate.shape)
-        # X_Candidate, _ = get_features_and_target(df_Candidate, y_size=1)
-        # print("df_Candidate2", df_Candidate.shape)
-        # X_Candidate, _ = get_features_and_target(df_Candidate, None)
         X_Candidate_np = X_Candidate.values
 
         ## Set up training features ##
-        # X_Train, y_Train = get_features_and_target(df_Train, y_size)
-        X_Train, y_Train = get_features_and_target(df_Train, "Y")
+        X_Train, y_Train = get_features_and_target(df_Train, y_size=y_size)
+
         X_Train_np = X_Train.values
 
         ## GSx Logic ##

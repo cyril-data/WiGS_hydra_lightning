@@ -10,6 +10,12 @@ from scipy.spatial.distance import cdist
 from utils.Auxiliary.DataFrameUtils import get_features_and_target
 from collections import deque
 import random
+import faiss
+from utils.Prediction.LightHydra import (
+    hl_pd_to_dataloader,
+    hl_y_pred_pd_to_tensor,
+    hl_np_to_dataloader,
+)
 
 # --- Hyperparameters ---
 HIDDEN_SIZE = 64  # Number of neurons in hidden layers
@@ -124,7 +130,9 @@ class WiGS_SAC_Selector:
     Implements a WiGS selector using a Soft Actor-Critic (SAC) agent for weight selection.
     """
 
-    def __init__(self, initial_candidate_size: int, Seed: int = None, k_top_candidate=1, **kwargs):
+    def __init__(
+        self, initial_candidate_size: int, Seed: int = None, k_top_candidate=10, **kwargs
+    ):
         """+
         Initializes the WiGS_SAC_Selector.
         Args:
@@ -184,7 +192,7 @@ class WiGS_SAC_Selector:
         This is a critical part of the design and can be expanded.
         """
         # X_train, y_train = get_features_and_target(df_Train, "y_size")
-        X_train, y_train = get_features_and_target(df_Train, "Y")
+        X_train, y_train = get_features_and_target(df_Train, y_size=y_size)
 
         # 1. Current model performance
         state_rmse = np.array([current_rmse])
@@ -199,13 +207,6 @@ class WiGS_SAC_Selector:
         labeled_target_std = np.nan_to_num(labeled_target_std, nan=0.0)
 
         # TODO WARNING .flatten() IS NOT GOOD, check the good scalar for multiouput target
-
-        # print("labeled_features_mean", type(labeled_features_mean), labeled_features_mean.shape)
-        # print("labeled_features_std", type(labeled_features_std), labeled_features_std.shape)
-        # print("labeled_target_mean", type(labeled_target_mean), labeled_target_mean.shape)
-        # print("labeled_target_std", type(labeled_target_std), labeled_target_std.shape)
-        # print("labeled_features_std", type(labeled_features_std), labeled_features_std.shape)
-        # print("labeled_target_std", type(labeled_target_std), labeled_target_std.shape)
 
         # Concatenate all features into a single state vector
         state = np.concatenate(
@@ -273,6 +274,7 @@ class WiGS_SAC_Selector:
         Model=None,
         df_Train: pd.DataFrame = None,
         current_rmse: float = None,
+        SimulationConfigInputUpdated: dict = None,
     ) -> dict:
         """
         Selects a point by first choosing a weight `w_x` via the SAC agent.
@@ -309,31 +311,190 @@ class WiGS_SAC_Selector:
         self.last_action = action.cpu().numpy()
         self.last_rmse = current_rmse
 
-        ### WiGS Point Selection Logic ###
-        # X_Candidate, _ = get_features_and_target(df_Candidate, y_size)
-        # X_Train, y_Train = get_features_and_target(df_Train, y_size)
-        X_Candidate, _ = get_features_and_target(df_Candidate, None)
-        X_Train, y_Train = get_features_and_target(df_Train, "Y")
+        ### ── VERSION BATCH (memory-efficient) ──────────────────────────────────────
+        X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
+        X_Train, y_Train = get_features_and_target(df_Train, y_size=y_size)
 
-        d_nmX = cdist(X_Candidate.values, X_Train.values, metric="euclidean")
-        Predictions = Model.predict(X_Candidate)
-        d_nmY = cdist(
-            Predictions.reshape(-1, 1), y_Train.values.reshape(-1, 1), metric="euclidean"
+        X_Candidate_f32 = X_Candidate.values.astype(np.float32)
+        X_Train_f32 = X_Train.values.astype(np.float32)
+
+        select_ytrain_cols = None
+
+        if SimulationConfigInputUpdated["hl_trainer"] is not None:
+
+            hl_data = SimulationConfigInputUpdated["hl_data"]
+
+            # Après (réutilise le même DataLoader)
+            candidate_indices = X_Candidate.index.tolist()
+            hl_data.pred_data.update_indices(candidate_indices)
+
+            y_pred = Model.predict(model=Model.model, dataloaders=hl_data)
+
+            y_pred, select_ytrain_cols = hl_y_pred_pd_to_tensor(
+                y_pred, y_Train.columns.to_list(), X_Candidate.index
+            )
+            # restrain only on regression
+            Predictions = y_pred[select_ytrain_cols].values
+
+        else:
+            Predictions = Model.predict(X_Candidate)
+
+        pred_vals = (
+            Predictions.reshape(-1, 1).astype(np.float32)
+            if len(Predictions.shape) == 1
+            else Predictions.astype(np.float32)
+        )
+        if select_ytrain_cols is not None:
+            y_Train = y_Train[select_ytrain_cols]
+        y_train_1d = (
+            y_Train.values.reshape(-1, 1).astype(np.float32)
+            if len(y_Train.shape) == 1
+            else y_Train.values.astype(np.float32)
         )
 
         epsilon = 1e-8
-        d_prime_nmX = (d_nmX - d_nmX.min()) / (d_nmX.max() - d_nmX.min() + epsilon)
-        d_prime_nmY = (d_nmY - d_nmY.min()) / (d_nmY.max() - d_nmY.min() + epsilon)
+        batch_size = 5000
 
-        score_matrix = (w_x * d_prime_nmX) + (w_y * d_prime_nmY)
-        final_scores = score_matrix.min(axis=1)
+        # Pass 1 : min/max global
+        dX_global_min, dX_global_max = np.inf, -np.inf
+        dY_global_min, dY_global_max = np.inf, -np.inf
+
+        for i in range(0, len(X_Candidate_f32), batch_size):
+            bX = X_Candidate_f32[i : i + batch_size]
+            dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
+            dX_global_min = min(dX_global_min, dX_batch.min())
+            dX_global_max = max(dX_global_max, dX_batch.max())
+
+            bY = pred_vals[i : i + batch_size]
+            dY_batch = cdist(bY, y_train_1d, metric="euclidean")
+            dY_global_min = min(dY_global_min, dY_batch.min())
+            dY_global_max = max(dY_global_max, dY_batch.max())
+
+        # Pass 2 : scores
+        final_scores_batch = np.empty(len(X_Candidate_f32), dtype=np.float32)
+
+        for i in range(0, len(X_Candidate_f32), batch_size):
+            bX = X_Candidate_f32[i : i + batch_size]
+            dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
+            d_prime_X = (dX_batch - dX_global_min) / (dX_global_max - dX_global_min + epsilon)
+
+            bY = pred_vals[i : i + batch_size]
+            dY_batch = cdist(bY, y_train_1d, metric="euclidean")
+            d_prime_Y = (dY_batch - dY_global_min) / (dY_global_max - dY_global_min + epsilon)
+
+            score_batch = (w_x * d_prime_X) + (w_y * d_prime_Y)
+            final_scores_batch[i : i + batch_size] = score_batch.min(axis=1)
+
+        top_k_number_batch = self.k_top_candidate
+        if len(final_scores_batch) < self.k_top_candidate:
+            top_k_number_batch = len(final_scores_batch)
+
+        # best_candidate_iloc_batch = np.argpartition(final_scores_batch, top_k_number_batch)[
+        #     :top_k_number_batch
+        # ]
+        best_candidate_iloc_batch = np.argpartition(final_scores_batch, -top_k_number_batch)[
+            -top_k_number_batch:
+        ]
+
+        # # top_k_indices_batch = np.argsort(final_scores_batch)[:top_k_number_batch]
+        # top_k_indices_batch = np.argsort(final_scores_batch)[-top_k_number_batch:][::-1]
+        # top_k_scores_batch = final_scores_batch[top_k_indices_batch]
+
+        # print("═" * 60)
+        # print(f"[BATCH] Top-{top_k_number_batch} candidats sélectionnés :")
+        # print("best_candidate_iloc_batch", best_candidate_iloc_batch)
+        # for rank, (idx, score) in enumerate(zip(top_k_indices_batch, top_k_scores_batch)):
+        #     print(
+        #         f"  #{rank+1:3d} | iloc={idx:5d} | score={score:.8f} | index={df_Candidate.iloc[idx].name}"
+        #     )
+        # print("═" * 60)
+
+        # ### ── ARGMAX ────────────────────────────────────────────────────────────
+
+        # d_nmX = cdist(X_Candidate.values, X_Train.values, metric="euclidean")
+        # d_nmY = cdist(
+        #     Predictions.reshape(-1, 1), y_Train.values.reshape(-1, 1), metric="euclidean"
+        # )
+
+        # epsilon = 1e-8
+        # d_prime_nmX = (d_nmX - d_nmX.min()) / (d_nmX.max() - d_nmX.min() + epsilon)
+        # d_prime_nmY = (d_nmY - d_nmY.min()) / (d_nmY.max() - d_nmY.min() + epsilon)
+
+        # score_matrix = (w_x * d_prime_nmX) + (w_y * d_prime_nmY)
+        # final_scores = score_matrix.min(axis=1)
         # best_candidate_iloc = np.argmax(final_scores)
-        top_k_number = self.k_top_candidate
-        if len(final_scores) < self.k_top_candidate:
-            top_k_number = len(final_scores)
-        best_candidate_iloc = np.argpartition(final_scores, -top_k_number)
 
+        # best_candidate_iloc_batch = [best_candidate_iloc]
+
+        # print("═" * 60)
+        # print(f"[MAX] Top-{top_k_number_batch} candidats sélectionnés :")
+        # print(
+        #     f" iloc={best_candidate_iloc:5d} | score={final_scores[best_candidate_iloc]}  | df_Candidate {df_Candidate.iloc[[best_candidate_iloc]].index[0]}"
+        # )
+        # # print(
+        # #     f"  #{rank+1:3d} | iloc={best_candidate_iloc:5d} | score={final_scores:.8f} | index={df_Candidate.iloc[best_candidate_iloc].name}"
+        # # )
+        # print("═" * 60)
+
+        # ### ── VERSION CDIST FULL ─────────────────────────────────────────────────────
+        # X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
+        # X_Train, y_Train = get_features_and_target(df_Train, y_size=y_size)
+
+        # d_nmX = cdist(X_Candidate.values, X_Train.values, metric="euclidean")
+
+        # Predictions = Model.predict(X_Candidate)
+        # d_nmY = cdist(
+        #     Predictions.reshape(-1, 1), y_Train.values.reshape(-1, 1), metric="euclidean"
+        # )
+
+        # epsilon = 1e-8
+        # d_prime_nmX = (d_nmX - d_nmX.min()) / (d_nmX.max() - d_nmX.min() + epsilon)
+        # d_prime_nmY = (d_nmY - d_nmY.min()) / (d_nmY.max() - d_nmY.min() + epsilon)
+
+        # score_matrix = (w_x * d_prime_nmX) + (w_y * d_prime_nmY)
+        # final_scores_cdist = score_matrix.min(axis=1)
+
+        # top_k_number_cdist = self.k_top_candidate
+        # if len(final_scores_cdist) < self.k_top_candidate:
+        #     top_k_number_cdist = len(final_scores_cdist)
+
+        # # best_candidate_iloc_batch = np.argpartition(final_scores_batch, top_k_number_batch)[
+        # #     :top_k_number_batch
+        # # ]
+        # best_candidate_iloc_batch = np.argpartition(final_scores_batch, -top_k_number_batch)[
+        #     -top_k_number_batch:
+        # ]
+
+        # # top_k_indices_batch = np.argsort(final_scores_batch)[:top_k_number_batch]
+        # top_k_indices_batch = np.argsort(final_scores_batch)[-top_k_number_batch:][::-1]
+        # top_k_scores_batch = final_scores_batch[top_k_indices_batch]
+
+        # # best_candidate_iloc_cdist = np.argpartition(final_scores_cdist, -top_k_number_cdist)
+
+        # # top_k_indices_cdist = np.argsort(final_scores_cdist)[:top_k_number_cdist]
+        # # top_k_scores_cdist = final_scores_cdist[top_k_indices_cdist]
+
+        # print("═" * 60)
+        # print(f"[CDIST] Top-{top_k_number_cdist} candidats sélectionnés :")
+        # for rank, (idx, score) in enumerate(zip(top_k_indices_cdist, top_k_scores_cdist)):
+        #     print(
+        #         f"  #{rank+1:3d} | iloc={idx:5d} | score={score:.8f} | index={df_Candidate.iloc[idx].name}"
+        #     )
+        # print("═" * 60)
+
+        # ### ── COMPARAISON ────────────────────────────────────────────────────────────
+        # print(
+        #     "\n[DIFF] Écart max entre les scores :",
+        #     np.abs(final_scores_batch - final_scores_cdist).max(),
+        # )
+        # print(
+        #     "[DIFF] Top-k identiques ?",
+        #     set(top_k_indices_batch.tolist()) == set(top_k_indices_cdist.tolist()),
+        # )
+
+        ## ── RETOUR (version batch) ─────────────────────────────────────────────────
         self.iteration += 1
 
-        IndexRecommendation = df_Candidate.iloc[best_candidate_iloc].index[0]
-        return {"IndexRecommendation": [float(IndexRecommendation)], "w_x": w_x}
+        IndexRecommendation = df_Candidate.iloc[best_candidate_iloc_batch].index
+
+        return {"IndexRecommendation": IndexRecommendation, "w_x": w_x}

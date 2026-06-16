@@ -21,11 +21,6 @@ def TrainCandidateSplit(X, y, CandidateProportion):
     X_Train, X_Candidate, y_Train, y_Candidate = train_test_split(
         X, y, test_size=CandidateProportion
     )
-
-    # Column names #
-    # df_Train = X_Train.copy()
-    # print("df_Train", df_Train.shape)
-    # df_Train.insert(0, "Y", y_Train)
     df_Train = pd.concat([y_Train, X_Train], axis=1)
 
     # df_Candidate = X_Candidate.copy()

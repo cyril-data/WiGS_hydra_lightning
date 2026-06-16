@@ -17,7 +17,14 @@ from utils.Main.TrainCandidateSplit import (
     TrainCandidateSplit,
     TrainCandidateSplit_X,
 )
-from utils.Prediction.LightHydra import get_hl_cfg, get_hl_modules
+from utils.Prediction.LightHydra import (
+    get_hl_cfg,
+    get_hl_modules,
+    get_hl_datamodules,
+    train_datamodule_to_pd,
+    val_datamodule_to_pd,
+    update_scheduler,
+)
 
 ### Isolate candidate target into function
 
@@ -47,53 +54,35 @@ def OneIterationFunction(SimulationConfigInput):
     hl_trainer = None
     hl_cfg = None
     hl_data = None
+    hl_model = None
 
     if DataFileInput == "hydralightning":
         hl_cfg = get_hl_cfg()
         print(f"< Instantiating hydralightning data and trainer >")
-        datamodule, hl_trainer = get_hl_modules(hl_cfg)
+        datamodule = get_hl_datamodules(hl_cfg)
+        hl_trainer, hl_model = get_hl_modules(hl_cfg, datamodule)
 
-        # ========================================================
-        # *** import data in pandas frame for active learning ***
-        # train
-        full_X = datamodule.train_data.data_x
-        full_y_reg = datamodule.train_data.data_y_reg
-        full_y_time_reg = datamodule.train_data.data_y_time_reg
-        full_y_cls = datamodule.train_data.data_y_cls
-        full_y_time_cls = datamodule.train_data.data_y_time_cls
-        full_y = np.concatenate([full_y_reg, full_y_time_reg, full_y_cls, full_y_time_cls], axis=1)
-        y_labels = (
-            datamodule.train_data.y_reg_labels
-            + datamodule.train_data.y_time_reg_labels
-            + datamodule.train_data.y_cls_labels
-            + datamodule.train_data.y_time_cls_labels
-        )
-        full_y_X = np.concatenate([full_y, full_X], axis=1)
-        y_X_labels = datamodule.train_data.x_labels + y_labels
-        df_full = pd.DataFrame(full_y_X, columns=y_X_labels)
-        y_size = len(y_labels)
-        # ***
+        # import Train data in pandas frame for active learning
+        df_full, y_size = train_datamodule_to_pd(datamodule)
+        x_size = df_full.shape[1] - y_size
 
-        # *** import data in pandas frame for active learning ***
-        # val
-        full_X = datamodule.val_data.data_x
-        full_y_reg = datamodule.val_data.data_y_reg
-        full_y_time_reg = datamodule.val_data.data_y_time_reg
-        full_y_cls = datamodule.val_data.data_y_cls
-        full_y_time_cls = datamodule.val_data.data_y_time_cls
-        full_y = np.concatenate([full_y_reg, full_y_time_reg, full_y_cls, full_y_time_cls], axis=1)
-        y_labels = (
-            datamodule.val_data.y_reg_labels
-            + datamodule.val_data.y_time_reg_labels
-            + datamodule.val_data.y_cls_labels
-            + datamodule.val_data.y_time_cls_labels
+        # import Val data in pandas frame for active learning
+        df_test, _ = val_datamodule_to_pd(datamodule)
+
+        ### Train Candidate Split ###
+        df_Train, df_Candidate = TrainCandidateSplit_X(
+            df_full.iloc[:, :x_size], SimulationConfigInput["CandidateProportion"]
         )
-        full_y_X = np.concatenate([full_y, full_X], axis=1)
-        y_X_labels = datamodule.val_data.x_labels + y_labels
-        df_test = pd.DataFrame(full_y_X, columns=y_X_labels)
-        y_size = len(y_labels)
-        # ***
-        # ========================================================
+
+        df_Train = df_full.loc[df_Train.index, :]
+
+        datamodule.train_data.update_indices(df_Train.index)
+
+        hl_data = datamodule
+
+        hl_trainer, hl_model, hl_data, hl_cfg = update_scheduler(
+            hl_trainer, hl_model, hl_data, hl_cfg
+        )
 
     else:
         y_size = 1
@@ -101,15 +90,14 @@ def OneIterationFunction(SimulationConfigInput):
         df_full = LoadData(DataFileInput)
         df_test = LoadData(DataFileInput)
 
-    ### Train Candidate Split ###
-    df_Train, df_Candidate = TrainCandidateSplit_X(
-        df_full.iloc[:, y_size:], SimulationConfigInput["CandidateProportion"]
-    )
-
-    df_Train = df_full.iloc[df_Train.index, :]
+        df_Train, df_Candidate = TrainCandidateSplit_X(
+            df_full.iloc[:, y_size:], SimulationConfigInput["CandidateProportion"]
+        )
+        df_Train = df_full.iloc[df_Train.index, :]
 
     ### Update SimulationConfig Arguments ###
 
+    SimulationConfigInput["hl_model"] = hl_model
     SimulationConfigInput["hl_data"] = hl_data
     SimulationConfigInput["hl_trainer"] = hl_trainer
     SimulationConfigInput["hl_cfg"] = hl_cfg

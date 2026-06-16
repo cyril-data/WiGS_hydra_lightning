@@ -11,6 +11,9 @@ from utils.Prediction.CrossValidation import get_cv_rmse
 
 ### Import functions ###
 from sklearn.base import BaseEstimator
+import pytorch_lightning as pl
+from pytorch_lightning.trainer.states import TrainerState
+import time
 
 
 ### Function ###
@@ -40,8 +43,14 @@ def LearningProcedure(SimulationConfigInputUpdated):
     y_size = SimulationConfigInputUpdated["y_size"]
     ### Initialize Model ###
 
-    if SimulationConfigInputUpdated["hl_trainer"] is not None:
+    hydralightning = SimulationConfigInputUpdated["hl_trainer"] is not None
+
+    if hydralightning:
         predictor_model = SimulationConfigInputUpdated["hl_trainer"]
+        hl_model = SimulationConfigInputUpdated["hl_model"]
+        hl_data = SimulationConfigInputUpdated["hl_data"]
+        hl_cfg = SimulationConfigInputUpdated["hl_cfg"]
+
     else:
         ModelClass = globals().get(SimulationConfigInputUpdated["ModelType"], None)
         model_init_args = {
@@ -49,6 +58,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
             for k, v in SimulationConfigInputUpdated.items()
             if k in inspect.signature(ModelClass.__init__).parameters
         }
+
         predictor_model = ModelClass(**model_init_args)
         SimulationConfigInputUpdated["Model"] = predictor_model
 
@@ -70,37 +80,53 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
         ## 1. Get features and target for the current training set ##
         X_train_df, y_train_series = get_features_and_target(
-            SimulationConfigInputUpdated["df_Train"], "Y"
+            SimulationConfigInputUpdated["df_Train"], y_size=y_size
         )
 
         ## 2. Prediction Model ##
-        if SimulationConfigInputUpdated["hl_trainer"] is not None:
-            predictor_model.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
+        if hydralightning:
+
+            hl_data.train_data.update_indices(X_train_df.index)
+
+            predictor_model, hl_model, hl_data, hl_cfg = update_scheduler(
+                predictor_model, hl_model, hl_data, hl_cfg
+            )
+
+            predictor_model.fit(model=hl_model, datamodule=hl_data, ckpt_path=None)
+
+            SimulationConfigInputUpdated["hl_model"] = hl_model
+
         else:
             predictor_model.fit(X_train_df=X_train_df, y_train_series=y_train_series)
+
         ## 3. Calculate Full Pool Error ##
         candidate_with_target_index = SimulationConfigInputUpdated["df_Candidate"].index
 
-        # TODO : multivariate
         # load target 'Y' only for train and not for candidate
 
-        candidate_with_target = SimulationConfigInputUpdated["df_full"].iloc[
+        # Work with TRUE INDICES ! .iloc -> rempace by .loc
+        # candidate_with_target = SimulationConfigInputUpdated["df_full"].iloc[
+        #     candidate_with_target_index, :
+        # ]
+
+        candidate_with_target = SimulationConfigInputUpdated["df_full"].loc[
             candidate_with_target_index, :
         ]
 
         FullPoolErrorOuputs = FullPoolErrorFunction(
             InputModel=predictor_model,
-            df_Train=SimulationConfigInputUpdated["df_Train"],
+            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
             df_Candidate=candidate_with_target,
-            # y_size=y_size,
+            y_size=y_size,
         )
         for metric_name, value in FullPoolErrorOuputs.items():
             ErrorVecs["Full_Pool"][metric_name].append(value)
 
         FullTestErrorOuputs = FullTestErrorFunction(
             InputModel=predictor_model,
+            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
             df_test=SimulationConfigInputUpdated["df_test"],
-            # y_size=y_size,
+            y_size=y_size,
         )
         for metric_name, value in FullTestErrorOuputs.items():
             ErrorVecs["Full_Test"][metric_name].append(value)
@@ -109,12 +135,18 @@ def LearningProcedure(SimulationConfigInputUpdated):
         model = predictor_model.model
 
         if model is not None:
+
             if isinstance(model, BaseEstimator):
                 current_cv_rmse = get_cv_rmse(model, X_train_df, y_train_series, k=5)
-            elif isinstance(model, nn.Module):
-                current_cv_rmse = get_cv_rmse_NN(model, X_train_df, y_train_series, k=5)
+            # elif isinstance(model, nn.Module):
+            #     current_cv_rmse = get_cv_rmse_NN(model, X_train_df, y_train_series, k=5)
+            elif hydralightning:
+
+                current_cv_rmse = get_cv_rmse_hl(predictor_model, model, hl_data, hl_cfg)
+
             else:
                 raise "current_cv_rmse class is not known"
+
         else:
             current_cv_rmse = np.nan
         if np.isnan(current_cv_rmse):
@@ -132,11 +164,14 @@ def LearningProcedure(SimulationConfigInputUpdated):
             y_size=y_size,
             Model=predictor_model,
             current_rmse=current_cv_rmse,
+            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
         )
 
         ## 7. Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
+
         QueryObservation = SimulationConfigInputUpdated["df_Candidate"].loc[QueryObservationIndex]
+
         SelectedObservationHistory.append(QueryObservationIndex)
 
         ## 8. Store weights ##
@@ -144,8 +179,10 @@ def LearningProcedure(SimulationConfigInputUpdated):
         WeightHistory.append(w_x)
 
         # load target 'Y' only for train and not for candidate
-        # TODO : multivariate
-        QueryObservation = SimulationConfigInputUpdated["df_full"].iloc[QueryObservationIndex, :]
+
+        # Work with TRUE INDICES ! .iloc -> rempace by .loc
+        # QueryObservation = SimulationConfigInputUpdated["df_full"].iloc[QueryObservationIndex, :]
+        QueryObservation = SimulationConfigInputUpdated["df_full"].loc[QueryObservationIndex, :]
 
         ## 9. Update Train and Candidate Sets ##
         SimulationConfigInputUpdated["df_Train"] = pd.concat(
