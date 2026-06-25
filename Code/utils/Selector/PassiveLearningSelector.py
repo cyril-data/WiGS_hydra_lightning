@@ -1,6 +1,8 @@
 ### Libraries ###
 import pandas as pd
+
 # import numpy as np
+
 
 ### Passive Learning ###
 class PassiveLearningSelector:
@@ -11,7 +13,7 @@ class PassiveLearningSelector:
         Seed (int): A random seed to ensure the sampling is reproducible.
     """
 
-    def __init__(self, Seed: int = None, **kwargs):
+    def __init__(self, Seed: int = None, k_top_candidate=1, **kwargs):
         """
         Initializes the PassiveLearningSelector.
 
@@ -20,6 +22,7 @@ class PassiveLearningSelector:
             **kwargs: Accepts and ignores additional keyword arguments for consistency.
         """
         self.Seed = Seed
+        self.k_top_candidate = k_top_candidate
 
     def select(self, df_Candidate: pd.DataFrame, **kwargs) -> dict:
         """
@@ -33,7 +36,9 @@ class PassiveLearningSelector:
             dict: A dictionary containing the recommended point's index, in the format `{'IndexRecommendation': [index]}`.
         """
 
-        QueryObservation = df_Candidate.sample(n=1, random_state=self.Seed)
+        QueryObservation = df_Candidate.sample(
+            n=min(self.k_top_candidate, len(df_Candidate)), random_state=self.Seed
+        )
         IndexRecommendation = list(QueryObservation.index)
 
         return {"IndexRecommendation": IndexRecommendation}

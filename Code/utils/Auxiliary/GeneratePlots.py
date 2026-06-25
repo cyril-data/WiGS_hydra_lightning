@@ -7,6 +7,39 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2
 import matplotlib.pyplot as plt
+import ast
+
+
+def safe_literal_eval(x):
+    if pd.isna(x):
+        return []
+    return ast.literal_eval(x)
+
+
+# def load_selection_history_csv(csv_path, index_col="Iteration"):
+#     """
+#     Lit un CSV de SelectionHistory et reconvertit chaque cellule
+#     (actuellement une string "[16899, 623, ...]") en vraie liste Python.
+#     Retourne un DataFrame [Iteration x Sim_i] de listes.
+#     """
+#     df = pd.read_csv(csv_path, index_col=index_col)
+#     df = df.map(safe_literal_eval)
+#     return df
+
+
+# def load_all_selection_histories(history_save_dir, strategies):
+#     """
+#     Charge les SelectionHistory CSV pour toutes les strategies dans un dict :
+#     { strategy_name: DataFrame[Iteration x Sim_i] de listes }
+#     """
+#     k_top = {}
+#     for strategy in strategies:
+#         csv_path = os.path.join(history_save_dir, f"{strategy}_SelectionHistory.csv")
+#         if os.path.exists(csv_path):
+#             k_top[strategy] = load_selection_history_csv(csv_path)
+#         else:
+#             print(f"  > Warning: {strategy}_SelectionHistory.csv not found.")
+#     return k_top
 
 
 ### Plotting Function ###
@@ -21,9 +54,11 @@ def MeanVariancePlot(
     Y_Label=None,
     VarInput=False,
     initial_train_size: int = None,
+    k_top: int = 1,
     FigSize=(9, 12),
     LegendMapping=None,
     show_legend=True,
+    total_pool_size=None,
     **SimulationErrorResults,
 ):
     """
@@ -37,6 +72,7 @@ def MeanVariancePlot(
 
     ### Extract ###
     for Label, Results in SimulationErrorResults.items():
+
         MeanVector[Label] = np.mean(Results, axis=1)
         VarianceVector[Label] = np.var(Results, axis=1)
         n_simulations = Results.shape[1]
@@ -73,18 +109,78 @@ def MeanVariancePlot(
     for Label, MeanValues in MeanVector.items():
         StdErrorValues = StdErrorVector[Label]
         num_iterations = len(MeanValues)
-        total_pool_size = initial_train_size + num_iterations
+        # total_pool_size = initial_train_size + num_iterations
+        # if isinstance(k_top, dict) and Label in k_top:
+        #     total_pool_size = initial_train_size
 
-        if num_iterations > 0:
-            iterations_array = np.arange(num_iterations)
-            num_labeled_at_step = initial_train_size + iterations_array
-            x = (num_labeled_at_step / total_pool_size) * 100
+        #     for k in k_top[Label].loc[:, "Sim_0"]:
+
+        #         total_pool_size += len(k)
+
+        # #     total_pool_size = [
+        # #         initial_train_size + k * num_iterations for k in k_top[Label].loc[Label, "Sim_0"]
+        # #     ]  # <-- Take into acount k_top
+        # else:
+
+        #     total_pool_size = (
+        #         initial_train_size + k_top * num_iterations
+        #     )  # <-- Take into acount k_top
+
+        # x = []
+
+        # if num_iterations > 0:
+        #     if isinstance(k_top, dict) and Label in k_top:
+        #         num_labeled_at_step = initial_train_size
+
+        #         x.append(num_labeled_at_step / total_pool_size * 100)
+        #         for k in k_top[Label].loc[:, "Sim_0"]:
+
+        #             # iterations_array = np.arange(num_iterations)
+        #             # num_labeled_at_step = initial_train_size + iterations_array
+        #             num_labeled_at_step += len(k)
+        #             # <--  Take into acount k_top
+        #             x.append(num_labeled_at_step / total_pool_size * 100)
+
+        #     else:
+
+        #         iterations_array = np.arange(num_iterations)
+        #         # num_labeled_at_step = initial_train_size + iterations_array
+        #         num_labeled_at_step = (
+        #             initial_train_size + k_top * iterations_array
+        #         )  # <--  Take into acount k_top
+
+        #         x = (num_labeled_at_step / total_pool_size) * 100
+
+        if isinstance(k_top, dict) and Label in k_top:
+            sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
+
+            # Nombre d'éléments nouvellement sélectionnés à chaque itération,
+            # moyenné sur toutes les simulations disponibles
+            selection_sizes = k_top[Label][sim_cols].map(len)
+            mean_selection_per_iter = selection_sizes.mean(axis=1)
+
+            if total_pool_size is None:
+                total_pool_size = initial_train_size + mean_selection_per_iter.sum()
+
+            num_labeled_at_step = initial_train_size
+            x = [num_labeled_at_step / total_pool_size * 100]
+            for added in mean_selection_per_iter:
+                num_labeled_at_step += added
+                x.append(num_labeled_at_step / total_pool_size * 100)
         else:
-            x = []
+
+            if total_pool_size is None:
+                total_pool_size = initial_train_size + k_top * num_iterations
+            iterations_array = np.arange(num_iterations)
+            num_labeled_at_step = initial_train_size + k_top * iterations_array
+            x = (num_labeled_at_step / total_pool_size) * 100
 
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ":") if Linestyles else ":"
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
+
+        if len(x) > len(MeanValues):
+            x = x[1:]
 
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(
@@ -114,7 +210,9 @@ def MeanVariancePlot(
         fig_var, ax_var = plt.subplots(figsize=FigSize)
         for Label, VarianceValues in VarianceVector.items():
             num_iterations = len(VarianceValues)
-            total_pool_size = initial_train_size + num_iterations
+
+            if total_pool_size is None:
+                total_pool_size = initial_train_size + num_iterations
 
             if num_iterations > 0:
                 iterations_array = np.arange(num_iterations)
@@ -199,8 +297,9 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
     ### Set up ###
     metrics_to_plot = ["RMSE", "MAE", "R2", "CC"]
     plot_types = {"trace": None, "trace_relative_iGS": "iGS"}
-    eval_types = ["full_pool"]
+    eval_types = ["full_pool", "full_test", "train"]
     strategies_to_exclude = {"WiGS (Static w_x=0.5)", "WiGS (MAB-UCB1, c=0.5)"}
+    total_pool_size = None
 
     ### Dynamically find datasets ###
     if single_dataset:
@@ -237,6 +336,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                 with open(metric_pkl_path, "rb") as f:
                     results_for_metric = pickle.load(f)
 
+                print("results_for_metric", results_for_metric)
+
                 # Indices #
                 indices_file_path = os.path.join(dataset_path, "InitialIndices.csv")
                 try:
@@ -263,6 +364,42 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                     )
                     continue
 
+                # TotalPoolSize #
+                total_pool_size_path = os.path.join(dataset_path, "TotalPoolSize.csv")
+
+                if os.path.exists(total_pool_size_path):
+
+                    for strategy, df in results_for_metric.items():
+
+                        total_pool_size_df = pd.read_csv(total_pool_size_path)
+                        total_pool_size = total_pool_size_df[strategy][0]
+
+                # get k_top
+                selection_history_dir = os.path.join(dataset_path, "selection_history")
+                k_top = {}
+                for strategy, df in results_for_metric.items():
+
+                    k_top_path = os.path.join(
+                        selection_history_dir, f"{strategy}_SelectionHistory.csv"
+                    )
+
+                    if os.path.exists(k_top_path):
+                        # k_top[strategy] = pd.read_csv(k_top_path)
+
+                        df = pd.read_csv(
+                            k_top_path, index_col="Iteration"
+                        )  # adapte si index_label différent
+                        # Reconvertir chaque cellule "[16899, 623, ...]" en vraie liste Python
+                        df = df.map(ast.literal_eval)
+                        k_top[strategy] = df
+
+                        print(f"  > Using k_top = {list(k_top.keys())} for dataset {data_name}")
+                    else:
+                        k_top = 1  # Value by default (ex: beer)
+                        print(
+                            f"> Warning: {strategy}_SelectionHistory.csv not found for {data_name}"
+                        )
+
                 # Filter out the excluded strategies
                 filtered_results = {
                     strategy: df
@@ -285,9 +422,12 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                         VarInput=True,
                         CriticalValue=1.96,
                         initial_train_size=initial_train_size,
+                        k_top=k_top,
                         show_legend=show_legend,
+                        total_pool_size=total_pool_size,
                         **filtered_results,
                     )
+
                     output_eval_name = "trace_plots" if eval_type == "full_pool" else eval_type
                     base_plot_path = os.path.join(image_dir, output_eval_name, metric, folder_name)
                     os.makedirs(os.path.join(base_plot_path, "trace"), exist_ok=True)

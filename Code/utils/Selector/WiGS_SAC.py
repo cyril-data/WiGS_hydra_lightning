@@ -495,6 +495,6 @@ class WiGS_SAC_Selector:
         ## ── RETOUR (version batch) ─────────────────────────────────────────────────
         self.iteration += 1
 
-        IndexRecommendation = df_Candidate.iloc[best_candidate_iloc_batch].index
+        IndexRecommendation = df_Candidate.iloc[best_candidate_iloc_batch].index.to_list()
 
         return {"IndexRecommendation": IndexRecommendation, "w_x": w_x}

@@ -6,6 +6,7 @@ from utils.Main.RunSimulationFunction import RunSimulationFunction
 
 ### Models - MUST BE IN SYNC WITH CreateSimulationSbatch ###
 MODEL_LIST = [
+    # "MLPPredictor",
     # "MLPRegressionPredictor",
     "RidgeRegressionPredictor",
     # 'GaussianProcessRegressorPredictor'
@@ -27,6 +28,13 @@ parser.add_argument(
 parser.add_argument(
     "--CandidateProportion", type=float, required=True, help="Percent for candidate dataset."
 )
+parser.add_argument("--k_top", type=int, default=1, help="Candidates number by select iteration.")
+parser.add_argument(
+    "--res_freq",
+    type=int,
+    default=1,
+    help="Candidates number by select iteration.",
+)
 args = parser.parse_args()
 
 ### Map Task ID to Model and Seed ###
@@ -34,7 +42,6 @@ task_id_zero_based = args.TaskID - 1
 model_index = task_id_zero_based // args.NReplications
 replication_seed = task_id_zero_based % args.NReplications
 
-print("model_index", model_index, task_id_zero_based, args.NReplications)
 
 try:
     model_type = MODEL_LIST[model_index]
@@ -57,6 +64,11 @@ SimulationResults = RunSimulationFunction(
     Seed=replication_seed,
     machine_learning_model=model_type,
     candidate_proportion=float(args.CandidateProportion),
+    add_useful_params={
+        "output_path": output_path,
+        "save_result_selection_frequency": args.res_freq,
+        "k_top_candidate": args.k_top,
+    },
 )
 
 ### Save Simulation Results to the new nested directory ###

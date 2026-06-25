@@ -7,6 +7,7 @@ import torch.nn as nn
 ### Functions ###
 from utils.Selector import *
 from utils.Prediction import *
+from utils.Prediction.LightHydra import print_gpu_memory
 from utils.Prediction.CrossValidation import get_cv_rmse
 
 ### Import functions ###
@@ -14,6 +15,8 @@ from sklearn.base import BaseEstimator
 import pytorch_lightning as pl
 from pytorch_lightning.trainer.states import TrainerState
 import time
+
+import pickle
 
 
 ### Function ###
@@ -36,6 +39,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
     ErrorVecs = {
         "Full_Pool": {"RMSE": [], "MAE": [], "R2": [], "CC": []},
         "Full_Test": {"RMSE": [], "MAE": [], "R2": [], "CC": []},
+        "Train": {"RMSE": [], "MAE": [], "R2": [], "CC": []},
     }
     WeightHistory = []
     SelectedObservationHistory = []
@@ -50,6 +54,13 @@ def LearningProcedure(SimulationConfigInputUpdated):
         hl_model = SimulationConfigInputUpdated["hl_model"]
         hl_data = SimulationConfigInputUpdated["hl_data"]
         hl_cfg = SimulationConfigInputUpdated["hl_cfg"]
+
+        data_train_full_len = len(SimulationConfigInputUpdated["df_full"])
+
+        SimulationConfigInputUpdated["add_useful_params"]["k_top_candidate"] = min(
+            data_train_full_len,
+            SimulationConfigInputUpdated["add_useful_params"]["k_top_candidate"],
+        )
 
     else:
         ModelClass = globals().get(SimulationConfigInputUpdated["ModelType"], None)
@@ -78,6 +89,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
     ### Algorithm ###
     while True:
 
+        print(f"=== iteration  {i} ===")
+
         ## 1. Get features and target for the current training set ##
         X_train_df, y_train_series = get_features_and_target(
             SimulationConfigInputUpdated["df_Train"], y_size=y_size
@@ -92,7 +105,12 @@ def LearningProcedure(SimulationConfigInputUpdated):
                 predictor_model, hl_model, hl_data, hl_cfg
             )
 
-            predictor_model.fit(model=hl_model, datamodule=hl_data, ckpt_path=None)
+            reset_trainer(predictor_model)
+
+            hl_model.apply(reset_weights)
+
+            # hl_data_traindataloader = hl_data.train_dataloader()
+            predictor_model.fit(model=hl_model, train_dataloaders=hl_data, ckpt_path=None)
 
             SimulationConfigInputUpdated["hl_model"] = hl_model
 
@@ -113,7 +131,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
             candidate_with_target_index, :
         ]
 
-        FullPoolErrorOuputs = FullPoolErrorFunction(
+        FullPoolErrorOuputs, SimulationConfigInputUpdated = FullPoolErrorFunction(
             InputModel=predictor_model,
             SimulationConfigInputUpdated=SimulationConfigInputUpdated,
             df_Candidate=candidate_with_target,
@@ -130,6 +148,15 @@ def LearningProcedure(SimulationConfigInputUpdated):
         )
         for metric_name, value in FullTestErrorOuputs.items():
             ErrorVecs["Full_Test"][metric_name].append(value)
+
+        TrainErrorOuputs = TrainErrorFunction(
+            InputModel=predictor_model,
+            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
+            df_train=SimulationConfigInputUpdated["df_Train"],
+            y_size=y_size,
+        )
+        for metric_name, value in TrainErrorOuputs.items():
+            ErrorVecs["Train"][metric_name].append(value)
 
         ## 4. Calculate CV Error ##
         model = predictor_model.model
@@ -196,6 +223,23 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## 10. Increase iteration ##
         i += 1
 
+        ## 11. Increase iteration ##
+        if (
+            i
+            % SimulationConfigInputUpdated["add_useful_params"]["save_result_selection_frequency"]
+            == 0
+        ):
+
+            dump_results(
+                SimulationConfigInputUpdated,
+                ErrorVecs,
+                SelectedObservationHistory,
+                WeightHistory,
+                InitialTrainIndices,
+            )
+            output_path = SimulationConfigInputUpdated["add_useful_params"]["output_path"]
+            print(f"\n=== Results writen in {output_path} ===\n")
+
     ### Output ###
     LearningProcedureOutput = {
         "ErrorVecs": ErrorVecs,
@@ -204,3 +248,66 @@ def LearningProcedure(SimulationConfigInputUpdated):
         "InitialTrainIndices": InitialTrainIndices,
     }
     return LearningProcedureOutput
+
+
+def dump_results(
+    SimulationConfigInputUpdated,
+    ErrorVecs,
+    SelectedObservationHistory,
+    WeightHistory,
+    InitialTrainIndices,
+):
+
+    ### Output ###
+    LearningProcedureOutput = {
+        "ErrorVecs": ErrorVecs,
+        "SelectedObservationHistory": SelectedObservationHistory,
+        "WeightHistory": WeightHistory,
+        "InitialTrainIndices": InitialTrainIndices,
+    }
+    # return LearningProcedureOutput
+
+    ### Return Simulation Parameters ###
+    SimulationParameters = {
+        "DataFileInput": str(SimulationConfigInputUpdated["DataFileInput"]),
+        "Seed": str(SimulationConfigInputUpdated["Seed"]),
+        "CandidateProportion": str(SimulationConfigInputUpdated["CandidateProportion"]),
+        "SelectorType": str(SimulationConfigInputUpdated["SelectorType"]),
+        "ModelType": str(SimulationConfigInputUpdated["ModelType"]),
+    }
+
+    ### Return Time ###
+    ElapsedTime = time.time() - SimulationConfigInputUpdated["StartTime"]
+
+    ### Return Dictionary ###
+    ErrorVecs = pd.DataFrame(LearningProcedureOutput["ErrorVecs"])
+
+    SimulationResults = {
+        "ErrorVecs": ErrorVecs,
+        "SelectionHistory": LearningProcedureOutput["SelectedObservationHistory"],
+        "WeightHistory": LearningProcedureOutput["WeightHistory"],
+        "InitialTrainIndices": LearningProcedureOutput["InitialTrainIndices"],
+        "SimulationParameters": SimulationParameters,
+        "ElapsedTime": ElapsedTime,
+        "k_top_candidate": SimulationConfigInputUpdated["add_useful_params"]["k_top_candidate"],
+    }
+    if "df_full" in SimulationConfigInputUpdated:
+        SimulationResults["TotalPoolSize"] = len(SimulationConfigInputUpdated["df_full"])
+
+    results = SimulationResults
+
+    all_results_by_strategy = {}
+
+    strategy_name = SimulationConfigInputUpdated["add_useful_params"]["strategy_name"]
+
+    # Store results #
+    all_results_by_strategy[strategy_name] = results
+
+    ### Run the Simulation for a Single Seed and Model ###
+    SimulationResults = all_results_by_strategy
+
+    output_path = SimulationConfigInputUpdated["add_useful_params"]["output_path"]
+
+    ### Save Simulation Results to the new nested directory ###
+    with open(output_path, "wb") as f:
+        pickle.dump(SimulationResults, f)

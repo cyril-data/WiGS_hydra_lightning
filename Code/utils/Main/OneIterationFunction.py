@@ -21,10 +21,10 @@ from utils.Prediction.LightHydra import (
     get_hl_cfg,
     get_hl_modules,
     get_hl_datamodules,
-    train_datamodule_to_pd,
-    val_datamodule_to_pd,
+    full_datamodule_to_pd,
     update_scheduler,
 )
+import os
 
 ### Isolate candidate target into function
 
@@ -57,24 +57,40 @@ def OneIterationFunction(SimulationConfigInput):
     hl_model = None
 
     if DataFileInput == "hydralightning":
-        hl_cfg = get_hl_cfg()
+        hl_cfg = get_hl_cfg(SimulationConfigInput["add_useful_params"]["strategy_name"])
+        hl_cfg["csv_path"] = os.path.join(
+            f"{os.environ['PROJECT_ROOT']}/../henrihost-al/", hl_cfg["csv_path"]
+        )
         print(f"< Instantiating hydralightning data and trainer >")
         datamodule = get_hl_datamodules(hl_cfg)
+
         hl_trainer, hl_model = get_hl_modules(hl_cfg, datamodule)
 
+        print("===")
+
         # import Train data in pandas frame for active learning
-        df_full, y_size = train_datamodule_to_pd(datamodule)
-        x_size = df_full.shape[1] - y_size
+        df_all_hl_dataset, y_size = full_datamodule_to_pd(datamodule)
+        x_size = df_all_hl_dataset.shape[1] - y_size
 
-        # import Val data in pandas frame for active learning
-        df_test, _ = val_datamodule_to_pd(datamodule)
+        print("df_all_hl_dataset", df_all_hl_dataset.shape)
 
+        # retrain df_full to the hl training set
+        df_full = df_all_hl_dataset.loc[datamodule.train_data.labels, :]
+
+        print("df_full", df_full.shape)
+        # reserve df_test to the hl test set
+        df_test = df_all_hl_dataset.loc[datamodule.test_data.labels, :]
+
+        print("df_test", df_test.shape)
         ### Train Candidate Split ###
         df_Train, df_Candidate = TrainCandidateSplit_X(
             df_full.iloc[:, :x_size], SimulationConfigInput["CandidateProportion"]
         )
 
         df_Train = df_full.loc[df_Train.index, :]
+
+        print("df_Train Split", df_Train.shape)
+        print("df_Candidate Split", df_Candidate.shape)
 
         datamodule.train_data.update_indices(df_Train.index)
 
@@ -83,6 +99,8 @@ def OneIterationFunction(SimulationConfigInput):
         hl_trainer, hl_model, hl_data, hl_cfg = update_scheduler(
             hl_trainer, hl_model, hl_data, hl_cfg
         )
+
+        print("===")
 
     else:
         y_size = 1
@@ -106,6 +124,7 @@ def OneIterationFunction(SimulationConfigInput):
     SimulationConfigInput["df_full"] = df_full
     SimulationConfigInput["df_Train"] = df_Train
     SimulationConfigInput["df_Candidate"] = df_Candidate
+    SimulationConfigInput["StartTime"] = StartTime
 
     ### Learning Process ###
     LearningProcedureOutput = LearningProcedure(SimulationConfigInputUpdated=SimulationConfigInput)
@@ -132,5 +151,10 @@ def OneIterationFunction(SimulationConfigInput):
         "InitialTrainIndices": LearningProcedureOutput["InitialTrainIndices"],
         "SimulationParameters": SimulationParameters,
         "ElapsedTime": ElapsedTime,
+        "k_top_candidate": SimulationConfigInput["add_useful_params"]["k_top_candidate"],
     }
+
+    if "df_full" in SimulationConfigInput:
+        SimulationResults["TotalPoolSize"] = len(SimulationConfigInput["df_full"])
+
     return SimulationResults

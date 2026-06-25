@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.metrics import make_scorer, mean_squared_error
+from lightning import Callback, LightningDataModule, LightningModule, Trainer
 
 
 import torch
@@ -11,10 +12,34 @@ from utils.Prediction.LightHydra import (
     get_hl_cfg,
     get_hl_modules,
     get_hl_datamodules,
-    train_datamodule_to_pd,
-    val_datamodule_to_pd,
     update_scheduler,
+    reset_trainer,
+    get_new_model,
 )
+
+from pytorch_lightning import Trainer
+import torch
+import objgraph
+import gc
+import copy
+from utils.Prediction.LightHydra import print_gpu_memory, reset_weights
+
+
+def get_tensors_snapshot():
+    """Retourne un set des ids de tensors CUDA actuellement en vie"""
+    gc.collect()
+    tensors = {}
+    for obj in gc.get_objects():
+        try:
+            if torch.is_tensor(obj) and obj.is_cuda:
+                tensors[id(obj)] = (
+                    obj.shape,
+                    obj.dtype,
+                    round(obj.element_size() * obj.nelement() / 1e6, 3),
+                )
+        except:
+            pass
+    return tensors
 
 
 def get_cv_rmse(model_object, X_train, y_train, k=5):
@@ -53,6 +78,10 @@ def get_cv_rmse_hl(predictor_model, hl_model, datamodule, hl_cfg):
     kf = KFold(n_splits=hl_cfg.get("k_fold"), shuffle=True, random_state=42)
     scores = []
 
+    saved_state_dict = copy.deepcopy(hl_model.state_dict())
+
+    fold_idx = 0
+
     for cv_train_pos, cv_val_pos in kf.split(saved_train_labels):
         cv_train_labels = [saved_train_labels[i] for i in cv_train_pos]
         cv_val_labels = [saved_train_labels[i] for i in cv_val_pos]
@@ -60,16 +89,25 @@ def get_cv_rmse_hl(predictor_model, hl_model, datamodule, hl_cfg):
         datamodule.train_data.update_indices(cv_train_labels)
         datamodule.val_data.update_indices(cv_val_labels)
 
-        predictor_model, hl_model = get_hl_modules(hl_cfg, datamodule)
+        reset_trainer(predictor_model)
+        predictor_model, hl_model, datamodule, hl_cfg = update_scheduler(
+            predictor_model, hl_model, datamodule, hl_cfg
+        )
+
+        hl_model.apply(reset_weights)
+
         predictor_model.fit(model=hl_model, datamodule=datamodule, ckpt_path=None)
 
         metric_dict = {**predictor_model.callback_metrics}
         rse = metric_dict["val/reg_loss"] + metric_dict["val/reg_time_loss"]
         scores.append(-torch.sqrt(rse).numpy())
 
+        fold_idx += 1
     # Restaurer
     datamodule.train_data.update_indices(saved_train_labels)
     datamodule.val_data.update_indices(saved_val_labels)
+    hl_model.load_state_dict(saved_state_dict)
+
     return -np.mean(scores)
 
 
