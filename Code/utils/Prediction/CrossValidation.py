@@ -75,7 +75,7 @@ def get_cv_rmse_hl(predictor_model, hl_model, datamodule, hl_cfg):
     saved_train_labels = list(datamodule.train_data.labels)  # ← labels pandas
     saved_val_labels = list(datamodule.val_data.labels)
 
-    kf = KFold(n_splits=hl_cfg.get("k_fold"), shuffle=True, random_state=42)
+    kf = KFold(n_splits=3, shuffle=True, random_state=42)
     scores = []
 
     saved_state_dict = copy.deepcopy(hl_model.state_dict())

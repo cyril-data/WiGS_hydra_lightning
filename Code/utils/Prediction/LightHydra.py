@@ -26,9 +26,17 @@ import resource
 import logging
 
 import torch.nn as nn
+from pathlib import Path
 
 logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
 os.environ["PROJECT_ROOT"] = f"{os.getcwd()}/.."
+
+
+# Remonte jusqu'à ukz42ac/IAlefeu/, puis va dans henrihost-al
+HHAL_PATH = Path(__file__).resolve().parents[4] / "henrihost-al"
+
+print("HHAL_PATH", HHAL_PATH)
+sys.path.insert(0, str(HHAL_PATH))
 
 from hhal.utils import (
     RankedLogger,
