@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=${AL_hl}
-#SBATCH --output=logs/${AL_hl}.err
-#SBATCH --error=logs/${AL_hl}.err
+#SBATCH --job-name=rd
+#SBATCH --output=logs/rd.err
+#SBATCH --error=logs/rd.err
 #SBATCH --nodes=1                    # on demande un noeud
 #SBATCH --ntasks-per-node=1          # avec une tache par noeud (= nombre de GPU ici)
 #SBATCH --gres=gpu:1
@@ -9,8 +9,8 @@
 #SBATCH --hint=nomultithread
 #SBATCH --account hir@h100
 #SBATCH -C        h100
-#SBATCH --time=1:50:00
-#SBATCH --qos=qos_gpu_h100-dev
+#SBATCH --time=19:50:00
+#SBATCH --qos=qos_gpu_h100-t3
 
 CONDA_PATH_INSTALL=/lustre/fswork/projects/rech/soz/commun/IAlefeu/conda_wigs
 

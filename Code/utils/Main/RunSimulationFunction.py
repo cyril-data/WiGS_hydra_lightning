@@ -30,10 +30,10 @@ def RunSimulationFunction(
         k_top_candidate = 1
 
     strategies_to_run = {
-        "Passive Learning": {
-            "SelectorType": "PassiveLearningSelector",
-            "k_top_candidate": k_top_candidate,
-        },
+        # "Passive Learning": {
+        #     "SelectorType": "PassiveLearningSelector",
+        #     "k_top_candidate": k_top_candidate,
+        # },
         # "GSx": {"SelectorType": "GreedySamplingSelector", "strategy": "GSx"},
         # "GSy": {"SelectorType": "GreedySamplingSelector", "strategy": "GSy"},
         # "iGS": {"SelectorType": "GreedySamplingSelector", "strategy": "iGS"},
