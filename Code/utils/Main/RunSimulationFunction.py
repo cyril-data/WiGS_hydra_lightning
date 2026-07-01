@@ -38,9 +38,21 @@ def RunSimulationFunction(
             "SelectorType": "PassiveLearningSelector",
             "k_top_candidate": k_top_candidate,
         },
-        "GSx": {"SelectorType": "GreedySamplingSelector", "strategy": "GSx"},
-        "GSy": {"SelectorType": "GreedySamplingSelector", "strategy": "GSy"},
-        "iGS": {"SelectorType": "GreedySamplingSelector", "strategy": "iGS"},
+        "GSx": {
+            "SelectorType": "GreedySamplingSelector",
+            "strategy": "GSx",
+            "k_top_candidate": k_top_candidate,
+        },
+        "GSy": {
+            "SelectorType": "GreedySamplingSelector",
+            "strategy": "GSy",
+            "k_top_candidate": k_top_candidate,
+        },
+        "iGS": {
+            "SelectorType": "GreedySamplingSelector",
+            "strategy": "iGS",
+            "k_top_candidate": k_top_candidate,
+        },
         "WiGS (Static w_x=0.25)": {
             "SelectorType": "WeightedGreedySamplingSelector",
             "weight_strategy": "static",

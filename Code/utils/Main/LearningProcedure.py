@@ -88,6 +88,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
     ### Algorithm ###
     while True:
+        StartTime_iteration = time.time()
 
         print(f"=== iteration  {i} ===")
 
@@ -111,7 +112,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
             # hl_data_traindataloader = hl_data.train_dataloader()
             StartTime = time.time()
-            predictor_model.fit(model=hl_model, train_dataloaders=hl_data, ckpt_path=None)
+            predictor_model.fit(model=hl_model, datamodule=hl_data, ckpt_path=None)
 
             print(f"\t+++ Training : {time.time() - StartTime} +++")
 
@@ -122,13 +123,6 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
         ## 3. Calculate Full Pool Error ##
         candidate_with_target_index = SimulationConfigInputUpdated["df_Candidate"].index
-
-        # load target 'Y' only for train and not for candidate
-
-        # Work with TRUE INDICES ! .iloc -> rempace by .loc
-        # candidate_with_target = Simulationget_locConfigInputUpdated["df_full"].iloc[
-        #     candidate_with_target_index, :
-        # ]
 
         candidate_with_target = SimulationConfigInputUpdated["df_full"].loc[
             candidate_with_target_index, :
@@ -170,15 +164,25 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## 4. Calculate CV Error ##
         model = predictor_model.model
 
+        StartTime = time.time()
+
         if model is not None:
 
             if isinstance(model, BaseEstimator):
-                current_cv_rmse = get_cv_rmse(model, X_train_df, y_train_series, k=5)
+                current_cv_rmse = (
+                    0
+                    if SimulationConfigInputUpdated["add_useful_params"]["no_cv"]
+                    else get_cv_rmse(model, X_train_df, y_train_series, k=5)
+                )
             # elif isinstance(model, nn.Module):
             #     current_cv_rmse = get_cv_rmse_NN(model, X_train_df, y_train_series, k=5)
             elif hydralightning:
+                current_cv_rmse = (
+                    0
+                    if SimulationConfigInputUpdated["add_useful_params"]["no_cv"]
+                    else get_cv_rmse_hl(predictor_model, model, hl_data, hl_cfg)
+                )
 
-                current_cv_rmse = get_cv_rmse_hl(predictor_model, model, hl_data, hl_cfg)
                 # current_cv_rmse = get_cv_rmse_hl_multigpu(hl_cfg)
 
             else:
@@ -186,6 +190,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
         else:
             current_cv_rmse = np.nan
+
+        print(f"\t+++ COMPUTE CV : {time.time() - StartTime} +++")
 
         if np.isnan(current_cv_rmse):
             raise "current_cv_rmse is Nan"
@@ -258,6 +264,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
             output_path = SimulationConfigInputUpdated["add_useful_params"]["output_path"]
             print(f"\n=== Results writen in {output_path} ===\n")
             print(f"\t+++ dump_results : {time.time() - StartTime} +++")
+
+        print(f"\t+++ ITERATION {i} : {time.time() - StartTime_iteration} +++")
 
     ### Output ###
     LearningProcedureOutput = {

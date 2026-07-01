@@ -8,7 +8,7 @@ from utils.Main.RunSimulationFunction import RunSimulationFunction
 MODEL_LIST = [
     # "MLPPredictor",
     # "MLPRegressionPredictor",
-    # "RidgeRegressionPredictor",
+    "RidgeRegressionPredictor",
     # 'GaussianProcessRegressorPredictor'
     # 'RandomForestRegressorPredictor'
     "HydraLightningMLPPredictor",
@@ -33,21 +33,25 @@ def main():
     parser.add_argument(
         "--CandidateProportion", type=float, required=True, help="Percent for candidate dataset."
     )
-    parser.add_argument(
-        "--k_top", type=int, default=1, help="Candidates number by select iteration."
-    )
+    parser.add_argument("--k_top", type=int, default=1, help="k_top selecion of candidates.")
     parser.add_argument(
         "--res_freq",
         type=int,
         default=1,
-        help="Candidates number by select iteration.",
+        help="frequence of writing the results.",
     )
 
     parser.add_argument(
         "--strat",
         type=str,
         default="WiGS (SAC)",
-        help="Candidates number by select iteration.",
+        help="Define one strategy.",
+    )
+
+    parser.add_argument(
+        "--no_cv",
+        action="store_true",
+        help="of --no_cv : the Cross Value are not computed.",
     )
 
     parser.add_argument("--hl_xp", type=str, default=None, help="Data type for this job array.")
@@ -89,6 +93,7 @@ def main():
             "k_top_candidate": args.k_top,
             "hl_xp": args.hl_xp,
             "strat": args.strat,
+            "no_cv": args.no_cv,
         },
     )
 

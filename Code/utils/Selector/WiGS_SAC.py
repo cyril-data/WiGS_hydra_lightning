@@ -593,11 +593,14 @@ class WiGS_SAC_Selector:
         dX_global_min, dX_global_max = np.inf, -np.inf
         dY_global_min, dY_global_max = np.inf, -np.inf
 
+        print("X_Candidate_np", X_Candidate_f32.shape)
+        print("X_Train_np", X_Train_f32.shape)
+
         dX_global_min, dX_global_max = global_min_max_dist_gpu(
             X_Candidate_f32, X_Train_f32, batch_size
         )
-        print("dX_global_min", dX_global_min)
 
+        print("dX_global_min", dX_global_min)
         print(f"\t+++ Wigs_SAC dX_global_min : {time.time() - StartTime} +++")
 
         StartTime = time.time()
@@ -605,36 +608,7 @@ class WiGS_SAC_Selector:
         dY_global_min, dY_global_max = global_min_max_dist_gpu(
             pred_vals, y_train_values, batch_size
         )
-        print(f"\t+++ Wigs_SAC dY_global_min : {time.time() - StartTime} +++")
-
-        print("dY_global_min", dY_global_min)
-
-        # print("torch dX_global_min", dX_global_min)
-        # print("torch dX_global_max", dX_global_max)
-
-        # print("torch dY_global_min", dY_global_min)
-        # print("torch dY_global_max", dY_global_max)
-
-        # for i in range(0, len(X_Candidate_f32), batch_size):
-        #     StartTime1 = time.time()
-        #     bX = X_Candidate_f32[i : i + batch_size]
-        #     dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
-        #     dX_global_min = min(dX_global_min, dX_batch.min())
-        #     dX_global_max = max(dX_global_max, dX_batch.max())
-
-        #     bY = pred_vals[i : i + batch_size]
-        #     dY_batch = cdist(bY, y_train_values, metric="euclidean")
-        #     dY_global_min = min(dY_global_min, dY_batch.min())
-        #     dY_global_max = max(dY_global_max, dY_batch.max())
-        #     print(f"\t+++ Wigs_SAC dY_global_max batch {i} : {time.time() - StartTime1} +++")
-
-        # print("numpy dX_global_min", dX_global_min)
-        # print("numpy dX_global_max", dX_global_max)
-
-        # print("numpy dY_global_min", dY_global_min)
-        # print("numpy dY_global_max", dY_global_max)
-
-        print(f"\t+++ Wigs_SAC Distance min calculation : {time.time() - StartTime} +++")
+        print(f"\t+++ Wigs_SAC dY_global_min_max  : {time.time() - StartTime} +++")
 
         ## 4. Distance and score calculation
         StartTime = time.time()
