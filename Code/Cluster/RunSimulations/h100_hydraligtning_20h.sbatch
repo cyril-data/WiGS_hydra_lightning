@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=rd
-#SBATCH --output=logs/rd.err
-#SBATCH --error=logs/rd.err
+#SBATCH --job-name=20h_wi_h100
+#SBATCH --output=logs/20h_wi_h100.err
+#SBATCH --error=logs/20h_wi_h100.err
 #SBATCH --nodes=1                    # on demande un noeud
 #SBATCH --ntasks-per-node=1          # avec une tache par noeud (= nombre de GPU ici)
 #SBATCH --gres=gpu:1
@@ -36,4 +36,4 @@ export PYTHONUSERBASE=$CONDA_PATH_INSTALL
 
 SLURM_ARRAY_TASK_ID=0
 
-python RunSimulation.py --Data "hydralightning" --TaskID "$SLURM_ARRAY_TASK_ID" --NReplications 25 --CandidateProportion 0.95 --k_top 10000
+python RunSimulation.py --Data "hydralightning" --TaskID "$SLURM_ARRAY_TASK_ID" --NReplications 25 --CandidateProportion 0.95 --k_top 10000 --hl_xp baseline_active_learning_h100

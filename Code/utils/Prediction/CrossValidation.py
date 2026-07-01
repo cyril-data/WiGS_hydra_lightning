@@ -1,8 +1,6 @@
 import numpy as np
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.metrics import make_scorer, mean_squared_error
-from lightning import Callback, LightningDataModule, LightningModule, Trainer
-
 
 import torch
 import torch.nn as nn
@@ -17,12 +15,17 @@ from utils.Prediction.LightHydra import (
     get_new_model,
 )
 
-from pytorch_lightning import Trainer
-import torch
-import objgraph
 import gc
 import copy
 from utils.Prediction.LightHydra import print_gpu_memory, reset_weights
+import time
+
+import torch.multiprocessing as mp
+from queue import Empty
+import pytorch_lightning as pl
+from omegaconf import OmegaConf
+
+import os
 
 
 def get_tensors_snapshot():
@@ -96,13 +99,16 @@ def get_cv_rmse_hl(predictor_model, hl_model, datamodule, hl_cfg):
 
         hl_model.apply(reset_weights)
 
+        StartTime = time.time()
         predictor_model.fit(model=hl_model, datamodule=datamodule, ckpt_path=None)
+        print(f"\t+++ CV fold {fold_idx} training : {time.time() - StartTime} +++")
 
         metric_dict = {**predictor_model.callback_metrics}
         rse = metric_dict["val/reg_loss"] + metric_dict["val/reg_time_loss"]
         scores.append(-torch.sqrt(rse).numpy())
 
         fold_idx += 1
+
     # Restaurer
     datamodule.train_data.update_indices(saved_train_labels)
     datamodule.val_data.update_indices(saved_val_labels)
@@ -181,3 +187,152 @@ def get_cv_rmse_NN(model_object, X_train, y_train, k=5, epochs=50, batch_size=32
             rmse_scores.append(rmse)
 
     return np.mean(rmse_scores)
+
+
+# def _cv_worker(gpu_id, task_queue, result_queue, hl_cfg_dict, dataloader_workers):
+
+#     hl_cfg = OmegaConf.create(hl_cfg_dict)
+#     hl_cfg.trainer.devices = [gpu_id]
+#     hl_cfg.trainer.accelerator = "gpu"
+#     hl_cfg.data.num_workers = dataloader_workers
+
+#     datamodule = get_hl_datamodules(hl_cfg)
+#     hl_trainer, hl_model = get_hl_modules(hl_cfg, datamodule)  # créé UNE SEULE FOIS
+#     saved_state_dict = copy.deepcopy(hl_model.state_dict())
+
+#     while True:
+#         try:
+#             fold_idx, cv_train_labels, cv_val_labels = task_queue.get_nowait()
+#         except Empty:
+#             break
+
+#         datamodule.train_data.update_indices(cv_train_labels)
+#         datamodule.val_data.update_indices(cv_val_labels)
+
+#         reset_trainer(hl_trainer)  # comme dans ton flux principal
+#         hl_model.load_state_dict(saved_state_dict)
+#         hl_model.apply(reset_weights)
+
+
+def _cv_worker(gpu_id, task_queue, result_queue, hl_cfg_dict, dataloader_workers):
+
+    print("_cv_worker gpu_id:", gpu_id, "num_workers:", dataloader_workers)
+    hl_cfg = OmegaConf.create(hl_cfg_dict)
+    hl_cfg.trainer.devices = [gpu_id]
+    hl_cfg.trainer.accelerator = "gpu"
+    hl_cfg.data.num_workers = dataloader_workers  # <-- pin explicite, par process
+
+    datamodule = get_hl_datamodules(hl_cfg)
+
+    # def _cv_worker(gpu_id, task_queue, result_queue, hl_cfg_dict):
+
+    #     print("_cv_worker gpu_id:", gpu_id)
+
+    #     # Reconstruire un cfg indépendant pour ce process (copie, pas de partage d'état)
+    #     hl_cfg = OmegaConf.create(hl_cfg_dict)
+    #     hl_cfg.trainer.devices = [gpu_id]  # pin sur le bon GPU
+    #     hl_cfg.trainer.accelerator = "gpu"
+
+    #     datamodule = get_hl_datamodules(hl_cfg)
+
+    while True:
+        try:
+            fold_idx, cv_train_labels, cv_val_labels = task_queue.get_nowait()
+        except Empty:
+            break
+
+        print(f"\t === fold_idx: {fold_idx} ===")
+        print(f"\t\t --- cv_train_labels: {len(cv_train_labels)} ---")
+        print(f"\t\t --- cv_val_labels: {len(cv_val_labels)} ---")
+
+        datamodule.train_data.update_indices(cv_train_labels)
+        datamodule.val_data.update_indices(cv_val_labels)
+
+        hl_trainer, hl_model = get_hl_modules(hl_cfg, datamodule)
+
+        StartTime = time.time()
+        print(f"\t\t --- fit() ---")
+        hl_trainer.fit(model=hl_model, datamodule=datamodule, ckpt_path=None)
+        print(f"\t\t --- end fit() ---")
+        print(f"\t+++ CV fold {fold_idx} on GPU {gpu_id} : {time.time() - StartTime} +++")
+
+        metric_dict = {**hl_trainer.callback_metrics}
+        rse = metric_dict["val/reg_loss"] + metric_dict["val/reg_time_loss"]
+        score = -torch.sqrt(rse).cpu().numpy()
+        result_queue.put((fold_idx, score))
+
+
+def get_cv_rmse_hl_multigpu(
+    hl_cfg, n_splits=3, n_workers_per_gpu=1, max_parallel=None, dataloader_workers=None
+):
+    n_gpus = torch.cuda.device_count()
+    gpu_slots = [g for g in range(n_gpus) for _ in range(n_workers_per_gpu)]
+    if max_parallel is not None:
+        gpu_slots = gpu_slots[:max_parallel]
+
+    n_parallel_processes = len(gpu_slots)
+
+    # Budget CPU total réparti entre les process GPU lancés en parallèle
+    total_cpus = os.cpu_count() or 1
+
+    if dataloader_workers is None:
+        # réserve 1 cpu pour le process principal/overhead, répartit le reste
+        dataloader_workers = min(
+            max(0, (total_cpus - 1) // max(n_parallel_processes, 1)), hl_cfg["num_workers"]
+        )
+
+    print(
+        f"CPUs total={total_cpus}, process GPU en parallèle={n_parallel_processes}, "
+        f"num_workers par process={dataloader_workers}"
+    )
+
+    ctx = mp.get_context("spawn")
+    task_queue, result_queue = ctx.Queue(), ctx.Queue()
+
+    # def get_cv_rmse_hl_multigpu(hl_cfg, n_splits=3):
+    #     ctx = mp.get_context("spawn")
+
+    # datamodule temporaire juste pour récupérer les labels (dans le process parent)
+    datamodule = get_hl_datamodules(hl_cfg)
+    saved_train_labels = list(datamodule.train_data.labels)
+
+    # cfg sérialisable (dict pur), picklable proprement vers les enfants
+    hl_cfg_dict = OmegaConf.to_container(hl_cfg, resolve=True)
+
+    kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    # task_queue = ctx.Queue()
+    # result_queue = ctx.Queue()
+
+    fold_idx = 0
+    for cv_train_pos, cv_val_pos in kf.split(saved_train_labels):
+        cv_train_labels = [saved_train_labels[i] for i in cv_train_pos]
+        cv_val_labels = [saved_train_labels[i] for i in cv_val_pos]
+        task_queue.put((fold_idx, cv_train_labels, cv_val_labels))
+        fold_idx += 1
+    n_folds = fold_idx
+
+    n_gpus = torch.cuda.device_count()
+    processes = [
+        ctx.Process(
+            target=_cv_worker,
+            args=(gpu_id, task_queue, result_queue, hl_cfg_dict, dataloader_workers),
+        )
+        for gpu_id in gpu_slots
+    ]
+
+    # processes = [
+    #     ctx.Process(target=_cv_worker, args=(g, task_queue, result_queue, hl_cfg_dict))
+    #     for g in range(n_gpus)
+    # ]
+    for p in processes:
+        p.start()
+
+    results = {}
+    for _ in range(n_folds):
+        fold_idx, score = result_queue.get()
+        results[fold_idx] = score
+
+    for p in processes:
+        p.join()
+
+    return np.mean([results[i] for i in range(n_folds)])

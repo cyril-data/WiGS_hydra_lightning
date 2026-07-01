@@ -50,25 +50,38 @@ from hhal.utils import (
 log = RankedLogger(__name__, rank_zero_only=True)
 
 
+def get_hl_cfg(config) -> DictConfig:
+
+    strategy = config["add_useful_params"]["strategy_name"]
+    hl_xp = config["add_useful_params"]["hl_xp"]
+    if hl_xp is None:
+        hl_xp = "baseline_active_learning"
+
+    with initialize(
+        version_base="1.3",
+        config_path="../../../../henrihost-al/configs",
+    ):
+        output_dir = f"{os.environ['PROJECT_ROOT']}/logs/temp"
+        cfg = compose(
+            config_name="train.yaml",
+            overrides=[
+                f"experiment={hl_xp}",
+                # f"csv_path={os.environ['PROJECT_ROOT']}/../henrihost-al/data/small_8000.csv",
+                # "max_epochs=1",
+                f"paths.output_dir={output_dir}",
+                f"paths.work_dir={os.environ['PROJECT_ROOT']}",
+            ],
+        )
+        cfg.logger.mlflow.run_name = f"{cfg.logger.mlflow.run_name}_{strategy}"
+        return cfg
+
+
 def reset_trainer(trainer: Trainer):
     """Remet le Trainer dans un état propre pour un nouveau .fit()"""
     trainer.fit_loop.epoch_progress.reset()
     trainer.fit_loop.epoch_loop.batch_progress.reset()
     trainer.fit_loop.epoch_loop.scheduler_progress.reset()
     trainer.fit_loop.epoch_loop.automatic_optimization.optim_progress.reset()
-
-    #     predictor_model.fit_loop.epoch_progress.reset()
-    #     predictor_model.fit_loop.epoch_loop.batch_progress.reset()
-    #     predictor_model.fit_loop.epoch_loop.scheduler_progress.reset()
-    #     predictor_model.fit_loop.epoch_loop.automatic_optimization.optim_progress.reset()
-
-    #         # Vider le cache GPU explicitement
-    #         torch.cuda.empty_cache()
-
-    # trainer.fit_loop.epoch_progress.current.completed = 0
-    # trainer.fit_loop.epoch_progress.current.processed = 0
-    # trainer.fit_loop.epoch_progress.current.started = 0
-    # trainer.fit_loop.epoch_progress.current.ready = 0
 
     # Vider le cache GPU explicitement
     torch.cuda.empty_cache()
@@ -206,32 +219,13 @@ def update_scheduler(trainer, model, datamodule, cfg):
     return trainer, model, datamodule, cfg
 
 
-def get_hl_cfg(strategy) -> DictConfig:
-    with initialize(
-        version_base="1.3",
-        config_path="../../../../henrihost-al/configs",
-    ):
-        output_dir = f"{os.environ['PROJECT_ROOT']}/logs/temp"
-        cfg = compose(
-            config_name="train.yaml",
-            overrides=[
-                "experiment=baseline_active_learning",
-                # f"csv_path={os.environ['PROJECT_ROOT']}/../henrihost-al/data/database_500k.csv",
-                f"paths.output_dir={output_dir}",
-                f"paths.work_dir={os.environ['PROJECT_ROOT']}",
-            ],
-        )
-        cfg.logger.mlflow.run_name = f"{cfg.logger.mlflow.run_name}_{strategy}"
-        return cfg
-
-
 def full_datamodule_to_pd(datamodule):
     """Construit df_full depuis le dataset COMPLET, pas depuis train_data."""
-    full_X = datamodule.df_x.to_numpy().astype(np.float32)
-    full_y_reg = datamodule.df_y_reg.to_numpy().astype(np.float32)
-    full_y_time_reg = datamodule.df_y_time_reg.to_numpy().astype(np.float32)
-    full_y_cls = datamodule.df_y_cls.to_numpy().astype(np.int32)
-    full_y_time_cls = datamodule.df_y_time_cls.to_numpy().astype(np.int32)
+    full_X = datamodule.train_data.data_x
+    full_y_reg = datamodule.train_data.data_y_reg
+    full_y_time_reg = datamodule.train_data.data_y_time_reg
+    full_y_cls = datamodule.train_data.data_y_cls
+    full_y_time_cls = datamodule.train_data.data_y_time_cls
 
     full_y = np.concatenate([full_y_reg, full_y_time_reg, full_y_cls, full_y_time_cls], axis=1)
     y_labels = (
@@ -244,9 +238,10 @@ def full_datamodule_to_pd(datamodule):
     y_X_labels = datamodule.train_data.x_labels + y_labels
 
     df_full = pd.DataFrame(
-        full_y_X, columns=y_X_labels, index=datamodule.df_x.index
+        full_y_X, columns=y_X_labels, index=datamodule.train_data.df_x.index
     )  # ← index complet
     y_size = len(y_labels)
+
     return df_full, y_size
 
 

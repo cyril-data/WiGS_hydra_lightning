@@ -40,9 +40,6 @@ def FullPoolErrorFunction(
 
     hydralightning = SimulationConfigInputUpdated["hl_trainer"] is not None
 
-    print("FullPoolErrorFunction df_Train", df_Train.shape)
-    print("FullPoolErrorFunction y_true_pool", y_true_pool.shape)
-
     # 3. Check if the candidate pool is empty
     if df_Candidate.empty:  # On the last loop, the hybrid vector is just the training labels
         y_hybrid_predictions = y_train
@@ -156,8 +153,6 @@ def FullTestErrorFunction(
 
     X_true_pool, y_true_pool = get_features_and_target(df_test, y_size=y_size)
 
-    print("FullTestErrorFunction y_true_pool", y_true_pool.shape)
-
     if hydralightning:
         hl_model = SimulationConfigInputUpdated["hl_model"]
         hl_data = SimulationConfigInputUpdated["hl_data"]
@@ -240,8 +235,6 @@ def TrainErrorFunction(
     # 1. Recreate the full data pool.
 
     X_true_pool, y_true_pool = get_features_and_target(df_train, y_size=y_size)
-
-    print("TrainErrorFunction y_true_pool", y_true_pool.shape)
 
     if hydralightning:
         hl_model = SimulationConfigInputUpdated["hl_model"]

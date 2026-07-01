@@ -24,51 +24,60 @@ def RunSimulationFunction(
     ### Set Up ###
     all_results_by_strategy = {}
 
+    strategy = None
+
     if add_useful_params is not None and "k_top_candidate" in add_useful_params:
         k_top_candidate = add_useful_params["k_top_candidate"]
+
+        strategy = add_useful_params["strat"]
     else:
         k_top_candidate = 1
 
     strategies_to_run = {
-        # "Passive Learning": {
-        #     "SelectorType": "PassiveLearningSelector",
-        #     "k_top_candidate": k_top_candidate,
-        # },
-        # "GSx": {"SelectorType": "GreedySamplingSelector", "strategy": "GSx"},
-        # "GSy": {"SelectorType": "GreedySamplingSelector", "strategy": "GSy"},
-        # "iGS": {"SelectorType": "GreedySamplingSelector", "strategy": "iGS"},
-        # "WiGS (Static w_x=0.25)": {
-        #     "SelectorType": "WeightedGreedySamplingSelector",
-        #     "weight_strategy": "static",
-        #     "w_x": 0.25,
-        # },
-        # "WiGS (Static w_x=0.5)": {
-        #     "SelectorType": "WeightedGreedySamplingSelector",
-        #     "weight_strategy": "static",
-        #     "w_x": 0.5,
-        # },
-        # "WiGS (Static w_x=0.75)": {
-        #     "SelectorType": "WeightedGreedySamplingSelector",
-        #     "weight_strategy": "static",
-        #     "w_x": 0.75,
-        # },
-        # "WiGS (Time-Decay, Linear)": {
-        #     "SelectorType": "WeightedGreedySamplingSelector",
-        #     "weight_strategy": "time_decay",
-        #     "decay_type": "linear",
-        # },
-        # "WiGS (Time-Decay, Exponential)": {
-        #     "SelectorType": "WeightedGreedySamplingSelector",
-        #     "weight_strategy": "time_decay",
-        #     "decay_type": "exponential",
-        #     "decay_constant": 5.0,
-        # },
-        # "WiGS (MAB-UCB1, c=0.5)": {"SelectorType": "WiGS_MAB_Selector", "mab_c": 0.5},
-        # "WiGS (MAB-UCB1, c=2.0)": {"SelectorType": "WiGS_MAB_Selector", "mab_c": 2.0},
-        # "WiGS (MAB-UCB1, c=5.0)": {"SelectorType": "WiGS_MAB_Selector", "mab_c": 5.0},
+        "Passive Learning": {
+            "SelectorType": "PassiveLearningSelector",
+            "k_top_candidate": k_top_candidate,
+        },
+        "GSx": {"SelectorType": "GreedySamplingSelector", "strategy": "GSx"},
+        "GSy": {"SelectorType": "GreedySamplingSelector", "strategy": "GSy"},
+        "iGS": {"SelectorType": "GreedySamplingSelector", "strategy": "iGS"},
+        "WiGS (Static w_x=0.25)": {
+            "SelectorType": "WeightedGreedySamplingSelector",
+            "weight_strategy": "static",
+            "w_x": 0.25,
+        },
+        "WiGS (Static w_x=0.5)": {
+            "SelectorType": "WeightedGreedySamplingSelector",
+            "weight_strategy": "static",
+            "w_x": 0.5,
+        },
+        "WiGS (Static w_x=0.75)": {
+            "SelectorType": "WeightedGreedySamplingSelector",
+            "weight_strategy": "static",
+            "w_x": 0.75,
+        },
+        "WiGS (Time-Decay, Linear)": {
+            "SelectorType": "WeightedGreedySamplingSelector",
+            "weight_strategy": "time_decay",
+            "decay_type": "linear",
+        },
+        "WiGS (Time-Decay, Exponential)": {
+            "SelectorType": "WeightedGreedySamplingSelector",
+            "weight_strategy": "time_decay",
+            "decay_type": "exponential",
+            "decay_constant": 5.0,
+        },
+        "WiGS (MAB-UCB1, c=0.5)": {"SelectorType": "WiGS_MAB_Selector", "mab_c": 0.5},
+        "WiGS (MAB-UCB1, c=2.0)": {"SelectorType": "WiGS_MAB_Selector", "mab_c": 2.0},
+        "WiGS (MAB-UCB1, c=5.0)": {"SelectorType": "WiGS_MAB_Selector", "mab_c": 5.0},
         "WiGS (SAC)": {"SelectorType": "WiGS_SAC_Selector", "k_top_candidate": k_top_candidate},
-        # "QBC": {"SelectorType": "QBCSelector", "n_committee": 5},
+        "QBC": {"SelectorType": "QBCSelector", "n_committee": 5},
     }
+
+    if strategy is not None:
+        strategies_to_run = {strategy: strategies_to_run[strategy]}
+
+    print("strategies_to_run", strategies_to_run)
 
     ### Loop Through Strategies ###
     for strategy_name, strategy_params in strategies_to_run.items():

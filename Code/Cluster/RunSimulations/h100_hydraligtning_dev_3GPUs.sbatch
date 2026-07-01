@@ -3,7 +3,7 @@
 #SBATCH --output=logs/wi_h100_2h.err
 #SBATCH --error=logs/wi_h100_2h.err
 #SBATCH --nodes=1                    # on demande un noeud
-#SBATCH --ntasks-per-node=1          # avec une tache par noeud (= nombre de GPU ici)
+#SBATCH --ntasks-per-node=3          # avec une tache par noeud (= nombre de GPU ici)
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=24
 #SBATCH --hint=nomultithread

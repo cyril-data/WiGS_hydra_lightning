@@ -16,6 +16,7 @@ from utils.Prediction.LightHydra import (
     hl_y_pred_pd_to_tensor,
     hl_np_to_dataloader,
 )
+import time
 
 # --- Hyperparameters ---
 HIDDEN_SIZE = 64  # Number of neurons in hidden layers
@@ -28,6 +29,222 @@ ALPHA = 0.2  # Entropy regularization coefficient (the "temperature")
 
 # Device Configuration
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def global_min_max_dist_gpu(candidates_np, ref_np, batch_size, train_chunk_size=None, label=""):
+    if train_chunk_size is None:
+        train_chunk_size = batch_size
+
+    ref_t = torch.from_numpy(ref_np).to(DEVICE).half()
+    ref_sq = (ref_t**2).sum(dim=1)
+    n_ref = ref_t.shape[0]
+
+    g_min = torch.tensor(float("inf"), device=DEVICE)
+    g_max = torch.tensor(float("-inf"), device=DEVICE)
+
+    with torch.no_grad():
+        for i in range(0, len(candidates_np), batch_size):
+            # print(f"global_min_max_dist_gpu : {i} sur {int(len(candidates_np)/ batch_size)}")
+            b = (
+                torch.from_numpy(candidates_np[i : i + batch_size])
+                .to(DEVICE, non_blocking=True)
+                .half()
+            )
+            b_sq = (b**2).sum(dim=1, keepdim=True)
+
+            for j in range(0, n_ref, train_chunk_size):
+                ref_chunk = ref_t[j : j + train_chunk_size]
+                ref_sq_chunk = ref_sq[j : j + train_chunk_size]
+
+                dist_sq = b_sq + ref_sq_chunk.unsqueeze(0) - 2.0 * (b @ ref_chunk.T)
+                dist_sq.clamp_(min=0)
+                dist = dist_sq.sqrt_()
+
+                g_min = torch.minimum(g_min, dist.min())
+                g_max = torch.maximum(g_max, dist.max())
+
+                del dist_sq, dist
+
+            del b, b_sq
+
+    return g_min.item(), g_max.item()
+
+
+def compute_final_scores_gpu(
+    X_candidate_np,
+    X_train_np,
+    dX_min,
+    dX_max,
+    Y_candidate_np,
+    Y_train_np,
+    dY_min,
+    dY_max,
+    w_x,
+    w_y,
+    batch_size,
+    train_chunk_size=None,
+    epsilon=1e-8,
+):
+    if train_chunk_size is None:
+        train_chunk_size = batch_size
+
+    X_train_t = torch.from_numpy(X_train_np).to(DEVICE).half()
+    X_train_sq = (X_train_t**2).sum(dim=1)
+    n_train_x = X_train_t.shape[0]
+
+    Y_train_t = torch.from_numpy(Y_train_np).to(DEVICE).half()
+    Y_train_sq = (Y_train_t**2).sum(dim=1)
+    n_train_y = Y_train_t.shape[0]
+
+    assert (
+        n_train_x == n_train_y
+    ), "X_train et Y_train doivent avoir le même nombre de lignes (même index)"
+
+    dX_range = dX_min and (dX_max - dX_min + epsilon)
+    dX_range = dX_max - dX_min + epsilon
+    dY_range = dY_max - dY_min + epsilon
+
+    n = len(X_candidate_np)
+    final_scores = np.empty(n, dtype=np.float32)
+
+    with torch.no_grad():
+        for i in range(0, n, batch_size):
+            bX = (
+                torch.from_numpy(X_candidate_np[i : i + batch_size])
+                .to(DEVICE, non_blocking=True)
+                .half()
+            )
+            bX_sq = (bX**2).sum(dim=1, keepdim=True)
+
+            bY = (
+                torch.from_numpy(Y_candidate_np[i : i + batch_size])
+                .to(DEVICE, non_blocking=True)
+                .half()
+            )
+            bY_sq = (bY**2).sum(dim=1, keepdim=True)
+
+            running_min = torch.full(
+                (bX.shape[0],), float("inf"), device=DEVICE, dtype=torch.float16
+            )
+
+            for j in range(0, n_train_x, train_chunk_size):
+                Xt_chunk = X_train_t[j : j + train_chunk_size]
+                Xsq_chunk = X_train_sq[j : j + train_chunk_size]
+                Yt_chunk = Y_train_t[j : j + train_chunk_size]
+                Ysq_chunk = Y_train_sq[j : j + train_chunk_size]
+
+                dX_chunk = (
+                    (bX_sq + Xsq_chunk.unsqueeze(0) - 2.0 * (bX @ Xt_chunk.T))
+                    .clamp_(min=0)
+                    .sqrt_()
+                )
+                dY_chunk = (
+                    (bY_sq + Ysq_chunk.unsqueeze(0) - 2.0 * (bY @ Yt_chunk.T))
+                    .clamp_(min=0)
+                    .sqrt_()
+                )
+
+                score_chunk = (dX_chunk - dX_min) * (w_x / dX_range) + (dY_chunk - dY_min) * (
+                    w_y / dY_range
+                )
+
+                running_min = torch.minimum(running_min, score_chunk.min(dim=1).values)
+
+                del dX_chunk, dY_chunk, score_chunk
+
+            final_scores[i : i + batch_size] = running_min.float().cpu().numpy()
+
+            del bX, bY, bX_sq, bY_sq, running_min
+
+    return final_scores
+
+
+# def global_min_max_dist_gpu(candidates_np, ref_np, batch_size, label=""):
+#     ref_t = torch.from_numpy(ref_np).to(DEVICE).half()
+#     ref_sq = (ref_t**2).sum(dim=1)  # précalculé une seule fois
+
+#     g_min = torch.tensor(float("inf"), device=DEVICE)
+#     g_max = torch.tensor(float("-inf"), device=DEVICE)
+
+#     with torch.no_grad():
+#         for i in range(0, len(candidates_np), batch_size):
+#             b = (
+#                 torch.from_numpy(candidates_np[i : i + batch_size])
+#                 .to(DEVICE, non_blocking=True)
+#                 .half()
+#             )
+#             b_sq = (b**2).sum(dim=1, keepdim=True)
+
+#             dist_sq = b_sq + ref_sq.unsqueeze(0) - 2.0 * (b @ ref_t.T)
+#             dist_sq.clamp_(min=0)
+#             dist = dist_sq.sqrt_()
+
+#             g_min = torch.minimum(g_min, dist.min())
+#             g_max = torch.maximum(g_max, dist.max())
+
+#             del b, b_sq, dist_sq, dist
+
+#     return g_min.item(), g_max.item()
+
+
+# def compute_final_scores_gpu(
+#     X_candidate_np,
+#     X_train_np,
+#     dX_min,
+#     dX_max,
+#     Y_candidate_np,
+#     Y_train_np,
+#     dY_min,
+#     dY_max,
+#     w_x,
+#     w_y,
+#     batch_size,
+#     epsilon=1e-8,
+# ):
+#     X_train_t = torch.from_numpy(X_train_np).to(DEVICE).half()
+#     X_train_sq = (X_train_t**2).sum(dim=1)
+
+#     Y_train_t = torch.from_numpy(Y_train_np).to(DEVICE).half()
+#     Y_train_sq = (Y_train_t**2).sum(dim=1)
+
+#     dX_range = dX_max - dX_min + epsilon
+#     dY_range = dY_max - dY_min + epsilon
+
+#     n = len(X_candidate_np)
+#     final_scores = np.empty(n, dtype=np.float32)
+
+#     with torch.no_grad():
+#         for i in range(0, n, batch_size):
+#             bX = (
+#                 torch.from_numpy(X_candidate_np[i : i + batch_size])
+#                 .to(DEVICE, non_blocking=True)
+#                 .half()
+#             )
+#             bX_sq = (bX**2).sum(dim=1, keepdim=True)
+#             dX_batch = (
+#                 (bX_sq + X_train_sq.unsqueeze(0) - 2.0 * (bX @ X_train_t.T)).clamp_(min=0).sqrt_()
+#             )
+
+#             bY = (
+#                 torch.from_numpy(Y_candidate_np[i : i + batch_size])
+#                 .to(DEVICE, non_blocking=True)
+#                 .half()
+#             )
+#             bY_sq = (bY**2).sum(dim=1, keepdim=True)
+#             dY_batch = (
+#                 (bY_sq + Y_train_sq.unsqueeze(0) - 2.0 * (bY @ Y_train_t.T)).clamp_(min=0).sqrt_()
+#             )
+
+#             # normalisation + pondération fusionnées (pas de tenseur intermédiaire séparé)
+#             score_batch = (dX_batch - dX_min) * (w_x / dX_range) + (dY_batch - dY_min) * (
+#                 w_y / dY_range
+#             )
+
+#             final_scores[i : i + batch_size] = score_batch.min(dim=1).values.cpu().numpy()
+
+#             del bX, bY, dX_batch, dY_batch, score_batch
+
+#     return final_scores
 
 
 ### Actor and Critic Network ###
@@ -279,6 +496,12 @@ class WiGS_SAC_Selector:
         """
         Selects a point by first choosing a weight `w_x` via the SAC agent.
         """
+
+        ## 1. Initialization
+        StartTime = time.time()
+
+        hl_data = None
+
         ### If there are no more observations in the candidate set ###
         if df_Candidate.empty:
             return {"IndexRecommendation": []}
@@ -320,6 +543,11 @@ class WiGS_SAC_Selector:
 
         select_ytrain_cols = None
 
+        print(f"\t+++ Wigs_SAC #1 : {time.time() - StartTime} +++")
+
+        ## 2. Prediction on candidates
+        StartTime = time.time()
+
         if SimulationConfigInputUpdated["hl_trainer"] is not None:
 
             hl_data = SimulationConfigInputUpdated["hl_data"]
@@ -338,7 +566,10 @@ class WiGS_SAC_Selector:
 
         else:
             Predictions = Model.predict(X_Candidate)
+        print(f"\t+++ Wigs_SAC Prediction on candidates : {time.time() - StartTime} +++")
 
+        ## 3. Distance and score calculation
+        StartTime = time.time()
         pred_vals = (
             Predictions.reshape(-1, 1).astype(np.float32)
             if len(Predictions.shape) == 1
@@ -346,49 +577,112 @@ class WiGS_SAC_Selector:
         )
         if select_ytrain_cols is not None:
             y_Train = y_Train[select_ytrain_cols]
-        y_train_1d = (
+        y_train_values = (
             y_Train.values.reshape(-1, 1).astype(np.float32)
             if len(y_Train.shape) == 1
             else y_Train.values.astype(np.float32)
         )
 
         epsilon = 1e-8
-        batch_size = 5000
+
+        batch_size = 512
+
+        print("batch_size DIST ! ", batch_size)
 
         # Pass 1 : min/max global
         dX_global_min, dX_global_max = np.inf, -np.inf
         dY_global_min, dY_global_max = np.inf, -np.inf
 
-        for i in range(0, len(X_Candidate_f32), batch_size):
-            bX = X_Candidate_f32[i : i + batch_size]
-            dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
-            dX_global_min = min(dX_global_min, dX_batch.min())
-            dX_global_max = max(dX_global_max, dX_batch.max())
+        dX_global_min, dX_global_max = global_min_max_dist_gpu(
+            X_Candidate_f32, X_Train_f32, batch_size
+        )
+        print("dX_global_min", dX_global_min)
 
-            bY = pred_vals[i : i + batch_size]
-            dY_batch = cdist(bY, y_train_1d, metric="euclidean")
-            dY_global_min = min(dY_global_min, dY_batch.min())
-            dY_global_max = max(dY_global_max, dY_batch.max())
+        print(f"\t+++ Wigs_SAC dX_global_min : {time.time() - StartTime} +++")
+
+        StartTime = time.time()
+
+        dY_global_min, dY_global_max = global_min_max_dist_gpu(
+            pred_vals, y_train_values, batch_size
+        )
+        print(f"\t+++ Wigs_SAC dY_global_min : {time.time() - StartTime} +++")
+
+        print("dY_global_min", dY_global_min)
+
+        # print("torch dX_global_min", dX_global_min)
+        # print("torch dX_global_max", dX_global_max)
+
+        # print("torch dY_global_min", dY_global_min)
+        # print("torch dY_global_max", dY_global_max)
+
+        # for i in range(0, len(X_Candidate_f32), batch_size):
+        #     StartTime1 = time.time()
+        #     bX = X_Candidate_f32[i : i + batch_size]
+        #     dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
+        #     dX_global_min = min(dX_global_min, dX_batch.min())
+        #     dX_global_max = max(dX_global_max, dX_batch.max())
+
+        #     bY = pred_vals[i : i + batch_size]
+        #     dY_batch = cdist(bY, y_train_values, metric="euclidean")
+        #     dY_global_min = min(dY_global_min, dY_batch.min())
+        #     dY_global_max = max(dY_global_max, dY_batch.max())
+        #     print(f"\t+++ Wigs_SAC dY_global_max batch {i} : {time.time() - StartTime1} +++")
+
+        # print("numpy dX_global_min", dX_global_min)
+        # print("numpy dX_global_max", dX_global_max)
+
+        # print("numpy dY_global_min", dY_global_min)
+        # print("numpy dY_global_max", dY_global_max)
+
+        print(f"\t+++ Wigs_SAC Distance min calculation : {time.time() - StartTime} +++")
+
+        ## 4. Distance and score calculation
+        StartTime = time.time()
 
         # Pass 2 : scores
         final_scores_batch = np.empty(len(X_Candidate_f32), dtype=np.float32)
 
-        for i in range(0, len(X_Candidate_f32), batch_size):
-            bX = X_Candidate_f32[i : i + batch_size]
-            dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
-            d_prime_X = (dX_batch - dX_global_min) / (dX_global_max - dX_global_min + epsilon)
+        final_scores_batch = compute_final_scores_gpu(
+            X_Candidate_f32,
+            X_Train_f32,
+            dX_global_min,
+            dX_global_max,
+            pred_vals,
+            y_train_values,
+            dY_global_min,
+            dY_global_max,
+            w_x,
+            w_y,
+            batch_size=batch_size,
+        )
 
-            bY = pred_vals[i : i + batch_size]
-            dY_batch = cdist(bY, y_train_1d, metric="euclidean")
-            d_prime_Y = (dY_batch - dY_global_min) / (dY_global_max - dY_global_min + epsilon)
+        print("final_scores_batch", final_scores_batch)
 
-            score_batch = (w_x * d_prime_X) + (w_y * d_prime_Y)
-            final_scores_batch[i : i + batch_size] = score_batch.min(axis=1)
+        # print("torch final_scores_batch", final_scores_batch)
+        # print("torch dX_global_max", dX_global_max)
+
+        # print("torch dY_global_min", dY_global_min)
+        # print("torch dY_global_max", dY_global_max)
+
+        # for i in range(0, len(X_Candidate_f32), batch_size):
+        #     bX = X_Candidate_f32[i : i + batch_size]
+        #     dX_batch = cdist(bX, X_Train_f32, metric="euclidean")
+        #     d_prime_X = (dX_batch - dX_global_min) / (dX_global_max - dX_global_min + epsilon)
+
+        #     bY = pred_vals[i : i + batch_size]
+        #     dY_batch = cdist(bY, y_train_values, metric="euclidean")
+        #     d_prime_Y = (dY_batch - dY_global_min) / (dY_global_max - dY_global_min + epsilon)
+
+        #     score_batch = (w_x * d_prime_X) + (w_y * d_prime_Y)
+        #     final_scores_batch[i : i + batch_size] = score_batch.min(axis=1)
+
+        # print("numpy final_scores_batch", final_scores_batch)
 
         top_k_number_batch = self.k_top_candidate
         if len(final_scores_batch) < self.k_top_candidate:
             top_k_number_batch = len(final_scores_batch)
 
+        print(f"\t+++ Wigs_SAC final_scores_batch : {time.time() - StartTime} +++")
         # best_candidate_iloc_batch = np.argpartition(final_scores_batch, top_k_number_batch)[
         #     :top_k_number_batch
         # ]
@@ -496,5 +790,7 @@ class WiGS_SAC_Selector:
         self.iteration += 1
 
         IndexRecommendation = df_Candidate.iloc[best_candidate_iloc_batch].index.to_list()
+
+        print("WiGS_SAC_Selector IndexRecommendation")
 
         return {"IndexRecommendation": IndexRecommendation, "w_x": w_x}

@@ -57,10 +57,11 @@ def OneIterationFunction(SimulationConfigInput):
     hl_model = None
 
     if DataFileInput == "hydralightning":
-        hl_cfg = get_hl_cfg(SimulationConfigInput["add_useful_params"]["strategy_name"])
+        hl_cfg = get_hl_cfg(SimulationConfigInput)
         hl_cfg["csv_path"] = os.path.join(
             f"{os.environ['PROJECT_ROOT']}/../henrihost-al/", hl_cfg["csv_path"]
         )
+
         print(f"< Instantiating hydralightning data and trainer >")
         datamodule = get_hl_datamodules(hl_cfg)
 
@@ -99,6 +100,10 @@ def OneIterationFunction(SimulationConfigInput):
         hl_trainer, hl_model, hl_data, hl_cfg = update_scheduler(
             hl_trainer, hl_model, hl_data, hl_cfg
         )
+
+        print(f"\t+++ Initialisation : {time.time() - StartTime} +++")
+
+        print("hl_data", hl_data)
 
         print("===")
 

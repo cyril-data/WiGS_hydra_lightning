@@ -110,7 +110,10 @@ def LearningProcedure(SimulationConfigInputUpdated):
             hl_model.apply(reset_weights)
 
             # hl_data_traindataloader = hl_data.train_dataloader()
+            StartTime = time.time()
             predictor_model.fit(model=hl_model, train_dataloaders=hl_data, ckpt_path=None)
+
+            print(f"\t+++ Training : {time.time() - StartTime} +++")
 
             SimulationConfigInputUpdated["hl_model"] = hl_model
 
@@ -123,7 +126,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         # load target 'Y' only for train and not for candidate
 
         # Work with TRUE INDICES ! .iloc -> rempace by .loc
-        # candidate_with_target = SimulationConfigInputUpdated["df_full"].iloc[
+        # candidate_with_target = Simulationget_locConfigInputUpdated["df_full"].iloc[
         #     candidate_with_target_index, :
         # ]
 
@@ -131,6 +134,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
             candidate_with_target_index, :
         ]
 
+        StartTime = time.time()
         FullPoolErrorOuputs, SimulationConfigInputUpdated = FullPoolErrorFunction(
             InputModel=predictor_model,
             SimulationConfigInputUpdated=SimulationConfigInputUpdated,
@@ -139,7 +143,9 @@ def LearningProcedure(SimulationConfigInputUpdated):
         )
         for metric_name, value in FullPoolErrorOuputs.items():
             ErrorVecs["Full_Pool"][metric_name].append(value)
+        print(f"\t+++ FullPoolErrorOuputs : {time.time() - StartTime} +++")
 
+        StartTime = time.time()
         FullTestErrorOuputs = FullTestErrorFunction(
             InputModel=predictor_model,
             SimulationConfigInputUpdated=SimulationConfigInputUpdated,
@@ -148,7 +154,9 @@ def LearningProcedure(SimulationConfigInputUpdated):
         )
         for metric_name, value in FullTestErrorOuputs.items():
             ErrorVecs["Full_Test"][metric_name].append(value)
+        print(f"\t+++ FullTestErrorOuputs : {time.time() - StartTime} +++")
 
+        StartTime = time.time()
         TrainErrorOuputs = TrainErrorFunction(
             InputModel=predictor_model,
             SimulationConfigInputUpdated=SimulationConfigInputUpdated,
@@ -157,6 +165,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         )
         for metric_name, value in TrainErrorOuputs.items():
             ErrorVecs["Train"][metric_name].append(value)
+        print(f"\t+++ TrainErrorOuputs : {time.time() - StartTime} +++")
 
         ## 4. Calculate CV Error ##
         model = predictor_model.model
@@ -170,12 +179,14 @@ def LearningProcedure(SimulationConfigInputUpdated):
             elif hydralightning:
 
                 current_cv_rmse = get_cv_rmse_hl(predictor_model, model, hl_data, hl_cfg)
+                # current_cv_rmse = get_cv_rmse_hl_multigpu(hl_cfg)
 
             else:
                 raise "current_cv_rmse class is not known"
 
         else:
             current_cv_rmse = np.nan
+
         if np.isnan(current_cv_rmse):
             raise "current_cv_rmse is Nan"
             # current_cv_rmse = FullPoolErrorOuputs["RMSE"]
@@ -183,6 +194,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ### 5. Break Condition ###
         if len(SimulationConfigInputUpdated["df_Candidate"]) == 0:
             break
+
+        StartTime = time.time()
 
         ## 6. Sampling Procedure ##
         SelectorFuncOutput = selector_model.select(
@@ -193,6 +206,9 @@ def LearningProcedure(SimulationConfigInputUpdated):
             current_rmse=current_cv_rmse,
             SimulationConfigInputUpdated=SimulationConfigInputUpdated,
         )
+        print(f"\t+++ SelectorFuncOutput : {time.time() - StartTime} +++")
+
+        StartTime = time.time()
 
         ## 7. Query selected observation ##
         QueryObservationIndex = SelectorFuncOutput["IndexRecommendation"]
@@ -223,13 +239,15 @@ def LearningProcedure(SimulationConfigInputUpdated):
         ## 10. Increase iteration ##
         i += 1
 
+        print(f"\t+++ #7-8-7-10 LearningProcedure : {time.time() - StartTime} +++")
+
         ## 11. Increase iteration ##
         if (
             i
             % SimulationConfigInputUpdated["add_useful_params"]["save_result_selection_frequency"]
             == 0
         ):
-
+            StartTime = time.time()
             dump_results(
                 SimulationConfigInputUpdated,
                 ErrorVecs,
@@ -239,6 +257,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
             )
             output_path = SimulationConfigInputUpdated["add_useful_params"]["output_path"]
             print(f"\n=== Results writen in {output_path} ===\n")
+            print(f"\t+++ dump_results : {time.time() - StartTime} +++")
 
     ### Output ###
     LearningProcedureOutput = {

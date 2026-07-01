@@ -1,7 +1,7 @@
 #!/bin/bash
-#SBATCH --job-name=wi_h100_2h
-#SBATCH --output=logs/wi_h100_2h.err
-#SBATCH --error=logs/wi_h100_2h.err
+#SBATCH --job-name=wi_v100_2h
+#SBATCH --output=logs/wi_v100_2h.err
+#SBATCH --error=logs/wi_v100_2h.err
 #SBATCH --nodes=1                    # on demande un noeud
 #SBATCH --ntasks-per-node=1          # avec une tache par noeud (= nombre de GPU ici)
 #SBATCH --gres=gpu:1
@@ -16,8 +16,8 @@ CONDA_PATH_INSTALL=/lustre/fswork/projects/rech/soz/commun/IAlefeu/conda_wigs
 
 module purge
 
-# Load arch/h100
-module load arch/h100
+# # Load arch/h100
+# module load arch/h100
 
 # Load miniforge
 module load miniforge/24.11.3
@@ -36,4 +36,4 @@ export PYTHONUSERBASE=$CONDA_PATH_INSTALL
 
 SLURM_ARRAY_TASK_ID=0
 
-python RunSimulation.py --Data "hydralightning" --TaskID "$SLURM_ARRAY_TASK_ID" --NReplications 25 --CandidateProportion 0.95 --k_top 10000 --hl_xp baseline_active_learning_h100
+python RunSimulation.py --Data "hydralightning" --TaskID "$SLURM_ARRAY_TASK_ID" --NReplications 25 --CandidateProportion 0.95 --k_top 10000 --hl_xp baseline_active_learning_v100
