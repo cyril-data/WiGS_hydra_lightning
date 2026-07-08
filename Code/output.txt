@@ -1,0 +1,34 @@
+HHAL_PATH /home/cregan/documents/code/00_LORIA/IAlefeu/henrihost-al
+model_index -1
+replication_seed 24
+--- Starting Task 0: Dataset=hydralightning, Model=HydraLightningMLPPredictor, Seed=24 ---
+strategies_to_run {'iGS': {'SelectorType': 'GreedySamplingSelector', 'strategy': 'iGS', 'k_top_candidate': 10000}}
+< Instantiating hydralightning data and trainer >
+===
+df_all_hl_dataset (99738, 84)
+TRAIN
+al_dataframe (89765, 84)
+hl_dataset labels 99738
+hl_dataset indices 89765
+hl_dataset indices [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] [89755, 89756, 89757, 89758, 89759, 89760, 89761, 89762, 89763, 89764]
+hl_dataset df_x (99738, 43)
+labels[0] = 10002 
+indice_hl_data de labels[0] 10002 = 0
+i 0
+real_idx 0
+i 0
+real_idx 0
+TEST
+al_dataframe (9973, 84)
+hl_dataset labels 99738
+hl_dataset indices 9973
+hl_dataset indices [89765, 89766, 89767, 89768, 89769, 89770, 89771, 89772, 89773, 89774] [99728, 99729, 99730, 99731, 99732, 99733, 99734, 99735, 99736, 99737]
+hl_dataset df_x (99738, 43)
+labels[0] = 10002 
+"
+              
+              ***********************************************************************
+              ERROR in label/indices match in al_dataframe or hl_dataset. Error : 10002
+              ***********************************************************************
+              
+            

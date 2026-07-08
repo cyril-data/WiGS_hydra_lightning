@@ -23,6 +23,7 @@ from utils.Prediction.LightHydra import (
     get_hl_datamodules,
     full_datamodule_to_pd,
     update_scheduler,
+    data_fit_from_ALdata_and_hl_data,
 )
 import os
 
@@ -76,22 +77,22 @@ def OneIterationFunction(SimulationConfigInput):
         print("df_all_hl_dataset", df_all_hl_dataset.shape)
 
         # retrain df_full to the hl training set
-        df_full = df_all_hl_dataset.loc[datamodule.train_data.labels, :]
 
-        print("df_full", df_full.shape)
-        # reserve df_test to the hl test set
-        df_test = df_all_hl_dataset.loc[datamodule.test_data.labels, :]
+        current_train_labels = datamodule.train_data.df_x.index[datamodule.train_data.indices]
+        current_test_labels = datamodule.test_data.df_x.index[datamodule.test_data.indices]
 
-        print("df_test", df_test.shape)
+        df_full = df_all_hl_dataset.loc[current_train_labels, :]
+        df_test = df_all_hl_dataset.loc[current_test_labels, :]
+
+        data_fit_from_ALdata_and_hl_data(df_full, datamodule.train_data)
+        data_fit_from_ALdata_and_hl_data(df_test, datamodule.test_data)
+
         ### Train Candidate Split ###
         df_Train, df_Candidate = TrainCandidateSplit_X(
             df_full.iloc[:, :x_size], SimulationConfigInput["CandidateProportion"]
         )
 
         df_Train = df_full.loc[df_Train.index, :]
-
-        print("df_Train Split", df_Train.shape)
-        print("df_Candidate Split", df_Candidate.shape)
 
         datamodule.train_data.update_indices(df_Train.index)
 
@@ -102,8 +103,6 @@ def OneIterationFunction(SimulationConfigInput):
         )
 
         print(f"\t+++ Initialisation : {time.time() - StartTime} +++")
-
-        print("hl_data", hl_data)
 
         print("===")
 

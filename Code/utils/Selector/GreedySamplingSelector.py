@@ -238,8 +238,8 @@ class GreedySamplingSelector:
             ):
                 hl_data = SimulationConfigInputUpdated["hl_data"]
 
-                candidate_indices = X_Candidate.index.tolist()
-                hl_data.pred_data.update_indices(candidate_indices)
+                candidate_labels = X_Candidate.index.tolist()
+                hl_data.pred_data.update_indices(candidate_labels)
 
                 y_pred = Model.predict(model=Model.model, dataloaders=hl_data)
 

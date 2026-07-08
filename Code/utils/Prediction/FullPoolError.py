@@ -67,8 +67,12 @@ def FullPoolErrorFunction(
                 # dataloader = hl_pd_to_dataloader(X_candidate, hl_model.device, hl_model.dtype)
 
                 # Après (réutilise le même DataLoader)
-                candidate_indices = X_candidate.index.tolist()
-                hl_data.pred_data.update_indices(candidate_indices)
+                candidate_labels = X_candidate.index.tolist()
+                hl_data.pred_data.update_indices(candidate_labels)
+
+                # # =====================================================
+                # print("\n--- APRES FULL ERROR ---")
+                # # =====================================================
 
                 y_pred_candidate = InputModel.predict(model=hl_model, datamodule=hl_data)
                 # y_pred_candidate = InputModel.predict(model=hl_model, dataloaders=dataloader)
@@ -158,12 +162,14 @@ def FullTestErrorFunction(
         hl_data = SimulationConfigInputUpdated["hl_data"]
 
         # Après (réutilise le même DataLoader)
-        candidate_indices = X_true_pool.index.tolist()
+        candidate_labels = X_true_pool.index.tolist()
 
-        hl_data.pred_data.update_indices(candidate_indices)
+        hl_data.pred_data.update_indices(candidate_labels)
 
         # batch_size = hl_data.batch_size_per_device
         # hl_data.batch_size_per_device = batch_size * 10
+
+        test_error = InputModel.test(model=hl_model, datamodule=hl_data)
 
         y_pred_candidate = InputModel.predict(model=hl_model, datamodule=hl_data)
 
@@ -190,7 +196,9 @@ def FullTestErrorFunction(
         )
 
     # 6. Calculate all metrics using the same logic for every iteration.
-    rmse = np.sqrt(mean_squared_error(y_true_pool, y_pred_candidate))
+
+    mse = mean_squared_error(y_true_pool, y_pred_candidate)
+    rmse = np.sqrt(mse)
     mae = mean_absolute_error(y_true_pool, y_pred_candidate)
     r2 = r2_score(y_true_pool, y_pred_candidate)
 
@@ -206,6 +214,8 @@ def FullTestErrorFunction(
 
     # Moyenne des corrélations
     cc = np.mean(correlations)
+
+    # print("numpy test/reg_loss MSE", mse)
 
     return {"RMSE": rmse, "MAE": mae, "R2": r2, "CC": cc}
 
@@ -241,9 +251,13 @@ def TrainErrorFunction(
         hl_data = SimulationConfigInputUpdated["hl_data"]
 
         # Après (réutilise le même DataLoader)
-        candidate_indices = X_true_pool.index.tolist()
+        candidate_labels = X_true_pool.index.tolist()
 
-        hl_data.pred_data.update_indices(candidate_indices)
+        hl_data.pred_data.update_indices(candidate_labels)
+
+        # # =====================================================
+        # print("TRAIN ERROR : ")
+        # # =====================================================
 
         y_pred_candidate = InputModel.predict(model=hl_model, datamodule=hl_data)
 

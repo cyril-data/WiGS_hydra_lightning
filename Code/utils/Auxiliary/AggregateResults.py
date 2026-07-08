@@ -127,6 +127,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     print(metric_results)
 
         time_data = {strategy: data["ElapsedTime"] for strategy, data in aggregated_data.items()}
+        print("time_data", time_data)
         time_df = pd.DataFrame(time_data)
         time_df.to_csv(
             os.path.join(dataset_output_dir, "ElapsedTime.csv"), index_label="Simulation"

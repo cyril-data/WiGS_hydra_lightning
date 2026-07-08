@@ -44,6 +44,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
     WeightHistory = []
     SelectedObservationHistory = []
     InitialTrainIndices = list(SimulationConfigInputUpdated["df_Train"].index)
+
     y_size = SimulationConfigInputUpdated["y_size"]
     ### Initialize Model ###
 
@@ -112,6 +113,9 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
             # hl_data_traindataloader = hl_data.train_dataloader()
             StartTime = time.time()
+
+            print(f"\t*** Training Start ***")
+
             predictor_model.fit(model=hl_model, datamodule=hl_data, ckpt_path=None)
 
             print(f"\t+++ Training : {time.time() - StartTime} +++")

@@ -87,7 +87,12 @@ def RunSimulationFunction(
     }
 
     if strategy is not None:
-        strategies_to_run = {strategy: strategies_to_run[strategy]}
+        limited_strategies_to_run = {}
+        for strat in strategy:
+            print("strat", strat)
+            limited_strategies_to_run[strat] = strategies_to_run[strat]
+
+        strategies_to_run = limited_strategies_to_run
 
     print("strategies_to_run", strategies_to_run)
 

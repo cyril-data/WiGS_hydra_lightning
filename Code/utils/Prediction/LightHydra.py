@@ -149,14 +149,17 @@ def get_hl_modules(cfg: DictConfig, datamodule) -> LightningDataModule:
         )
 
         # Update scheduler steps per epoch
+
         if cfg["model"].get("scheduler"):
-            if "OneCycleLR" in cfg["model"]["scheduler"]["_target_"]:
-                steps_per_epoch = int(
-                    np.ceil(len(datamodule.train_data) / (cfg.batch_size * trainer.world_size))
-                )
-                print(f"Override steps per epoch to {steps_per_epoch}")
-                print("Computing steps per epoch for scheduler")
-                cfg["model"]["scheduler"]["steps_per_epoch"] = steps_per_epoch
+
+            if cfg["model"]["scheduler"] is not None:
+                if "OneCycleLR" in cfg["model"]["scheduler"]["_target_"]:
+                    steps_per_epoch = int(
+                        np.ceil(len(datamodule.train_data) / (cfg.batch_size * trainer.world_size))
+                    )
+                    print(f"Override steps per epoch to {steps_per_epoch}")
+                    print("Computing steps per epoch for scheduler")
+                    cfg["model"]["scheduler"]["steps_per_epoch"] = steps_per_epoch
 
     model: LightningModule = hydra.utils.instantiate(cfg.model)
 
@@ -219,6 +222,48 @@ def update_scheduler(trainer, model, datamodule, cfg):
     return trainer, model, datamodule, cfg
 
 
+def data_fit_from_ALdata_and_hl_data(al_dataframe, hl_dataset):
+    try:
+        positions_in_hl_dataset = hl_dataset.indices
+        corresponding_labels_for_df_x = hl_dataset.df_x.index[positions_in_hl_dataset]
+
+        # i = 0 est la position DANS LE SUBSET, celle qui correspond à label_0.
+        # C'est cette position qu'il faut passer à __getitem__, pas un résultat de get_loc.
+        subset_position = 0
+
+        label_0 = corresponding_labels_for_df_x[subset_position]
+
+        df_active_learning_y_reg_0, df_active_learning_y_reg_12 = (
+            al_dataframe.loc[label_0, "AmDNF_TemperatureMax"],
+            al_dataframe.loc[label_0, "_SF2_TemperatureEquilibriumMax"],
+        )
+
+        hl_data_y_reg_0, hl_data_y_reg_12 = (
+            hl_dataset[subset_position]["y_reg"][0],
+            hl_dataset[subset_position]["y_reg"][12],
+        )
+    except Exception as e:
+        print(f"""
+              ***********************************************************************
+              ERROR in label/indices match in al_dataframe or hl_dataset. Error : {e}
+              ***********************************************************************
+            """)
+        raise
+
+    assert df_active_learning_y_reg_0 == hl_data_y_reg_0, f"""
+             ***********************************************************************
+    df_full Active Learning dataframe : {df_active_learning_y_reg_0} does not correspond to
+             hl dataset :  {hl_data_y_reg_0}
+            ***********************************************************************
+    """
+    assert df_active_learning_y_reg_12 == hl_data_y_reg_12, f"""
+             ***********************************************************************
+    df_full Active Learning dataframe : {df_active_learning_y_reg_12} does not correspond to
+             hl dataset :  {hl_data_y_reg_12}
+            ***********************************************************************
+    """
+
+
 def full_datamodule_to_pd(datamodule):
     """Construit df_full depuis le dataset COMPLET, pas depuis train_data."""
     full_X = datamodule.train_data.data_x
@@ -234,11 +279,13 @@ def full_datamodule_to_pd(datamodule):
         + datamodule.train_data.y_cls_labels
         + datamodule.train_data.y_time_cls_labels
     )
-    full_y_X = np.concatenate([full_y, full_X], axis=1)
-    y_X_labels = datamodule.train_data.x_labels + y_labels
+
+    full_X_y = np.concatenate([full_X, full_y], axis=1)
+
+    X_y_labels = datamodule.train_data.x_labels + y_labels
 
     df_full = pd.DataFrame(
-        full_y_X, columns=y_X_labels, index=datamodule.train_data.df_x.index
+        full_X_y, columns=X_y_labels, index=datamodule.train_data.df_x.index
     )  # ← index complet
     y_size = len(y_labels)
 
@@ -368,7 +415,7 @@ def hl_y_pred_pd_to_tensor(y_pred_candidate, all_cols, X_candidate_index):
 
         # y_time_reg : [batch, n_time_reg]
         if batch["y_time_reg"] is not None:
-            parts.append(batch["y_time_reg"])  # [B, n_time_reg]
+            # parts.append(batch["y_time_reg"])  # [B, n_time_reg]
             if time_reg_cols is None:
                 time_reg_cols = batch["y_time_reg"].shape[1]
 
@@ -391,7 +438,7 @@ def hl_y_pred_pd_to_tensor(y_pred_candidate, all_cols, X_candidate_index):
 
     all_reg_cols = (
         all_cols[0:reg_cols]
-        + all_cols[(reg_cols + cls_cols) : (reg_cols + cls_cols + time_reg_cols)]
+        # + all_cols[(reg_cols + cls_cols) : (reg_cols + cls_cols + time_reg_cols)]
     )
 
     y_pred_candidate_pd = pd.DataFrame(

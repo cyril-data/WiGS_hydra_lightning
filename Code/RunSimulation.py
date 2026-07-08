@@ -3,12 +3,13 @@ import argparse
 import os
 import pickle
 from utils.Main.RunSimulationFunction import RunSimulationFunction
+import ast
 
 ### Models - MUST BE IN SYNC WITH CreateSimulationSbatch ###
 MODEL_LIST = [
     # "MLPPredictor",
     # "MLPRegressionPredictor",
-    "RidgeRegressionPredictor",
+    # "RidgeRegressionPredictor",
     # 'GaussianProcessRegressorPredictor'
     # 'RandomForestRegressorPredictor'
     "HydraLightningMLPPredictor",
@@ -44,8 +45,9 @@ def main():
     parser.add_argument(
         "--strat",
         type=str,
-        default="WiGS (SAC)",
-        help="Define one strategy.",
+        nargs="+",  # Accepte une ou plusieurs valeurs
+        default=["WiGS (SAC)"],
+        help="Define one or more strategies. Example: --strat 'WiGS (SAC)' 'iGS'",
     )
 
     parser.add_argument(
@@ -56,6 +58,15 @@ def main():
 
     parser.add_argument("--hl_xp", type=str, default=None, help="Data type for this job array.")
     args = parser.parse_args()
+
+    if len(args.strat) == 1:
+        # test if args.strat a list
+        try:
+            args.strat = ast.literal_eval(args.strat[0])
+        except (ValueError, SyntaxError):
+            pass
+
+    print("Strategies:", args.strat)
 
     ### Map Task ID to Model and Seed ###
     task_id_zero_based = args.TaskID - 1

@@ -92,7 +92,6 @@ def MeanVariancePlot(
             Y_Label = f"Error Difference (Method - {RelativeError})"
 
             BaselineMean = MeanVector[RelativeError].copy()
-
             for Label in MeanVector:
                 MeanVector[Label] -= BaselineMean
 
@@ -107,7 +106,15 @@ def MeanVariancePlot(
     ### Mean Plot ###
     fig_mean, ax_mean = plt.subplots(figsize=FigSize)
     for Label, MeanValues in MeanVector.items():
+
+        if -1 in MeanValues.index:
+            MeanValues = MeanValues.drop(-1)
+
         StdErrorValues = StdErrorVector[Label]
+
+        if -1 in StdErrorValues.index:
+            StdErrorValues = StdErrorValues.drop(-1)
+
         num_iterations = len(MeanValues)
         # total_pool_size = initial_train_size + num_iterations
         # if isinstance(k_top, dict) and Label in k_top:
@@ -178,9 +185,6 @@ def MeanVariancePlot(
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ":") if Linestyles else ":"
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
-
-        if len(x) > len(MeanValues):
-            x = x[1:]
 
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(
@@ -296,7 +300,11 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
 
     ### Set up ###
     metrics_to_plot = ["RMSE", "MAE", "R2", "CC"]
-    plot_types = {"trace": None, "trace_relative_iGS": "iGS"}
+    plot_types = {
+        "trace": None,
+        "trace_relative_random": "Passive Learning",
+        "trace_relative_iGS": "iGS",
+    }
     eval_types = ["full_pool", "full_test", "train"]
     strategies_to_exclude = {"WiGS (Static w_x=0.5)", "WiGS (MAB-UCB1, c=0.5)"}
     total_pool_size = None
@@ -336,7 +344,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                 with open(metric_pkl_path, "rb") as f:
                     results_for_metric = pickle.load(f)
 
-                print("results_for_metric", results_for_metric)
+                print(f"    - results_for_metric  {metric} for {eval_type}")
 
                 # Indices #
                 indices_file_path = os.path.join(dataset_path, "InitialIndices.csv")
@@ -410,6 +418,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                 for folder_name, baseline in plot_types.items():
                     y_label = f"Normalized {metric}" if baseline else metric
                     subtitle = f"Performance ({eval_type.capitalize()} {metric}) on {data_name.upper()} Dataset"
+
+                    print(f"\t *{y_label}, {subtitle} ")
 
                     TracePlotMean, TracePlotVariance = MeanVariancePlot(
                         RelativeError=baseline,
