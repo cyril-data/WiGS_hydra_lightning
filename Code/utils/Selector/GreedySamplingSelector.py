@@ -218,6 +218,17 @@ class GreedySamplingSelector:
         X_Candidate, _ = get_features_and_target(df_Candidate, y_size=None)
         X_Train, y_Train = get_features_and_target(df_Train, y_size=y_size)
 
+        if "subset_rand_candidat" in SimulationConfigInputUpdated["add_useful_params"]:
+
+            n_candidat = SimulationConfigInputUpdated["add_useful_params"]["subset_rand_candidat"]
+            if n_candidat is not None:
+                # N random seletion
+                if len(X_Candidate) > n_candidat:
+                    indices_random_iloc = np.random.choice(
+                        len(X_Candidate), size=n_candidat, replace=False
+                    )
+                    X_Candidate = X_Candidate.iloc[indices_random_iloc]
+
         X_Candidate_f32 = X_Candidate.values.astype(np.float32)
         X_Train_f32 = X_Train.values.astype(np.float32)
 

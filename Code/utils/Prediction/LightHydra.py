@@ -53,24 +53,28 @@ log = RankedLogger(__name__, rank_zero_only=True)
 def get_hl_cfg(config) -> DictConfig:
 
     strategy = config["add_useful_params"]["strategy_name"]
+    hl_max_epoch = config["add_useful_params"]["hl_max_epoch"]
     hl_xp = config["add_useful_params"]["hl_xp"]
     if hl_xp is None:
         hl_xp = "baseline_active_learning"
+
+    overrides = [
+        f"experiment={hl_xp}",
+        f"paths.work_dir={os.environ['PROJECT_ROOT']}",
+    ]
+    if hl_max_epoch is not None:
+        overrides.append(f"max_epochs={hl_max_epoch}")
+        overrides.append(f"check_val_every_n_epoch={hl_max_epoch}")
 
     with initialize(
         version_base="1.3",
         config_path="../../../../henrihost-al/configs",
     ):
         output_dir = f"{os.environ['PROJECT_ROOT']}/logs/temp"
+        overrides.append(f"paths.output_dir={output_dir}")
         cfg = compose(
             config_name="train.yaml",
-            overrides=[
-                f"experiment={hl_xp}",
-                # f"csv_path={os.environ['PROJECT_ROOT']}/../henrihost-al/data/small_8000.csv",
-                # "max_epochs=1",
-                f"paths.output_dir={output_dir}",
-                f"paths.work_dir={os.environ['PROJECT_ROOT']}",
-            ],
+            overrides=overrides,
         )
         cfg.logger.mlflow.run_name = f"{cfg.logger.mlflow.run_name}_{strategy}"
         return cfg

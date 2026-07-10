@@ -3,6 +3,7 @@ import os
 import pickle
 import glob
 import pandas as pd
+import yaml
 
 
 ### Function ###
@@ -43,6 +44,58 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         eval_types = list(error_df_template.columns)
         metrics = list(error_df_template.index)
 
+        print("strategies", strategies)
+        print("error_df_template", error_df_template)
+        print("eval_types", eval_types)
+        print("metrics", metrics)
+
+        ## Discover strategies across ALL files (each file may have 1 or more strategies) ##
+        strategies = []
+        eval_types = None
+        metrics = None
+
+        for file_path in result_files_for_dataset:
+            with open(file_path, "rb") as f:
+                result = pickle.load(f)
+
+            for strategy, strategy_data in result.items():
+                if strategy not in strategies:
+                    strategies.append(strategy)
+
+                ## On déduit eval_types/metrics une seule fois, à partir du premier trouvé ##
+                if eval_types is None:
+                    error_df_template = strategy_data["ErrorVecs"]
+                    eval_types = list(error_df_template.columns)
+                    metrics = list(error_df_template.index)
+
+        print("ALL FILES : strategies", strategies)
+        print("ALL FILES : error_df_template", error_df_template)
+        print("ALL FILES : eval_types", eval_types)
+        print("ALL FILES : metrics", metrics)
+
+        # ## Discover metrics and eval types from DataFrame structure (across ALL files) ##
+        # strategies_set = set()
+        # eval_types_set = set()
+        # metrics_set = set()
+
+        # for file_path in result_files_for_dataset:
+        #     with open(file_path, "rb") as f:
+        #         result = pickle.load(f)
+        #     for strategy, strategy_data in result.items():
+        #         strategies_set.add(strategy)
+        #         error_df_template = strategy_data["ErrorVecs"]
+        #         eval_types_set.update(error_df_template.columns)
+        #         metrics_set.update(error_df_template.index)
+
+        # strategies = sorted(strategies_set)
+        # eval_types = sorted(eval_types_set)
+        # metrics = sorted(metrics_set)
+
+        # print("ALL FILES strategies", strategies)
+        # print("ALL FILES error_df_template", error_df_template)
+        # print("ALL FILES eval_types", eval_types)
+        # print("ALL FILES metrics", metrics)
+
         aggregated_data = {
             s: {
                 "ErrorVecs": {eval_type: {m: [] for m in metrics} for eval_type in eval_types},
@@ -50,6 +103,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                 "SelectionHistory": [],
                 "WeightHistory": [],
                 "TotalPoolSize": [],
+                "SimulationParameters": [],
             }
             for s in strategies
         }
@@ -69,6 +123,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                 )
 
             for strategy, results in single_run_result.items():
+
                 if strategy in aggregated_data:
 
                     error_vec_df = results["ErrorVecs"]
@@ -82,6 +137,9 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
 
                     # Store #
                     aggregated_data[strategy]["ElapsedTime"].append(results["ElapsedTime"])
+
+                    print(f"ElapsedTime", results["ElapsedTime"])
+
                     if "TotalPoolSize" in results:
                         aggregated_data[strategy]["TotalPoolSize"].append(results["TotalPoolSize"])
 
@@ -90,6 +148,14 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     )
                     if "WeightHistory" in results:
                         aggregated_data[strategy]["WeightHistory"].append(results["WeightHistory"])
+
+                    if (
+                        "SimulationParameters" in results
+                        and "SimulationParameters" in aggregated_data[strategy]
+                    ):
+                        aggregated_data[strategy]["SimulationParameters"].append(
+                            results["SimulationParameters"]
+                        )
 
                     # Extraire k_top_candidate directement depuis SimulationResults
                     if "k_top_candidate" in results:
@@ -115,8 +181,9 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                 metric_results = {}
                 for strategy in strategies:
                     series_list = aggregated_data[strategy]["ErrorVecs"][eval_type][metric]
+
                     if series_list:
-                        metric_results[strategy] = pd.concat(series_list, axis=1)
+                        metric_results[strategy] = pd.concat(series_list, axis=1).fillna(0)
 
                 if metric_results:
                     output_path = os.path.join(eval_metrics_save_dir, f"{metric}.pkl")
@@ -124,7 +191,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                         pickle.dump(metric_results, f)
 
                     print(f"  > Saved {metric}.pkl to {eval_type.lower()}_metrics/")
-                    print(metric_results)
+                    print(type(metric_results), metric_results.keys(), metric_results)
 
         time_data = {strategy: data["ElapsedTime"] for strategy, data in aggregated_data.items()}
         print("time_data", time_data)
@@ -142,6 +209,18 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
             os.path.join(dataset_output_dir, "TotalPoolSize.csv"), index_label="Simulation"
         )
         print(f"  > Saved TotalPoolSize.csv")
+
+        params = {
+            strategy: (
+                data["SimulationParameters"]
+                if "SimulationParameters" in data
+                else "no_SimulationParameters_output"
+            )
+            for strategy, data in aggregated_data.items()
+        }
+        with open(os.path.join(dataset_output_dir, "SimulationParameters.yaml"), "w+") as ff:
+            yaml.dump(params, ff)
+        print(f"  > Saved 'SimulationParameters.yaml")
 
         ### Save Selection History ###
         history_save_dir = os.path.join(dataset_output_dir, "selection_history")

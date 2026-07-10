@@ -109,7 +109,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
             reset_trainer(predictor_model)
 
-            hl_model.apply(reset_weights)
+            if not SimulationConfigInputUpdated["add_useful_params"]["curriculum"]:
+                hl_model.apply(reset_weights)
 
             # hl_data_traindataloader = hl_data.train_dataloader()
             StartTime = time.time()
@@ -305,6 +306,21 @@ def dump_results(
         "CandidateProportion": str(SimulationConfigInputUpdated["CandidateProportion"]),
         "SelectorType": str(SimulationConfigInputUpdated["SelectorType"]),
         "ModelType": str(SimulationConfigInputUpdated["ModelType"]),
+        "output_path": str(SimulationConfigInputUpdated["add_useful_params"]["output_path"]),
+        "save_result_selection_frequency": str(
+            SimulationConfigInputUpdated["add_useful_params"]["save_result_selection_frequency"]
+        ),
+        "k_top_candidate": str(
+            SimulationConfigInputUpdated["add_useful_params"]["k_top_candidate"]
+        ),
+        "subset_rand_candidat": str(
+            SimulationConfigInputUpdated["add_useful_params"]["subset_rand_candidat"]
+        ),
+        "hl_xp": str(SimulationConfigInputUpdated["add_useful_params"]["hl_xp"]),
+        "strat": str(SimulationConfigInputUpdated["add_useful_params"]["strat"]),
+        "no_cv": str(SimulationConfigInputUpdated["add_useful_params"]["no_cv"]),
+        "hl_max_epoch": str(SimulationConfigInputUpdated["add_useful_params"]["hl_max_epoch"]),
+        "curriculum": str(SimulationConfigInputUpdated["add_useful_params"]["curriculum"]),
     }
 
     ### Return Time ###

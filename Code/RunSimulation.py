@@ -4,6 +4,7 @@ import os
 import pickle
 from utils.Main.RunSimulationFunction import RunSimulationFunction
 import ast
+from datetime import datetime  # <-- C'est la bonne façon
 
 ### Models - MUST BE IN SYNC WITH CreateSimulationSbatch ###
 MODEL_LIST = [
@@ -56,6 +57,26 @@ def main():
         help="of --no_cv : the Cross Value are not computed.",
     )
 
+    parser.add_argument(
+        "--subset_rand_candidat",
+        type=int,
+        default=None,
+        help="Number of candidate selection.",
+    )
+
+    parser.add_argument(
+        "--hl_max_epoch",
+        type=int,
+        default=None,
+        help="max_epoch with hydra lightning",
+    )
+
+    parser.add_argument(
+        "--curriculum",
+        action="store_true",
+        help="if --curriculum : model weights are conserved. This option impose --no_cv",
+    )
+
     parser.add_argument("--hl_xp", type=str, default=None, help="Data type for this job array.")
     args = parser.parse_args()
 
@@ -65,6 +86,9 @@ def main():
             args.strat = ast.literal_eval(args.strat[0])
         except (ValueError, SyntaxError):
             pass
+    no_cv = args.no_cv
+    if args.curriculum:
+        no_cv = True
 
     print("Strategies:", args.strat)
 
@@ -72,9 +96,6 @@ def main():
     task_id_zero_based = args.TaskID - 1
     model_index = task_id_zero_based // args.NReplications
     replication_seed = task_id_zero_based % args.NReplications
-
-    print("model_index", model_index)
-    print("replication_seed", replication_seed)
 
     try:
         model_type = MODEL_LIST[model_index]
@@ -86,7 +107,19 @@ def main():
     data_save_dir = os.path.join(BASE_SAVE_DIRECTORY, args.Data)
     os.makedirs(data_save_dir, exist_ok=True)
     output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}.pkl"
+
     output_path = os.path.join(data_save_dir, output_filename)
+
+    today = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}_{today}.pkl"
+    output_path = os.path.join(data_save_dir, output_filename)
+
+    # Check if output_path exists
+    if os.path.exists(output_path):
+        # in that case, change the name :
+        today = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}_{today}.pkl"
+        output_path = os.path.join(data_save_dir, output_filename)
 
     print(
         f"--- Starting Task {args.TaskID}: Dataset={args.Data}, Model={model_type}, Seed={replication_seed} ---"
@@ -102,9 +135,12 @@ def main():
             "output_path": output_path,
             "save_result_selection_frequency": args.res_freq,
             "k_top_candidate": args.k_top,
+            "subset_rand_candidat": args.subset_rand_candidat,
             "hl_xp": args.hl_xp,
             "strat": args.strat,
-            "no_cv": args.no_cv,
+            "no_cv": no_cv,
+            "hl_max_epoch": args.hl_max_epoch,
+            "curriculum": args.curriculum,
         },
     )
 

@@ -140,6 +140,19 @@ def OneIterationFunction(SimulationConfigInput):
         "CandidateProportion": str(SimulationConfigInput["CandidateProportion"]),
         "SelectorType": str(SimulationConfigInput["SelectorType"]),
         "ModelType": str(SimulationConfigInput["ModelType"]),
+        "output_path": str(SimulationConfigInput["add_useful_params"]["output_path"]),
+        "save_result_selection_frequency": str(
+            SimulationConfigInput["add_useful_params"]["save_result_selection_frequency"]
+        ),
+        "k_top_candidate": str(SimulationConfigInput["add_useful_params"]["k_top_candidate"]),
+        "subset_rand_candidat": str(
+            SimulationConfigInput["add_useful_params"]["subset_rand_candidat"]
+        ),
+        "hl_xp": str(SimulationConfigInput["add_useful_params"]["hl_xp"]),
+        "strat": str(SimulationConfigInput["add_useful_params"]["strat"]),
+        "no_cv": str(SimulationConfigInput["add_useful_params"]["no_cv"]),
+        "hl_max_epoch": str(SimulationConfigInput["add_useful_params"]["hl_max_epoch"]),
+        "curriculum": str(SimulationConfigInput["add_useful_params"]["curriculum"]),
     }
 
     ### Return Time ###

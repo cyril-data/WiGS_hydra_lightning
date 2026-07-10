@@ -171,9 +171,11 @@ def MeanVariancePlot(
 
             num_labeled_at_step = initial_train_size
             x = [num_labeled_at_step / total_pool_size * 100]
+
             for added in mean_selection_per_iter:
                 num_labeled_at_step += added
                 x.append(num_labeled_at_step / total_pool_size * 100)
+
         else:
 
             if total_pool_size is None:
@@ -185,6 +187,9 @@ def MeanVariancePlot(
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ":") if Linestyles else ":"
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
+
+        if len(x) > len(MeanValues):
+            x = x[1:]
 
         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(
@@ -382,31 +387,36 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                         total_pool_size_df = pd.read_csv(total_pool_size_path)
                         total_pool_size = total_pool_size_df[strategy][0]
 
-                # get k_top
-                selection_history_dir = os.path.join(dataset_path, "selection_history")
-                k_top = {}
-                for strategy, df in results_for_metric.items():
+                try:
+                    # get k_top
+                    selection_history_dir = os.path.join(dataset_path, "selection_history")
+                    k_top = {}
+                    for strategy, df in results_for_metric.items():
 
-                    k_top_path = os.path.join(
-                        selection_history_dir, f"{strategy}_SelectionHistory.csv"
-                    )
-
-                    if os.path.exists(k_top_path):
-                        # k_top[strategy] = pd.read_csv(k_top_path)
-
-                        df = pd.read_csv(
-                            k_top_path, index_col="Iteration"
-                        )  # adapte si index_label différent
-                        # Reconvertir chaque cellule "[16899, 623, ...]" en vraie liste Python
-                        df = df.map(ast.literal_eval)
-                        k_top[strategy] = df
-
-                        print(f"  > Using k_top = {list(k_top.keys())} for dataset {data_name}")
-                    else:
-                        k_top = 1  # Value by default (ex: beer)
-                        print(
-                            f"> Warning: {strategy}_SelectionHistory.csv not found for {data_name}"
+                        k_top_path = os.path.join(
+                            selection_history_dir, f"{strategy}_SelectionHistory.csv"
                         )
+
+                        if os.path.exists(k_top_path):
+                            # k_top[strategy] = pd.read_csv(k_top_path)
+
+                            df = pd.read_csv(
+                                k_top_path, index_col="Iteration"
+                            )  # adapte si index_label différent
+                            # Reconvertir chaque cellule "[16899, 623, ...]" en vraie liste Python
+                            df = df.map(ast.literal_eval)
+                            k_top[strategy] = df
+
+                            print(
+                                f"  > Using k_top = {list(k_top.keys())} for dataset {data_name}"
+                            )
+                        else:
+                            k_top = 1  # Value by default (ex: beer)
+                            print(
+                                f"> Warning: {strategy}_SelectionHistory.csv not found for {data_name}"
+                            )
+                except:
+                    print("selection_history_dir fail")
 
                 # Filter out the excluded strategies
                 filtered_results = {
@@ -414,6 +424,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                     for strategy, df in results_for_metric.items()
                     if strategy not in strategies_to_exclude
                 }
+
+                print("filtered_results", filtered_results)
 
                 for folder_name, baseline in plot_types.items():
                     y_label = f"Normalized {metric}" if baseline else metric

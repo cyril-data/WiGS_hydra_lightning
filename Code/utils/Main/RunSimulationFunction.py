@@ -94,8 +94,6 @@ def RunSimulationFunction(
 
         strategies_to_run = limited_strategies_to_run
 
-    print("strategies_to_run", strategies_to_run)
-
     ### Loop Through Strategies ###
     for strategy_name, strategy_params in strategies_to_run.items():
 
