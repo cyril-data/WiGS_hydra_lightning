@@ -106,20 +106,30 @@ def main():
     ### Create new nested save directory and unique filename ###
     data_save_dir = os.path.join(BASE_SAVE_DIRECTORY, args.Data)
     os.makedirs(data_save_dir, exist_ok=True)
-    output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}.pkl"
-
-    output_path = os.path.join(data_save_dir, output_filename)
 
     today = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}_{today}.pkl"
+
+    output_filename = (
+        f"{args.Data[:3]}_{model_type[:3]}_seed{replication_seed}_"
+        f"strat{args.strat}_nocv{int(args.no_cv)}_ep{args.hl_max_epoch}_"
+        f"ktop{args.k_top}_randsub{args.subset_rand_candidat}_"
+        f"cur{int(args.curriculum)}_{today}.pkl"
+    )
     output_path = os.path.join(data_save_dir, output_filename)
 
     # Check if output_path exists
     if os.path.exists(output_path):
         # in that case, change the name :
         today = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        output_filename = f"{args.Data}_{model_type}_seed_{replication_seed}_{today}.pkl"
+        output_filename = (
+            f"{args.Data[:3]}_{model_type[:3]}_seed{replication_seed}_"
+            f"strat{args.strat}_nocv{int(args.no_cv)}_ep{args.hl_max_epoch}_"
+            f"ktop{args.k_top}_randsub{args.subset_rand_candidat}_"
+            f"cur{int(args.curriculum)}_{today}.pkl"
+        )
         output_path = os.path.join(data_save_dir, output_filename)
+
+    print(f"--- output_path : {output_path} ---")
 
     print(
         f"--- Starting Task {args.TaskID}: Dataset={args.Data}, Model={model_type}, Seed={replication_seed} ---"

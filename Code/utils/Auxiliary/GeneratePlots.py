@@ -8,38 +8,14 @@ import pandas as pd
 from scipy.stats import chi2
 import matplotlib.pyplot as plt
 import ast
+import yaml
+import traceback
 
 
 def safe_literal_eval(x):
     if pd.isna(x):
         return []
     return ast.literal_eval(x)
-
-
-# def load_selection_history_csv(csv_path, index_col="Iteration"):
-#     """
-#     Lit un CSV de SelectionHistory et reconvertit chaque cellule
-#     (actuellement une string "[16899, 623, ...]") en vraie liste Python.
-#     Retourne un DataFrame [Iteration x Sim_i] de listes.
-#     """
-#     df = pd.read_csv(csv_path, index_col=index_col)
-#     df = df.map(safe_literal_eval)
-#     return df
-
-
-# def load_all_selection_histories(history_save_dir, strategies):
-#     """
-#     Charge les SelectionHistory CSV pour toutes les strategies dans un dict :
-#     { strategy_name: DataFrame[Iteration x Sim_i] de listes }
-#     """
-#     k_top = {}
-#     for strategy in strategies:
-#         csv_path = os.path.join(history_save_dir, f"{strategy}_SelectionHistory.csv")
-#         if os.path.exists(csv_path):
-#             k_top[strategy] = load_selection_history_csv(csv_path)
-#         else:
-#             print(f"  > Warning: {strategy}_SelectionHistory.csv not found.")
-#     return k_top
 
 
 ### Plotting Function ###
@@ -59,6 +35,7 @@ def MeanVariancePlot(
     LegendMapping=None,
     show_legend=True,
     total_pool_size=None,
+    sim_name=None,
     **SimulationErrorResults,
 ):
     """
@@ -68,7 +45,13 @@ def MeanVariancePlot(
     if initial_train_size is None:
         raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
 
-    MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector = {}, {}, {}, {}
+    MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector, SimName = (
+        {},
+        {},
+        {},
+        {},
+        {},
+    )
 
     ### Extract ###
     for Label, Results in SimulationErrorResults.items():
@@ -116,47 +99,6 @@ def MeanVariancePlot(
             StdErrorValues = StdErrorValues.drop(-1)
 
         num_iterations = len(MeanValues)
-        # total_pool_size = initial_train_size + num_iterations
-        # if isinstance(k_top, dict) and Label in k_top:
-        #     total_pool_size = initial_train_size
-
-        #     for k in k_top[Label].loc[:, "Sim_0"]:
-
-        #         total_pool_size += len(k)
-
-        # #     total_pool_size = [
-        # #         initial_train_size + k * num_iterations for k in k_top[Label].loc[Label, "Sim_0"]
-        # #     ]  # <-- Take into acount k_top
-        # else:
-
-        #     total_pool_size = (
-        #         initial_train_size + k_top * num_iterations
-        #     )  # <-- Take into acount k_top
-
-        # x = []
-
-        # if num_iterations > 0:
-        #     if isinstance(k_top, dict) and Label in k_top:
-        #         num_labeled_at_step = initial_train_size
-
-        #         x.append(num_labeled_at_step / total_pool_size * 100)
-        #         for k in k_top[Label].loc[:, "Sim_0"]:
-
-        #             # iterations_array = np.arange(num_iterations)
-        #             # num_labeled_at_step = initial_train_size + iterations_array
-        #             num_labeled_at_step += len(k)
-        #             # <--  Take into acount k_top
-        #             x.append(num_labeled_at_step / total_pool_size * 100)
-
-        #     else:
-
-        #         iterations_array = np.arange(num_iterations)
-        #         # num_labeled_at_step = initial_train_size + iterations_array
-        #         num_labeled_at_step = (
-        #             initial_train_size + k_top * iterations_array
-        #         )  # <--  Take into acount k_top
-
-        #         x = (num_labeled_at_step / total_pool_size) * 100
 
         if isinstance(k_top, dict) and Label in k_top:
             sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
@@ -181,6 +123,7 @@ def MeanVariancePlot(
             if total_pool_size is None:
                 total_pool_size = initial_train_size + k_top * num_iterations
             iterations_array = np.arange(num_iterations)
+
             num_labeled_at_step = initial_train_size + k_top * iterations_array
             x = (num_labeled_at_step / total_pool_size) * 100
 
@@ -387,6 +330,28 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                         total_pool_size_df = pd.read_csv(total_pool_size_path)
                         total_pool_size = total_pool_size_df[strategy][0]
 
+                # SimulationParameters #
+                simulation_parameters = os.path.join(dataset_path, "SimulationParameters.yaml")
+                try:
+                    with open(simulation_parameters, "r") as file:
+                        params = yaml.safe_load(file)
+                except FileNotFoundError:
+                    print(f"Error : File {simulation_parameters} not found.")
+
+                sim_name = {}
+                for strategy, df in results_for_metric.items():
+                    sim_name[strategy] = {}
+                    for param in params[strategy]:
+                        sim_name[strategy][param["Sim"]] = (
+                            f"sim{param['Sim'][4:]}."
+                            f"s{param['Seed']}."
+                            f"ncv{1 if param['no_cv']=='True' else 0}"
+                            f".ep{param['hl_max_epoch']}."
+                            f"kt{param['k_top_candidate']}"
+                            f".prs{param['subset_rand_candidat']}."
+                            f"cur{1 if param['curriculum']=='True' else 0}"
+                        )
+
                 try:
                     # get k_top
                     selection_history_dir = os.path.join(dataset_path, "selection_history")
@@ -404,6 +369,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                                 k_top_path, index_col="Iteration"
                             )  # adapte si index_label différent
                             # Reconvertir chaque cellule "[16899, 623, ...]" en vraie liste Python
+                            df = df.fillna("[]")
+
                             df = df.map(ast.literal_eval)
                             k_top[strategy] = df
 
@@ -425,48 +392,96 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                     if strategy not in strategies_to_exclude
                 }
 
-                print("filtered_results", filtered_results)
-
                 for folder_name, baseline in plot_types.items():
                     y_label = f"Normalized {metric}" if baseline else metric
                     subtitle = f"Performance ({eval_type.capitalize()} {metric}) on {data_name.upper()} Dataset"
 
                     print(f"\t *{y_label}, {subtitle} ")
 
-                    TracePlotMean, TracePlotVariance = MeanVariancePlot(
-                        RelativeError=baseline,
-                        Colors=master_colors,
-                        LegendMapping=master_legend,
-                        Linestyles=master_linestyles,
-                        Y_Label=y_label,
-                        Subtitle=subtitle,
-                        TransparencyVal=0.1,
-                        VarInput=True,
-                        CriticalValue=1.96,
-                        initial_train_size=initial_train_size,
-                        k_top=k_top,
-                        show_legend=show_legend,
-                        total_pool_size=total_pool_size,
-                        **filtered_results,
-                    )
-
                     output_eval_name = "trace_plots" if eval_type == "full_pool" else eval_type
                     base_plot_path = os.path.join(image_dir, output_eval_name, metric, folder_name)
                     os.makedirs(os.path.join(base_plot_path, "trace"), exist_ok=True)
                     os.makedirs(os.path.join(base_plot_path, "variance"), exist_ok=True)
 
-                    trace_plot_path = os.path.join(
-                        base_plot_path, "trace", f"{data_name}_{metric}_TracePlot.png"
-                    )
-                    TracePlotMean.savefig(trace_plot_path, bbox_inches="tight", dpi=300)
-                    plt.close(TracePlotMean)
+                    if folder_name == "trace":
+                        # Initialisation du graphique
+                        plt.figure(figsize=(12, 6))
+                        # Itération sur chaque stratégie et son DataFrame associé
+                        for strategy, df in results_for_metric.items():
+                            # Détermination du style et de la couleur en fonction de la stratégie
+                            if strategy == "Passive Learning":
+                                linestyle = "--"
+                                color = "gray"
+                            else:
+                                linestyle = "-"
+                                color = "red"
 
-                    if TracePlotVariance:
-                        variance_plot_path = os.path.join(
-                            base_plot_path, "variance", f"{data_name}_{metric}_VariancePlot.png"
+                            # Tracé de chaque colonne (Sim_X) du DataFrame
+                            for column in df.columns:
+                                plt.plot(
+                                    df[column],
+                                    label=f"{strategy} - {sim_name[strategy][column]}",
+                                    linestyle=linestyle,
+                                    color=color,
+                                    alpha=0.7,
+                                )
+
+                        # Ajout des labels et de la légende
+                        plt.xlabel("Index")
+                        plt.ylabel("Valeur")
+                        plt.title("Comparaison des courbes par stratégie")
+                        plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+                        plt.grid(True)
+
+                        # Sauvegarde du graphique
+                        plt.tight_layout()
+                        plt.savefig(
+                            os.path.join(base_plot_path, "all_trace.png"),
+                            dpi=300,
+                            bbox_inches="tight",
                         )
-                        TracePlotVariance.savefig(variance_plot_path, bbox_inches="tight", dpi=300)
-                        plt.close(TracePlotVariance)
+
+                    try:
+
+                        TracePlotMean, TracePlotVariance = MeanVariancePlot(
+                            RelativeError=baseline,
+                            Colors=master_colors,
+                            LegendMapping=master_legend,
+                            Linestyles=master_linestyles,
+                            Y_Label=y_label,
+                            Subtitle=subtitle,
+                            TransparencyVal=0.1,
+                            VarInput=True,
+                            CriticalValue=1.96,
+                            initial_train_size=initial_train_size,
+                            k_top=k_top,
+                            show_legend=show_legend,
+                            total_pool_size=total_pool_size,
+                            sim_name=sim_name,
+                            **filtered_results,
+                        )
+
+                        trace_plot_path = os.path.join(
+                            base_plot_path, "trace", f"{data_name}_{metric}_TracePlot.png"
+                        )
+                        TracePlotMean.savefig(trace_plot_path, bbox_inches="tight", dpi=300)
+                        plt.close(TracePlotMean)
+
+                        if TracePlotVariance:
+                            variance_plot_path = os.path.join(
+                                base_plot_path,
+                                "variance",
+                                f"{data_name}_{metric}_VariancePlot.png",
+                            )
+                            TracePlotVariance.savefig(
+                                variance_plot_path, bbox_inches="tight", dpi=300
+                            )
+                            plt.close(TracePlotVariance)
+
+                    except Exception as e:
+                        print(f"Error in MeanVariancePlot : {e}")
+                        print("\nStacktrace all :")
+                        traceback.print_exc()
 
         print(f"Finished all plots for {data_name}.")
     print("\n--- Plot Generation Complete ---")

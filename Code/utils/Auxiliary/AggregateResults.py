@@ -29,9 +29,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
     ### Loop through datasets ###
     for data_name in dataset_basenames:
         print(f"\nAggregating dataset: {data_name}...")
-        search_pattern_dataset = os.path.join(
-            raw_results_dir, data_name, f"{data_name}_*_seed_*.pkl"
-        )
+        search_pattern_dataset = os.path.join(raw_results_dir, data_name, f"*.pkl")
         result_files_for_dataset = glob.glob(search_pattern_dataset)
 
         ## Load one file to inspect the structure ##
@@ -43,11 +41,6 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
         error_df_template = first_result[strategies[0]]["ErrorVecs"]
         eval_types = list(error_df_template.columns)
         metrics = list(error_df_template.index)
-
-        print("strategies", strategies)
-        print("error_df_template", error_df_template)
-        print("eval_types", eval_types)
-        print("metrics", metrics)
 
         ## Discover strategies across ALL files (each file may have 1 or more strategies) ##
         strategies = []
@@ -67,34 +60,6 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     error_df_template = strategy_data["ErrorVecs"]
                     eval_types = list(error_df_template.columns)
                     metrics = list(error_df_template.index)
-
-        print("ALL FILES : strategies", strategies)
-        print("ALL FILES : error_df_template", error_df_template)
-        print("ALL FILES : eval_types", eval_types)
-        print("ALL FILES : metrics", metrics)
-
-        # ## Discover metrics and eval types from DataFrame structure (across ALL files) ##
-        # strategies_set = set()
-        # eval_types_set = set()
-        # metrics_set = set()
-
-        # for file_path in result_files_for_dataset:
-        #     with open(file_path, "rb") as f:
-        #         result = pickle.load(f)
-        #     for strategy, strategy_data in result.items():
-        #         strategies_set.add(strategy)
-        #         error_df_template = strategy_data["ErrorVecs"]
-        #         eval_types_set.update(error_df_template.columns)
-        #         metrics_set.update(error_df_template.index)
-
-        # strategies = sorted(strategies_set)
-        # eval_types = sorted(eval_types_set)
-        # metrics = sorted(metrics_set)
-
-        # print("ALL FILES strategies", strategies)
-        # print("ALL FILES error_df_template", error_df_template)
-        # print("ALL FILES eval_types", eval_types)
-        # print("ALL FILES metrics", metrics)
 
         aggregated_data = {
             s: {
@@ -153,6 +118,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                         "SimulationParameters" in results
                         and "SimulationParameters" in aggregated_data[strategy]
                     ):
+                        results["SimulationParameters"]["Sim"] = f"Sim_{i}"
                         aggregated_data[strategy]["SimulationParameters"].append(
                             results["SimulationParameters"]
                         )
