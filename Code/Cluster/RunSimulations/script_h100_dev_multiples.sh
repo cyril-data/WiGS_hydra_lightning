@@ -89,8 +89,8 @@ cat > "temp_${job_name}.slurm" <<EOL_
 #SBATCH --hint=nomultithread
 #SBATCH --account hir@h100
 #SBATCH -C h100
-#SBATCH --time=19:50:00
-#SBATCH --qos=qos_gpu_h100-t3
+#SBATCH --time=1:50:00
+#SBATCH --qos=qos_gpu_h100-dev
 
 CONDA_PATH_INSTALL=$CONDA_PATH_INSTALL
 

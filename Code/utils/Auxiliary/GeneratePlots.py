@@ -411,10 +411,8 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                             # Détermination du style et de la couleur en fonction de la stratégie
                             if strategy == "Passive Learning":
                                 linestyle = "--"
-                                color = "gray"
                             else:
                                 linestyle = "-"
-                                color = "red"
 
                             # Tracé de chaque colonne (Sim_X) du DataFrame
                             for column in df.columns:
@@ -422,7 +420,6 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                                     df[column],
                                     label=f"{strategy} - {sim_name[strategy][column]}",
                                     linestyle=linestyle,
-                                    color=color,
                                     alpha=0.7,
                                 )
 

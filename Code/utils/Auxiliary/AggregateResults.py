@@ -159,22 +159,31 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     print(f"  > Saved {metric}.pkl to {eval_type.lower()}_metrics/")
                     print(type(metric_results), metric_results.keys(), metric_results)
 
-        time_data = {strategy: data["ElapsedTime"] for strategy, data in aggregated_data.items()}
-        print("time_data", time_data)
-        time_df = pd.DataFrame(time_data)
-        time_df.to_csv(
-            os.path.join(dataset_output_dir, "ElapsedTime.csv"), index_label="Simulation"
-        )
-        print(f"  > Saved ElapsedTime.csv")
+        try:
+            time_data = {
+                strategy: data["ElapsedTime"] for strategy, data in aggregated_data.items()
+            }
+            print("time_data", time_data)
+            time_df = pd.DataFrame(time_data)
+            time_df.to_csv(
+                os.path.join(dataset_output_dir, "ElapsedTime.csv"), index_label="Simulation"
+            )
+            print(f"  > Saved ElapsedTime.csv")
 
-        total_pool_size = {
-            strategy: data["TotalPoolSize"] for strategy, data in aggregated_data.items()
-        }
-        total_pool_size_df = pd.DataFrame(total_pool_size)
-        total_pool_size_df.to_csv(
-            os.path.join(dataset_output_dir, "TotalPoolSize.csv"), index_label="Simulation"
-        )
-        print(f"  > Saved TotalPoolSize.csv")
+        except Exception as e:
+            print(f"Error in time_data : {e}")
+
+        try:
+            total_pool_size = {
+                strategy: data["TotalPoolSize"] for strategy, data in aggregated_data.items()
+            }
+            total_pool_size_df = pd.DataFrame(total_pool_size)
+            total_pool_size_df.to_csv(
+                os.path.join(dataset_output_dir, "TotalPoolSize.csv"), index_label="Simulation"
+            )
+            print(f"  > Saved TotalPoolSize.csv")
+        except Exception as e:
+            print(f"Error in total_pool_size : {e}")
 
         params = {
             strategy: (
