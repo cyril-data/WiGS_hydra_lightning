@@ -28,3 +28,5 @@ Results/selection_videos/**/frames_png_for_video/
 Results/selection_videos/**/*.png
 Results/selection_videos/**/*.svg
 
+logs/
+.fewword

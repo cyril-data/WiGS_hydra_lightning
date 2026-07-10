@@ -64,6 +64,41 @@ def min_dist_per_row_gpu(candidates_np, ref_np, batch_size, train_chunk_size=Non
     return min_dist
 
 
+def pairwise_dist_gpu(a_np, b_np, batch_size, ref_chunk_size=None):
+    """
+    Full (len(a_np), len(b_np)) euclidean distance matrix on GPU, chunked over `a_np`
+    to bound peak memory. Unlike min_dist_per_row_gpu/min_igs_per_row_gpu this does NOT
+    reduce over the reference axis - callers that need the per-pair values (e.g. to
+    cache X-distances across AL iterations and combine them with a freshly computed
+    Y-distance matrix each iteration) need the full matrix.
+    """
+    if ref_chunk_size is None:
+        ref_chunk_size = batch_size
+
+    b_t = torch.from_numpy(b_np).to(DEVICE).float()
+    b_sq = (b_t**2).sum(dim=1)
+    n_b = b_t.shape[0]
+    n_a = len(a_np)
+
+    out = torch.empty((n_a, n_b), device=DEVICE, dtype=torch.float32)
+
+    with torch.no_grad():
+        for i in range(0, n_a, batch_size):
+            a_chunk = (
+                torch.from_numpy(a_np[i : i + batch_size]).to(DEVICE, non_blocking=True).float()
+            )
+            a_sq = (a_chunk**2).sum(dim=1, keepdim=True)
+
+            for j in range(0, n_b, ref_chunk_size):
+                b_chunk = b_t[j : j + ref_chunk_size]
+                b_sq_chunk = b_sq[j : j + ref_chunk_size]
+                dist_sq = a_sq + b_sq_chunk.unsqueeze(0) - 2.0 * (a_chunk @ b_chunk.T)
+                dist_sq.clamp_(min=0)
+                out[i : i + a_chunk.shape[0], j : j + b_chunk.shape[0]] = dist_sq.sqrt_()
+
+    return out
+
+
 def min_igs_per_row_gpu(
     X_candidate_np,
     X_train_np,
@@ -121,14 +156,10 @@ def min_igs_per_row_gpu(
                 Ysq_chunk = Y_train_sq[j : j + train_chunk_size]
 
                 dX_chunk = (
-                    (bX_sq + Xsq_chunk.unsqueeze(0) - 2.0 * (bX @ Xt_chunk.T))
-                    .clamp_(min=0)
-                    .sqrt_()
+                    (bX_sq + Xsq_chunk.unsqueeze(0) - 2.0 * (bX @ Xt_chunk.T)).clamp_(min=0).sqrt_()
                 )
                 dY_chunk = (
-                    (bY_sq + Ysq_chunk.unsqueeze(0) - 2.0 * (bY @ Yt_chunk.T))
-                    .clamp_(min=0)
-                    .sqrt_()
+                    (bY_sq + Ysq_chunk.unsqueeze(0) - 2.0 * (bY @ Yt_chunk.T)).clamp_(min=0).sqrt_()
                 )
 
                 dxy_chunk = dX_chunk * dY_chunk
@@ -181,6 +212,74 @@ class GreedySamplingSelector:
         self.distance = distance
         self.Seed = Seed
         self.k_top_candidate = k_top_candidate
+
+        # Persists across select() calls within one AL run (a fresh selector is
+        # created per replication/strategy in LearningProcedure, so this never
+        # leaks state across runs). Caches the X-distance matrix (candidates x
+        # train) since X is iteration-invariant - only the newly added train
+        # points need a distance computed each call, existing columns are
+        # reused as-is. Y is NOT cached: it depends on candidate predictions
+        # from the freshly retrained model each iteration, so it's recomputed
+        # in full every call.
+        self._dx_cache = None
+        # Full (n_candidate, n_train) fp32 matrix caching is only safe up to a
+        # bounded size; beyond this it falls back to the uncached, chunked
+        # min-only computation to avoid GPU OOM.
+        self._dx_cache_max_bytes = 2 * 1024**3
+
+    def _get_dx_matrix(self, candidate_index, train_index, X_candidate_np, X_train_np, batch_size):
+        """Returns the full (n_candidate, n_train) X-distance matrix, reusing cached
+        columns for train points already seen in a previous call and computing new
+        columns only for train points added since then. Returns None if that dense
+        matrix would exceed the memory budget - callers must fall back to the
+        chunked, non-materializing min_dist_per_row_gpu/min_igs_per_row_gpu instead,
+        since (unlike this cache) those never hold more than one chunk at a time."""
+        candidate_labels = candidate_index.tolist()
+        train_labels = train_index.tolist()
+
+        n_elements = len(candidate_labels) * len(train_labels)
+        if n_elements * 4 > self._dx_cache_max_bytes:
+            # Too big to hold as a dense cache (and pairwise_dist_gpu would hit the
+            # same ceiling, since it materializes the full matrix too) - drop any
+            # existing cache so a later, smaller call can re-bootstrap it, and let
+            # the caller fall back to a memory-safe path.
+            self._dx_cache = None
+            return None
+
+        if self._dx_cache is None:
+            dX = pairwise_dist_gpu(X_candidate_np, X_train_np, batch_size)
+            self._dx_cache = {
+                "candidate_labels": candidate_labels,
+                "train_labels": list(train_labels),
+                "dX": dX,
+            }
+            return dX
+
+        cache = self._dx_cache
+
+        # Candidates only ever shrink (LearningProcedure drops selected rows,
+        # never adds any back), so candidate_labels is a subset of the cached
+        # ones - prune the cached rows down to the ones still present.
+        old_pos = {lbl: i for i, lbl in enumerate(cache["candidate_labels"])}
+        keep_idx = [old_pos[lbl] for lbl in candidate_labels]
+        dX = cache["dX"][keep_idx, :]
+
+        # Train only ever grows (rows appended) - compute distances for the
+        # newly added train points only.
+        old_train_set = set(cache["train_labels"])
+        new_positions = [i for i, lbl in enumerate(train_labels) if lbl not in old_train_set]
+
+        if new_positions:
+            X_train_new_np = X_train_np[new_positions]
+            new_cols = pairwise_dist_gpu(X_candidate_np, X_train_new_np, batch_size)
+            dX = torch.cat([dX, new_cols], dim=1)
+
+        self._dx_cache = {
+            "candidate_labels": candidate_labels,
+            "train_labels": train_labels,
+            "dX": dX,
+        }
+        return dX
 
     ### Select Observation(s) ###
     def select(
@@ -247,18 +346,32 @@ class GreedySamplingSelector:
                 SimulationConfigInputUpdated is not None
                 and SimulationConfigInputUpdated.get("hl_trainer") is not None
             ):
-                hl_data = SimulationConfigInputUpdated["hl_data"]
+                cached = SimulationConfigInputUpdated.get("_cached_candidate_predictions")
+                cached_cols = SimulationConfigInputUpdated.get("all_reg_cols")
 
-                candidate_labels = X_Candidate.index.tolist()
-                hl_data.pred_data.update_indices(candidate_labels)
+                if (
+                    cached is not None
+                    and cached_cols is not None
+                    and cached["labels"].equals(X_Candidate.index)
+                ):
+                    # FullPoolErrorFunction already ran this exact predict() call
+                    # earlier in this same iteration (same model, same candidate
+                    # set) - reuse it instead of paying for it twice.
+                    select_ytrain_cols = cached_cols
+                    Predictions = cached["y_pred_pd"][select_ytrain_cols].values
+                else:
+                    hl_data = SimulationConfigInputUpdated["hl_data"]
 
-                y_pred = Model.predict(model=Model.model, dataloaders=hl_data)
+                    candidate_labels = X_Candidate.index.tolist()
+                    hl_data.pred_data.update_indices(candidate_labels)
 
-                y_pred, select_ytrain_cols = hl_y_pred_pd_to_tensor(
-                    y_pred, y_Train.columns.to_list(), X_Candidate.index
-                )
-                # restrain only on regression
-                Predictions = y_pred[select_ytrain_cols].values
+                    y_pred = Model.predict(model=Model.model, dataloaders=hl_data)
+
+                    y_pred, select_ytrain_cols = hl_y_pred_pd_to_tensor(
+                        y_pred, y_Train.columns.to_list(), X_Candidate.index
+                    )
+                    # restrain only on regression
+                    Predictions = y_pred[select_ytrain_cols].values
             else:
                 Predictions = Model.predict(X_Candidate)
 
@@ -287,24 +400,134 @@ class GreedySamplingSelector:
         final_scores = None
 
         if self.strategy == "GSx":
-            final_scores = min_dist_per_row_gpu(X_Candidate_f32, X_Train_f32, batch_size)
+            dX_matrix = self._get_dx_matrix(
+                df_Candidate.index, df_Train.index, X_Candidate_f32, X_Train_f32, batch_size
+            )
+            if dX_matrix is None:
+                final_scores = min_dist_per_row_gpu(X_Candidate_f32, X_Train_f32, batch_size)
+            else:
+                final_scores = dX_matrix.min(dim=1).values.float().cpu().numpy()
 
         elif self.strategy == "GSy":
             final_scores = min_dist_per_row_gpu(pred_vals, y_train_values, batch_size)
 
         elif self.strategy == "iGS":
-            final_scores = min_igs_per_row_gpu(
-                X_Candidate_f32, X_Train_f32, pred_vals, y_train_values, batch_size
+            dX_matrix = self._get_dx_matrix(
+                df_Candidate.index, df_Train.index, X_Candidate_f32, X_Train_f32, batch_size
             )
+            if dX_matrix is None:
+                final_scores = min_igs_per_row_gpu(
+                    X_Candidate_f32, X_Train_f32, pred_vals, y_train_values, batch_size
+                )
+            else:
+                # Y depends on this iteration's freshly retrained model (candidate
+                # predictions change every call), so it's never cached - recomputed
+                # in full and combined with the cached/incremental X matrix above.
+                dY_matrix = pairwise_dist_gpu(pred_vals, y_train_values, batch_size)
+                final_scores = (dX_matrix * dY_matrix).min(dim=1).values.float().cpu().numpy()
 
         # print(f"\t+++ GreedySampling final_scores : {time.time() - StartTime} +++")
 
-        ## 4. Top-k selection (largest scores = most informative) ##
+        ## 4. Sequential (greedy) top-k selection with incremental score updates ##
+        # True greedy sampling (Wu, Lin & Huang 2018) picks one candidate at a time and
+        # updates the reference set before scoring the next pick, using the picked
+        # candidate's own prediction as a proxy label since it isn't labeled yet.
+        # Picking a whole batch off a single distance snapshot (the previous behavior
+        # here) can select several mutually-close "far" points instead of a diverse
+        # batch. Recomputing full distances against the whole reference set for every
+        # pick would cost O(k * N * M); instead each remaining candidate only needs its
+        # distance to the ONE just-picked point, merged into a running min, since
+        # min(d_to_old_ref, d_to_new_point) == min(d_to_old_ref U {new_point}).
+        #
+        # This delta step deliberately does NOT reuse min_dist_per_row_gpu /
+        # min_igs_per_row_gpu: those are built for a (possibly large) M-row
+        # reference set, so every call round-trips the full remaining candidate
+        # array through host memory and recomputes its squared norms from
+        # scratch. Called once per round that's a real, avoidable cost - paid
+        # twice per round for iGS, since it repeats that host-transfer/norm tax
+        # for both the X and Y branches. Here the reference is always exactly
+        # one row, so candidates are kept resident on the GPU across the whole
+        # round loop and each delta is a plain (N, D) . (D,) distance-to-a-point,
+        # no chunking or host round-trip required.
+        StartTime = time.time()
+
         top_k_number = self.k_top_candidate
         if len(final_scores) < self.k_top_candidate:
             top_k_number = len(final_scores)
 
-        best_candidate_iloc = np.argpartition(final_scores, -top_k_number)[-top_k_number:]
+        if top_k_number <= 1:
+            # single pick - no reference-set update needed, skip GPU residency setup
+            best_candidate_iloc = (
+                np.array([int(np.argmax(final_scores))])
+                if top_k_number == 1
+                else np.array([], dtype=int)
+            )
+        else:
+            remaining_iloc = torch.arange(len(final_scores), device=DEVICE)
+            running_scores = torch.from_numpy(final_scores).to(DEVICE)
+
+            X_remaining = torch.from_numpy(X_Candidate_f32).to(DEVICE)
+            X_sq = (X_remaining**2).sum(dim=1)
+
+            if pred_vals is not None:
+                y_pred_remaining = torch.from_numpy(pred_vals).to(DEVICE)
+                y_sq = (y_pred_remaining**2).sum(dim=1)
+
+            selected_iloc = []
+            for round_idx in range(top_k_number):
+                pick_pos = int(torch.argmax(running_scores))
+                selected_iloc.append(int(remaining_iloc[pick_pos]))
+
+                if round_idx == top_k_number - 1:
+                    break  # last pick - no further round needs an updated reference set
+
+                if self.strategy in ("GSx", "iGS"):
+                    new_ref_X = X_remaining[pick_pos]
+                    new_ref_X_sq = X_sq[pick_pos]
+                if self.strategy in ("GSy", "iGS"):
+                    new_ref_Y = y_pred_remaining[pick_pos]
+                    new_ref_Y_sq = y_sq[pick_pos]
+
+                keep = torch.ones(remaining_iloc.shape[0], dtype=torch.bool, device=DEVICE)
+                keep[pick_pos] = False
+                remaining_iloc = remaining_iloc[keep]
+                running_scores = running_scores[keep]
+                X_remaining = X_remaining[keep]
+                X_sq = X_sq[keep]
+                if pred_vals is not None:
+                    y_pred_remaining = y_pred_remaining[keep]
+                    y_sq = y_sq[keep]
+
+                if self.strategy == "GSx":
+                    delta = (
+                        (X_sq + new_ref_X_sq - 2.0 * (X_remaining @ new_ref_X))
+                        .clamp_(min=0)
+                        .sqrt_()
+                    )
+                elif self.strategy == "GSy":
+                    delta = (
+                        (y_sq + new_ref_Y_sq - 2.0 * (y_pred_remaining @ new_ref_Y))
+                        .clamp_(min=0)
+                        .sqrt_()
+                    )
+                else:  # iGS
+                    dX = (
+                        (X_sq + new_ref_X_sq - 2.0 * (X_remaining @ new_ref_X))
+                        .clamp_(min=0)
+                        .sqrt_()
+                    )
+                    dY = (
+                        (y_sq + new_ref_Y_sq - 2.0 * (y_pred_remaining @ new_ref_Y))
+                        .clamp_(min=0)
+                        .sqrt_()
+                    )
+                    delta = dX * dY
+
+                running_scores = torch.minimum(running_scores, delta)
+
+            best_candidate_iloc = np.array(selected_iloc)
+
+        # print(f"\t+++ GreedySampling sequential selection : {time.time() - StartTime} +++")
 
         ## Output ##
         IndexRecommendation = df_Candidate.iloc[best_candidate_iloc].index.to_list()

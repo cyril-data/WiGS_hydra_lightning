@@ -84,6 +84,14 @@ def FullPoolErrorFunction(
                 if "all_reg_cols" not in SimulationConfigInputUpdated:
                     SimulationConfigInputUpdated["all_reg_cols"] = all_reg_cols
 
+                # Cache this predict() call so the selector (GSy/iGS) can reuse it
+                # instead of recomputing the same predictions on the same candidate
+                # set with the same just-trained model later this iteration.
+                SimulationConfigInputUpdated["_cached_candidate_predictions"] = {
+                    "labels": X_candidate.index,
+                    "y_pred_pd": y_pred_candidate_pd,
+                }
+
                 # restrain only on regression
                 y_train = y_train[all_reg_cols]
 

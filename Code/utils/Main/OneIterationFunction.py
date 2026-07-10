@@ -78,8 +78,8 @@ def OneIterationFunction(SimulationConfigInput):
 
         # retrain df_full to the hl training set
 
-        current_train_labels = datamodule.train_data.df_x.index[datamodule.train_data.indices]
-        current_test_labels = datamodule.test_data.df_x.index[datamodule.test_data.indices]
+        current_train_labels = datamodule.train_data.index[datamodule.train_data.indices]
+        current_test_labels = datamodule.test_data.index[datamodule.test_data.indices]
 
         df_full = df_all_hl_dataset.loc[current_train_labels, :]
         df_test = df_all_hl_dataset.loc[current_test_labels, :]

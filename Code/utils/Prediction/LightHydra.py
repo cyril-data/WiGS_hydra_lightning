@@ -235,7 +235,7 @@ def update_scheduler(trainer, model, datamodule, cfg):
 def data_fit_from_ALdata_and_hl_data(al_dataframe, hl_dataset):
     try:
         positions_in_hl_dataset = hl_dataset.indices
-        corresponding_labels_for_df_x = hl_dataset.df_x.index[positions_in_hl_dataset]
+        corresponding_labels_for_df_x = hl_dataset.index[positions_in_hl_dataset]
 
         # i = 0 est la position DANS LE SUBSET, celle qui correspond à label_0.
         # C'est cette position qu'il faut passer à __getitem__, pas un résultat de get_loc.
@@ -295,7 +295,7 @@ def full_datamodule_to_pd(datamodule):
     X_y_labels = datamodule.train_data.x_labels + y_labels
 
     df_full = pd.DataFrame(
-        full_X_y, columns=X_y_labels, index=datamodule.train_data.df_x.index
+        full_X_y, columns=X_y_labels, index=datamodule.train_data.index
     )  # ← index complet
     y_size = len(y_labels)
 
