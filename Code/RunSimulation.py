@@ -110,7 +110,7 @@ def main():
     today = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     output_filename = (
-        f"{args.Data[:3]}_{model_type[:3]}_seed{replication_seed}_"
+        f"{args.Data[:3]}_{model_type[:3]}_seed{replication_seed}_xp_{args.hl_xp}_"
         f"strat{args.strat}_nocv{int(args.no_cv)}_ep{args.hl_max_epoch}_"
         f"ktop{args.k_top}_randsub{args.subset_rand_candidat}_"
         f"cur{int(args.curriculum)}_{today}.pkl"
@@ -122,7 +122,7 @@ def main():
         # in that case, change the name :
         today = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         output_filename = (
-            f"{args.Data[:3]}_{model_type[:3]}_seed{replication_seed}_"
+            f"{args.Data[:3]}_{model_type[:3]}_seed{replication_seed}_xp_{args.hl_xp}_"
             f"strat{args.strat}_nocv{int(args.no_cv)}_ep{args.hl_max_epoch}_"
             f"ktop{args.k_top}_randsub{args.subset_rand_candidat}_"
             f"cur{int(args.curriculum)}_{today}.pkl"

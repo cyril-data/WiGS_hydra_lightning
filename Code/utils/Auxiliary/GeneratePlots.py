@@ -190,6 +190,212 @@ def MeanVariancePlot(
     return (fig_mean, fig_var)
 
 
+# ### Plotting Function ###
+# def MeanVariancePlot(
+#     Subtitle=None,
+#     TransparencyVal=0.2,
+#     CriticalValue=1.96,
+#     RelativeError=None,
+#     Colors=None,
+#     Linestyles=None,
+#     xlim=None,
+#     Y_Label=None,
+#     VarInput=False,
+#     initial_train_size: int = None,
+#     k_top: int = 1,
+#     FigSize=(9, 12),
+#     LegendMapping=None,
+#     show_legend=True,
+#     total_pool_size=None,
+#     sim_name=None,
+#     **SimulationErrorResults,
+# ):
+#     """
+#     Generates trace plots.
+#     If RelativeError is provided, plots the DIFFERENCE (Method - Baseline).
+#     """
+#     if initial_train_size is None:
+#         raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
+
+#     MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector, SimName = (
+#         {},
+#         {},
+#         {},
+#         {},
+#         {},
+#     )
+
+#     ### Extract ###
+#     XGrid = {}  # grille x (en % du pool) utilisée pour chaque Label, si calculée ici
+
+#     for Label, Results in SimulationErrorResults.items():
+#         n_simulations = Results.shape[1]
+
+#         if isinstance(k_top, dict) and Label in k_top:
+#             sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
+#             selection_sizes = k_top[Label][sim_cols].map(len)
+
+#             # --- x cumulé par simulation, en excluant les points après la fin de la sim ---
+#             per_sim_x_pct = {}
+#             per_sim_valid_len = {}
+#             for sim_idx, col in enumerate(sim_cols):
+#                 sizes = selection_sizes[col].values
+#                 finished_mask = sizes == 0
+
+#                 if finished_mask.any():
+#                     last_active = np.argmax(finished_mask)  # 1er indice où la sim s'arrête
+#                 else:
+#                     last_active = len(sizes)
+
+#                 cum = initial_train_size + np.cumsum(sizes[:last_active])
+#                 x_sim = np.concatenate(([initial_train_size], cum))
+#                 per_sim_x_pct[col] = x_sim
+#                 per_sim_valid_len[col] = last_active + 1  # +1 pour le point initial
+
+#             pool_size = total_pool_size or max(x[-1] for x in per_sim_x_pct.values())
+
+#             # --- grille commune en % du pool labellisé ---
+#             common_grid_pct = np.linspace(initial_train_size / pool_size * 100, 100, num=200)
+
+#             interpolated = np.full((len(common_grid_pct), len(sim_cols)), np.nan)
+#             for sim_idx, col in enumerate(sim_cols):
+#                 x_sim_pct = per_sim_x_pct[col] / pool_size * 100
+#                 n_pts = per_sim_valid_len[col]
+#                 y_sim = Results[
+#                     :n_pts, sim_idx
+#                 ]  # erreurs de CETTE sim, tronquées à sa longueur réelle
+
+#                 # ne pas extrapoler au-delà de ce que cette sim a atteint
+#                 valid_mask = common_grid_pct <= x_sim_pct[-1]
+#                 interpolated[valid_mask, sim_idx] = np.interp(
+#                     common_grid_pct[valid_mask], x_sim_pct, y_sim
+#                 )
+
+#             valid_counts = np.sum(~np.isnan(interpolated), axis=1)
+#             MeanVector[Label] = np.nanmean(interpolated, axis=1)
+#             VarianceVector[Label] = np.nanvar(interpolated, axis=1)
+#             StdErrorVector[Label] = np.nanstd(interpolated, axis=1) / np.sqrt(
+#                 np.maximum(valid_counts, 1)
+#             )
+#             XGrid[Label] = common_grid_pct
+
+#             df = np.maximum(valid_counts - 1, 1)
+#             lower_chi2 = chi2.ppf(0.025, df=df)
+#             upper_chi2 = chi2.ppf(0.975, df=df)
+#             StdErrorVarianceVector[Label] = {
+#                 "lower": (valid_counts - 1) * VarianceVector[Label] / upper_chi2,
+#                 "upper": (valid_counts - 1) * VarianceVector[Label] / lower_chi2,
+#             }
+
+#         else:
+#             # cas k_top scalaire (int), inchangé
+#             MeanVector[Label] = np.mean(Results, axis=1)
+#             VarianceVector[Label] = np.var(Results, axis=1)
+#             StdErrorVector[Label] = np.std(Results, axis=1) / np.sqrt(n_simulations)
+
+#             lower_chi2 = chi2.ppf(0.025, df=n_simulations - 1)
+#             upper_chi2 = chi2.ppf(0.975, df=n_simulations - 1)
+#             StdErrorVarianceVector[Label] = {
+#                 "lower": (n_simulations - 1) * VarianceVector[Label] / upper_chi2,
+#                 "upper": (n_simulations - 1) * VarianceVector[Label] / lower_chi2,
+#             }
+#             XGrid[Label] = None  # calculé plus loin, comme dans la version originale
+
+#         ### Calculate Difference (Method - Baseline) if specified ###
+#         if RelativeError:
+#             if RelativeError in MeanVector:
+#                 Y_Label = f"Error Difference (Method - {RelativeError})"
+
+#                 BaselineMean = MeanVector[RelativeError].copy()
+#                 for Label in MeanVector:
+#                     MeanVector[Label] -= BaselineMean
+
+#                     # Manual Clamp for 100% Labeled
+#                     # At 100%, Method == Baseline, so Difference must be 0.0
+#                     if len(MeanVector[Label]) > 0:
+#                         MeanVector[Label][-1] = 0.0
+#                         StdErrorVector[Label][-1] = 0.0
+#             else:
+#                 print(
+#                     f"  > Warning: Baseline '{RelativeError}' not found. Skipping normalization."
+#                 )
+
+#     ### Mean Plot ###
+#     fig_mean, ax_mean = plt.subplots(figsize=FigSize)
+
+#     for Label, MeanValues in MeanVector.items():
+#         StdErrorValues = StdErrorVector[Label]
+
+#         if XGrid.get(Label) is not None:
+#             x = XGrid[Label]
+#         else:
+#             num_iterations = len(MeanValues)
+#             if total_pool_size is None:
+#                 total_pool_size = initial_train_size + k_top * num_iterations
+#             iterations_array = np.arange(num_iterations)
+#             num_labeled_at_step = initial_train_size + k_top * iterations_array
+#             x = (num_labeled_at_step / total_pool_size) * 100
+
+#         color = Colors.get(Label, None) if Colors else None
+#         linestyle = Linestyles.get(Label, ":") if Linestyles else ":"
+#         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
+
+#         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
+#         ax_mean.fill_between(
+#             x,
+#             MeanValues - CriticalValue * StdErrorValues,
+#             MeanValues + CriticalValue * StdErrorValues,
+#             alpha=TransparencyVal,
+#             color=color,
+#         )
+
+#     ax_mean.set_xlabel("Percent of Learning Pool Labeled")
+#     ax_mean.set_ylabel(Y_Label)
+
+#     # 3. Reference Line is now at 0.0 (No Difference)
+#     if RelativeError:
+#         ax_mean.axhline(y=0.0, color="r", linestyle="-", linewidth=1, alpha=0.5)
+
+#     if show_legend:
+#         ax_mean.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
+
+#     if isinstance(xlim, list):
+#         ax_mean.set_xlim(xlim)
+
+#     ### Variance Plot ###
+#     fig_var = None
+#     if VarInput:
+#         fig_var, ax_var = plt.subplots(figsize=FigSize)
+#         for Label, VarianceValues in VarianceVector.items():
+#             num_iterations = len(VarianceValues)
+
+#             if total_pool_size is None:
+#                 total_pool_size = initial_train_size + num_iterations
+
+#             if num_iterations > 0:
+#                 iterations_array = np.arange(num_iterations)
+#                 num_labeled_at_step = initial_train_size + iterations_array
+#                 x = (num_labeled_at_step / total_pool_size) * 100
+#             else:
+#                 x = []
+
+#             color = Colors.get(Label, None) if Colors else None
+#             linestyle = Linestyles.get(Label, "-") if Linestyles else "-"
+#             legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
+#             ax_var.plot(x, VarianceValues, label=legend_label, color=color, linestyle=linestyle)
+#             lower_bound = StdErrorVarianceVector[Label]["lower"]
+#             upper_bound = StdErrorVarianceVector[Label]["upper"]
+#             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
+
+#         ax_var.set_xlabel("Percent of Learning Pool Labeled")
+#         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
+#         ax_var.legend(loc="upper right")
+#         if isinstance(xlim, list):
+#             ax_var.set_xlim(xlim)
+
+#     return (fig_mean, fig_var)
+
+
 ### Main Wrapper Function ###
 def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, single_dataset=None):
     """
