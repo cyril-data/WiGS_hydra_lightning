@@ -11,6 +11,8 @@ enum34==1.1.10
 et_xmlfile==2.0.0
 exceptiongroup==1.3.0
 executing==2.2.1
+faiss-gpu
+faiss-cpu
 filelock==3.19.1
 fonttools==4.59.1
 fsspec==2025.9.0

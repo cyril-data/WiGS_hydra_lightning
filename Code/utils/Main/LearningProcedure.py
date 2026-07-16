@@ -19,6 +19,45 @@ import time
 import pickle
 
 
+def compute_error(predictor_model, candidate_with_target, y_size, SimulationConfigInputUpdated_):
+
+    SimulationConfigInputUpdated = SimulationConfigInputUpdated_
+
+    StartTime = time.time()
+    FullPoolErrorOuputs, SimulationConfigInputUpdated = FullPoolErrorFunction(
+        InputModel=predictor_model,
+        SimulationConfigInputUpdated=SimulationConfigInputUpdated,
+        df_Candidate=candidate_with_target,
+        y_size=y_size,
+    )
+    print(f"\t+++ FullPoolErrorOuputs : {time.time() - StartTime} +++")
+
+    StartTime = time.time()
+    FullTestErrorOuputs = FullTestErrorFunction(
+        InputModel=predictor_model,
+        SimulationConfigInputUpdated=SimulationConfigInputUpdated,
+        df_test=SimulationConfigInputUpdated["df_test"],
+        y_size=y_size,
+    )
+    print(f"\t+++ FullTestErrorOuputs : {time.time() - StartTime} +++")
+
+    StartTime = time.time()
+    TrainErrorOuputs = TrainErrorFunction(
+        InputModel=predictor_model,
+        SimulationConfigInputUpdated=SimulationConfigInputUpdated,
+        df_train=SimulationConfigInputUpdated["df_Train"],
+        y_size=y_size,
+    )
+    print(f"\t+++ TrainErrorOuputs : {time.time() - StartTime} +++")
+
+    return (
+        FullPoolErrorOuputs,
+        FullTestErrorOuputs,
+        TrainErrorOuputs,
+        SimulationConfigInputUpdated,
+    )
+
+
 ### Function ###
 def LearningProcedure(SimulationConfigInputUpdated):
     """
@@ -41,6 +80,8 @@ def LearningProcedure(SimulationConfigInputUpdated):
         "Full_Test": {"RMSE": [], "MAE": [], "R2": [], "CC": []},
         "Train": {"RMSE": [], "MAE": [], "R2": [], "CC": []},
     }
+
+    ErrorVecs_iteration = []
     WeightHistory = []
     SelectedObservationHistory = []
     InitialTrainIndices = list(SimulationConfigInputUpdated["df_Train"].index)
@@ -133,38 +174,38 @@ def LearningProcedure(SimulationConfigInputUpdated):
             candidate_with_target_index, :
         ]
 
-        StartTime = time.time()
-        FullPoolErrorOuputs, SimulationConfigInputUpdated = FullPoolErrorFunction(
-            InputModel=predictor_model,
-            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
-            df_Candidate=candidate_with_target,
-            y_size=y_size,
-        )
-        for metric_name, value in FullPoolErrorOuputs.items():
-            ErrorVecs["Full_Pool"][metric_name].append(value)
-        print(f"\t+++ FullPoolErrorOuputs : {time.time() - StartTime} +++")
+        if (
+            i
+            % SimulationConfigInputUpdated["add_useful_params"]["save_result_selection_frequency"]
+            == 0
+        ):
 
-        StartTime = time.time()
-        FullTestErrorOuputs = FullTestErrorFunction(
-            InputModel=predictor_model,
-            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
-            df_test=SimulationConfigInputUpdated["df_test"],
-            y_size=y_size,
-        )
-        for metric_name, value in FullTestErrorOuputs.items():
-            ErrorVecs["Full_Test"][metric_name].append(value)
-        print(f"\t+++ FullTestErrorOuputs : {time.time() - StartTime} +++")
+            (
+                FullPoolErrorOuputs,
+                FullTestErrorOuputs,
+                TrainErrorOuputs,
+                SimulationConfigInputUpdated,
+            ) = compute_error(
+                predictor_model, candidate_with_target, y_size, SimulationConfigInputUpdated
+            )
 
-        StartTime = time.time()
-        TrainErrorOuputs = TrainErrorFunction(
-            InputModel=predictor_model,
-            SimulationConfigInputUpdated=SimulationConfigInputUpdated,
-            df_train=SimulationConfigInputUpdated["df_Train"],
-            y_size=y_size,
-        )
-        for metric_name, value in TrainErrorOuputs.items():
-            ErrorVecs["Train"][metric_name].append(value)
-        print(f"\t+++ TrainErrorOuputs : {time.time() - StartTime} +++")
+            for metric_name, value in FullPoolErrorOuputs.items():
+                ErrorVecs["Full_Pool"][metric_name].append(value)
+            for metric_name, value in FullTestErrorOuputs.items():
+                ErrorVecs["Full_Test"][metric_name].append(value)
+            for metric_name, value in TrainErrorOuputs.items():
+                ErrorVecs["Train"][metric_name].append(value)
+            ErrorVecs_iteration.append(i)
+
+        else:
+            for metric_name, value in FullPoolErrorOuputs.items():
+                ErrorVecs["Full_Pool"][metric_name].append(value)
+            for metric_name, value in FullTestErrorOuputs.items():
+                ErrorVecs["Full_Test"][metric_name].append(value)
+            for metric_name, value in TrainErrorOuputs.items():
+                ErrorVecs["Train"][metric_name].append(value)
+
+            ErrorVecs_iteration.append(ErrorVecs_iteration[-1])
 
         ## 4. Calculate CV Error ##
         model = predictor_model.model
@@ -204,6 +245,22 @@ def LearningProcedure(SimulationConfigInputUpdated):
 
         ### 5. Break Condition ###
         if len(SimulationConfigInputUpdated["df_Candidate"]) == 0:
+            (
+                FullPoolErrorOuputs,
+                FullTestErrorOuputs,
+                TrainErrorOuputs,
+                SimulationConfigInputUpdated,
+            ) = compute_error(
+                predictor_model, candidate_with_target, y_size, SimulationConfigInputUpdated
+            )
+            for metric_name, value in FullPoolErrorOuputs.items():
+                ErrorVecs["Full_Pool"][metric_name][-1] = value
+            for metric_name, value in FullTestErrorOuputs.items():
+                ErrorVecs["Full_Test"][metric_name][-1] = value
+            for metric_name, value in TrainErrorOuputs.items():
+                ErrorVecs["Train"][metric_name][-1] = value
+            ErrorVecs_iteration[-1] = i
+
             break
 
         StartTime = time.time()
@@ -253,22 +310,18 @@ def LearningProcedure(SimulationConfigInputUpdated):
         print(f"\t+++ #7-8-7-10 LearningProcedure : {time.time() - StartTime} +++")
 
         ## 11. Increase iteration ##
-        if (
-            i
-            % SimulationConfigInputUpdated["add_useful_params"]["save_result_selection_frequency"]
-            == 0
-        ):
-            StartTime = time.time()
-            dump_results(
-                SimulationConfigInputUpdated,
-                ErrorVecs,
-                SelectedObservationHistory,
-                WeightHistory,
-                InitialTrainIndices,
-            )
-            output_path = SimulationConfigInputUpdated["add_useful_params"]["output_path"]
-            print(f"\n=== Results writen in {output_path} ===\n")
-            print(f"\t+++ dump_results : {time.time() - StartTime} +++")
+        StartTime = time.time()
+        dump_results(
+            SimulationConfigInputUpdated,
+            ErrorVecs,
+            SelectedObservationHistory,
+            WeightHistory,
+            InitialTrainIndices,
+            ErrorVecs_iteration,
+        )
+        output_path = SimulationConfigInputUpdated["add_useful_params"]["output_path"]
+        print(f"\n=== Results writen in {output_path} ===\n")
+        print(f"\t+++ dump_results : {time.time() - StartTime} +++")
 
         print(f"\t+++ ITERATION {i} : {time.time() - StartTime_iteration} +++")
 
@@ -278,6 +331,7 @@ def LearningProcedure(SimulationConfigInputUpdated):
         "SelectedObservationHistory": SelectedObservationHistory,
         "WeightHistory": WeightHistory,
         "InitialTrainIndices": InitialTrainIndices,
+        "ErrorVecs_iteration": ErrorVecs_iteration,
     }
     return LearningProcedureOutput
 
@@ -288,6 +342,7 @@ def dump_results(
     SelectedObservationHistory,
     WeightHistory,
     InitialTrainIndices,
+    ErrorVecs_iteration,
 ):
 
     ### Output ###
@@ -296,6 +351,7 @@ def dump_results(
         "SelectedObservationHistory": SelectedObservationHistory,
         "WeightHistory": WeightHistory,
         "InitialTrainIndices": InitialTrainIndices,
+        "ErrorVecs_iteration": ErrorVecs_iteration,
     }
     # return LearningProcedureOutput
 
@@ -337,7 +393,10 @@ def dump_results(
         "SimulationParameters": SimulationParameters,
         "ElapsedTime": ElapsedTime,
         "k_top_candidate": SimulationConfigInputUpdated["add_useful_params"]["k_top_candidate"],
+        "ErrorVecs_iteration": LearningProcedureOutput["ErrorVecs_iteration"],
     }
+
+    print("SimulationResults", SimulationResults.keys())
     if "df_full" in SimulationConfigInputUpdated:
         SimulationResults["TotalPoolSize"] = len(SimulationConfigInputUpdated["df_full"])
 
@@ -349,6 +408,7 @@ def dump_results(
 
     # Store results #
     all_results_by_strategy[strategy_name] = results
+    print("results", results.keys())
 
     ### Run the Simulation for a Single Seed and Model ###
     SimulationResults = all_results_by_strategy

@@ -69,6 +69,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                 "WeightHistory": [],
                 "TotalPoolSize": [],
                 "SimulationParameters": [],
+                "ErrorVecs_iteration": [],
             }
             for s in strategies
         }
@@ -94,6 +95,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     error_vec_df = results["ErrorVecs"]
                     for eval_type in error_vec_df.columns:
                         for metric in error_vec_df.index:
+
                             metric_values_list = error_vec_df.loc[metric, eval_type]
                             series = pd.Series(metric_values_list, name=f"Sim_{i}")
                             aggregated_data[strategy]["ErrorVecs"][eval_type][metric].append(
@@ -111,6 +113,11 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     aggregated_data[strategy]["SelectionHistory"].append(
                         results["SelectionHistory"]
                     )
+                    if "ErrorVecs_iteration" in results:
+                        aggregated_data[strategy]["ErrorVecs_iteration"].append(
+                            results["ErrorVecs_iteration"]
+                        )
+
                     if "WeightHistory" in results:
                         aggregated_data[strategy]["WeightHistory"].append(results["WeightHistory"])
 
@@ -157,8 +164,8 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                         pickle.dump(metric_results, f)
 
                     print(f"  > Saved {metric}.pkl to {eval_type.lower()}_metrics/")
-                    print(type(metric_results), metric_results.keys(), metric_results)
-
+                    # print(type(metric_results), metric_results.keys(), metric_results)
+        # time_data
         try:
             time_data = {
                 strategy: data["ElapsedTime"] for strategy, data in aggregated_data.items()
@@ -172,6 +179,59 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
 
         except Exception as e:
             print(f"Error in time_data : {e}")
+
+        # ErrorVecs_iteration
+        try:
+            for strategy, data in aggregated_data.items():
+
+                print("strategy", strategy)
+                print("data", type(data), data.keys())
+            ErrorVecs_iteration = {
+                strategy: data["ErrorVecs_iteration"] for strategy, data in aggregated_data.items()
+            }
+            print("ErrorVecs_iteration", ErrorVecs_iteration)
+
+            # Détermine le nombre maximal d'itérations
+            max_iterations = max(len(v) for v in ErrorVecs_iteration.values())
+
+            # Crée un DataFrame avec des valeurs vides pour les itérations manquantes
+            df = pd.DataFrame(
+                {
+                    **{
+                        strategy: ErrorVecs_iteration[strategy]
+                        + [None] * (max_iterations - len(ErrorVecs_iteration[strategy]))
+                        for strategy in ErrorVecs_iteration
+                    },
+                }
+            )
+            # df.to_csv(os.path.join(dataset_output_dir, "ErrorVecs_iteration.csv"), index=False)
+
+            # df = pd.DataFrame(
+            #     {
+            #         "Simulation": list(range(len(ErrorVecs_iteration["iGS"]))),
+            #         "iGS": ErrorVecs_iteration["iGS"],
+            #         "Passive Learning": ErrorVecs_iteration["Passive Learning"],
+            #     }
+            # )
+
+            # rows = []
+            # for method, iterations in ErrorVecs_iteration.items():
+            #     print("method", method)
+            #     print("iterations", iterations)
+            #     for i, iteration in enumerate(iterations):
+            #         for value in iteration:
+            #             rows.append({"Method": method, "Iteration": i, "Value": value})
+
+            # df = pd.DataFrame(rows)
+            # df.to_csv('ErrorVecs_iteration_flat.csv', index=False)
+
+            # ErrorVecs_iteration_df = pd.DataFrame(ErrorVecs_iteration)
+            df.to_csv(
+                os.path.join(dataset_output_dir, "ErrorVecs_iteration.csv"),
+            )
+            print(f"  > Saved ErrorVecs_iteration.csv")
+        except Exception as e:
+            print(f"Error in ErrorVecs_iteration : {e}")
 
         try:
             total_pool_size = {

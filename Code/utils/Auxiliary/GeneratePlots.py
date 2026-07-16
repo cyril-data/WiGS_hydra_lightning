@@ -18,6 +18,292 @@ def safe_literal_eval(x):
     return ast.literal_eval(x)
 
 
+def IndividualTracesPlot(
+    Subtitle=None,
+    TransparencyVal=0.85,
+    CriticalValue=None,  # accepted for call-site compatibility with MeanVariancePlot; unused here (no CI band on raw traces)
+    RelativeError=None,
+    Colors=None,
+    Linestyles=None,
+    RandomLabels=None,
+    xlim=None,
+    Y_Label=None,
+    VarInput=None,  # accepted for call-site compatibility with MeanVariancePlot; unused here (no variance computed)
+    initial_train_size: int = None,
+    k_top: int = 1,
+    FigSize=(9, 12),
+    LegendMapping=None,
+    show_legend=True,
+    total_pool_size=None,
+    sim_name=None,  # dict: {Label: {true_Sim_id: descriptive_name}}. If given, used to
+    # build the legend label as f"{Label} - {sim_name[Label][true_id]}".
+    # `true_id` is looked up via `sim_ids` if provided, otherwise via the
+    # positional Sim_id (see `sim_ids` below for why this matters).
+    sim_ids=None,  # dict: {Label: [true_Sim_id, ...]}, one true id per column of
+    # Results / k_top[Label], IN THE SAME ORDER as those columns.
+    # Needed because "Sim_0", "Sim_1"... in the DataFrame are just
+    # positional column names -- they do NOT necessarily match the
+    # real simulation id (param["Sim"]) used as a key in `sim_name`,
+    # e.g. build it as: sim_ids[strategy] = [p["Sim"] for p in params[strategy]]
+    TraceColors=None,  # dict: {(Label, true_Sim_id): color}. Pins an exact color to one
+    # specific trace. Takes priority over everything else.
+    colormap="turbo",  # colormap used to auto-generate one distinct color per trace,
+    # so every individual sim can be told apart even within the
+    # same Label. Only applies to traces not covered by
+    # TraceColors or Colors (see below).
+    linewidth=1.3,
+    grid_points: int = 200,
+    **SimulationErrorResults,
+):
+    """
+    Plots every individual simulation trace (no mean, no variance, no
+    confidence band) on a single graph. One line per (Label, Sim) pair.
+
+    Color rule (every individual trace must be distinguishable):
+      - `TraceColors[(Label, true_Sim_id)]`, if given, wins -- pins one exact color.
+      - Else, `Colors[Label]`, if given, is used for every sim of that Label
+        (legacy behaviour: sims of that Label won't be distinguishable by color,
+        only by legend text -- use this only when you deliberately want one
+        color per strategy instead of per sim).
+      - Else, a color is auto-assigned from `colormap`, spread evenly across
+        ALL traces that fall into this case, so every one of them is visually
+        distinct regardless of which Label it belongs to.
+
+    Linestyle rule (this is what marks Random vs non-Random, independently of color):
+      - Any Label matching "Random" (case-insensitive, or listed explicitly
+        in `RandomLabels`) is drawn DASHED.
+      - Every other Label is drawn SOLID.
+      - `Linestyles` (dict: Label -> linestyle), if provided, always wins
+        over this default rule for that Label.
+
+    If RelativeError=<baseline Label> is given, each individual trace is
+    plotted as (Method sim - Baseline mean), like MeanVariancePlot does for
+    the averaged curve, but here you see the per-sim dispersion around 0
+    instead of a single averaged line. This requires interpolating every
+    sim onto a shared percent-of-pool grid (see `grid_points`), since a
+    sim's own x-axis and the baseline's mean x-axis don't line up exactly.
+
+    Handles the same two k_top cases as MeanVariancePlot:
+      - k_top as a dict of per-label DataFrames (columns Sim_0, Sim_1, ...,
+        values = lists of selected indices per iteration; a sim that has
+        stopped shows an empty list `[]`), i.e. variable / per-sim k_top.
+      - k_top as a scalar int, i.e. fixed selection size every iteration
+        for every sim.
+    """
+    if initial_train_size is None:
+        raise ValueError("IndividualTracesPlot requires 'initial_train_size' to be provided.")
+
+    RandomLabels = set(RandomLabels) if RandomLabels else set()
+
+    def _is_random(label):
+        return label in RandomLabels or "random" in label.lower()
+
+    def _linestyle_for(label):
+        if Linestyles and label in Linestyles:
+            return Linestyles[label]
+        return "--" if _is_random(label) else "-"
+
+    def _per_sim_x_pct(Label, Results, n_simulations):
+        """Returns list of (sim_idx, sim_id, x_pct, y_sim) tuples, one per sim, real (non-interpolated) axis.
+        sim_idx = positional column index (0, 1, 2...); sim_id = column name (e.g. "Sim_0"),
+        which is only a positional label and may NOT match the true simulation identity."""
+        pairs = []
+        if isinstance(k_top, dict) and Label in k_top:
+            sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
+            selection_sizes = k_top[Label][sim_cols].map(len)
+
+            per_sim_x_abs = {}
+            per_sim_valid_len = {}
+            max_reach = 0
+            for col in sim_cols:
+                sizes = selection_sizes[col].values
+                finished_mask = sizes == 0
+                last_active = int(np.argmax(finished_mask)) if finished_mask.any() else len(sizes)
+                cum = initial_train_size + np.cumsum(sizes[:last_active])
+                x_abs = np.concatenate(([initial_train_size], cum))
+                per_sim_x_abs[col] = x_abs
+                per_sim_valid_len[col] = last_active + 1
+                max_reach = max(max_reach, x_abs[-1])
+
+            pool_size = total_pool_size if total_pool_size is not None else max_reach
+
+            for sim_idx, col in enumerate(sim_cols):
+                if sim_idx >= n_simulations:
+                    break
+                x_abs = per_sim_x_abs[col]
+                n_pts = per_sim_valid_len[col]
+                x_pct = x_abs / pool_size * 100
+                y_sim = Results[:n_pts, sim_idx]
+                if len(y_sim) != len(x_pct):
+                    n_common = min(len(y_sim), len(x_pct))
+                    y_sim = y_sim[:n_common]
+                    x_pct = x_pct[:n_common]
+                if len(x_pct) >= 2:
+                    pairs.append((sim_idx, col, x_pct, y_sim))
+        else:
+            k_top_scalar = k_top if isinstance(k_top, (int, float)) else 1
+            num_iterations = Results.shape[0]
+            pool_size = (
+                total_pool_size
+                if total_pool_size is not None
+                else initial_train_size + k_top_scalar * num_iterations
+            )
+            iterations_array = np.arange(num_iterations)
+            x_abs = initial_train_size + k_top_scalar * iterations_array
+            x_pct = x_abs / pool_size * 100
+            for sim_idx in range(n_simulations):
+                pairs.append((sim_idx, f"Sim_{sim_idx}", x_pct, Results[:, sim_idx]))
+        return pairs
+
+    # ------------------------------------------------------------------
+    # Pre-extract (x_pct, y) per sim per label from raw inputs.
+    # ------------------------------------------------------------------
+    RawTraces = {}  # Label -> list of (x_pct, y) per sim
+    for Label, Results in SimulationErrorResults.items():
+        Results = np.asarray(Results)
+        n_simulations = Results.shape[1]
+        RawTraces[Label] = _per_sim_x_pct(Label, Results, n_simulations)
+
+    # ------------------------------------------------------------------
+    # If RelativeError requested: compute baseline mean on a shared grid,
+    # then subtract it (interpolated) from every individual sim of every
+    # label, including the baseline's own sims (which will hover near 0).
+    # ------------------------------------------------------------------
+    BaselineInterp = None
+    if RelativeError:
+        if RelativeError not in RawTraces:
+            print(f"  > Warning: Baseline '{RelativeError}' not found. Skipping normalization.")
+        else:
+            common_grid_pct = np.linspace(0.0, 100.0, num=grid_points)
+            baseline_pairs = RawTraces[RelativeError]
+            baseline_matrix = np.full((len(common_grid_pct), len(baseline_pairs)), np.nan)
+            for sim_idx, (_, sim_id, x_pct, y_sim) in enumerate(baseline_pairs):
+                valid_mask = (common_grid_pct >= x_pct[0]) & (common_grid_pct <= x_pct[-1])
+                baseline_matrix[valid_mask, sim_idx] = np.interp(
+                    common_grid_pct[valid_mask], x_pct, y_sim
+                )
+            baseline_mean = np.nanmean(baseline_matrix, axis=1)
+            BaselineInterp = (common_grid_pct, baseline_mean)
+            Y_Label = f"Error Difference (Method - {RelativeError})"
+
+    fig, ax = plt.subplots(figsize=FigSize)
+    _warned_labels = set()  # avoid spamming one warning per label
+
+    # ------------------------------------------------------------------
+    # Pass 1: resolve every trace's true_sim_id + legend label + y-values,
+    # without assigning colors yet (need the total count first).
+    # ------------------------------------------------------------------
+    ResolvedTraces = []  # list of dicts: Label, true_sim_id, x_pct, y_plot, trace_label
+    for Label, pairs in RawTraces.items():
+        legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
+
+        for sim_idx, sim_id, x_pct, y_sim in pairs:
+            if BaselineInterp is not None:
+                common_grid_pct, baseline_mean = BaselineInterp
+                baseline_at_x = np.interp(x_pct, common_grid_pct, baseline_mean)
+                y_plot = y_sim - baseline_at_x
+            else:
+                y_plot = y_sim
+
+            # Resolve the TRUE simulation id for this column: prefer the
+            # explicit positional mapping (sim_ids[Label][sim_idx]), since
+            # "Sim_0", "Sim_1"... in the DataFrame are just positional column
+            # names and do not necessarily match the real param["Sim"].
+            true_sim_id = sim_id
+            if sim_ids and Label in sim_ids:
+                if sim_idx < len(sim_ids[Label]):
+                    true_sim_id = sim_ids[Label][sim_idx]
+                elif Label not in _warned_labels:
+                    print(
+                        f"  > Warning: sim_ids['{Label}'] has fewer entries than "
+                        f"columns in Results; falling back to positional Sim_id."
+                    )
+                    _warned_labels.add(Label)
+
+            descriptive_name = None
+            if sim_name and Label in sim_name:
+                descriptive_name = sim_name[Label].get(true_sim_id)
+                if descriptive_name is None and Label not in _warned_labels:
+                    print(
+                        f"  > Warning: sim_name['{Label}'] has no entry for "
+                        f"'{true_sim_id}' (available: {list(sim_name[Label].keys())}); "
+                        f"falling back to raw Sim_id in legend."
+                    )
+                    _warned_labels.add(Label)
+
+            trace_label = (
+                f"{legend_label} - {descriptive_name}"
+                if descriptive_name is not None
+                else f"{legend_label} ({true_sim_id})"
+            )
+
+            ResolvedTraces.append(
+                {
+                    "Label": Label,
+                    "true_sim_id": true_sim_id,
+                    "x_pct": x_pct,
+                    "y_plot": y_plot,
+                    "trace_label": trace_label,
+                }
+            )
+
+    # ------------------------------------------------------------------
+    # Pass 2: assign a color to every trace.
+    #   TraceColors[(Label, true_sim_id)] > Colors[Label] > auto colormap.
+    # Auto colors are spread evenly across ALL traces needing one, so every
+    # sim is visually distinguishable regardless of its Label.
+    # ------------------------------------------------------------------
+    auto_needed_idx = [
+        i
+        for i, t in enumerate(ResolvedTraces)
+        if not (TraceColors and (t["Label"], t["true_sim_id"]) in TraceColors)
+        and not (Colors and t["Label"] in Colors)
+    ]
+    cmap = plt.get_cmap(colormap)
+    n_auto = len(auto_needed_idx)
+    auto_palette = [cmap(p) for p in np.linspace(0.05, 0.95, n_auto)] if n_auto > 0 else []
+    auto_color_for_idx = dict(zip(auto_needed_idx, auto_palette))
+
+    # ------------------------------------------------------------------
+    # Pass 3: plot.
+    # ------------------------------------------------------------------
+    for i, t in enumerate(ResolvedTraces):
+        Label, true_sim_id = t["Label"], t["true_sim_id"]
+
+        if TraceColors and (Label, true_sim_id) in TraceColors:
+            color = TraceColors[(Label, true_sim_id)]
+        elif Colors and Label in Colors:
+            color = Colors[Label]
+        else:
+            color = auto_color_for_idx[i]
+
+        linestyle = _linestyle_for(Label)
+
+        ax.plot(
+            t["x_pct"],
+            t["y_plot"],
+            color=color,
+            linestyle=linestyle,
+            linewidth=linewidth,
+            alpha=TransparencyVal,
+            label=t["trace_label"],
+        )
+
+    ax.set_xlabel("Percent of Learning Pool Labeled")
+    ax.set_ylabel(Y_Label)
+
+    if RelativeError and BaselineInterp is not None:
+        ax.axhline(y=0.0, color="r", linestyle="-", linewidth=1, alpha=0.5)
+
+    if show_legend:
+        ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
+
+    if isinstance(xlim, list):
+        ax.set_xlim(xlim)
+
+    return fig
+
+
 ### Plotting Function ###
 def MeanVariancePlot(
     Subtitle=None,
@@ -36,109 +322,178 @@ def MeanVariancePlot(
     show_legend=True,
     total_pool_size=None,
     sim_name=None,
+    grid_points: int = 200,
     **SimulationErrorResults,
 ):
     """
     Generates trace plots.
     If RelativeError is provided, plots the DIFFERENCE (Method - Baseline).
+
+    Handles k_top varying per simulation AND per iteration (k_top passed as a
+    dict of per-label DataFrames of selected-index lists), including
+    simulations that stop early (empty list once their pool is exhausted).
+    Every simulation gets its own cumulative x-axis, and all
+    simulations/labels are interpolated onto ONE shared percent-of-pool grid
+    before being averaged or compared -- this is what makes the
+    `RelativeError` subtraction (Method - Baseline) safe even when Method and
+    Baseline had different selection rhythms.
     """
     if initial_train_size is None:
         raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
 
-    MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector, SimName = (
-        {},
-        {},
-        {},
-        {},
-        {},
-    )
+    MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector = {}, {}, {}, {}
+
+    # ------------------------------------------------------------------
+    # 0. One shared grid (in % of pool labeled) for every label, so that
+    #    RelativeError subtraction and cross-label comparison are always
+    #    well-defined (no more per-label x-axis mismatches).
+    # ------------------------------------------------------------------
+    common_grid_pct = np.linspace(0.0, 100.0, num=grid_points)
+
+    InterpolatedMatrices = {}  # Label -> (grid_points x n_sims) matrix
+    ValidCounts = {}  # Label -> nb of sims with data at each grid point
 
     ### Extract ###
     for Label, Results in SimulationErrorResults.items():
 
-        MeanVector[Label] = np.mean(Results, axis=1)
-        VarianceVector[Label] = np.var(Results, axis=1)
+        # Results may arrive as a pandas DataFrame (columns = Sim_0, Sim_1, ...).
+        # Force it to a plain numpy array so positional (slice, int) indexing
+        # below always works, regardless of what was passed in.
+        Results = np.asarray(Results)
         n_simulations = Results.shape[1]
-        StdErrorVector[Label] = np.std(Results, axis=1) / np.sqrt(n_simulations)
 
-        # Calculate Variance Bounds
-        lower_chi2 = chi2.ppf(0.025, df=n_simulations - 1)
-        upper_chi2 = chi2.ppf(0.975, df=n_simulations - 1)
+        if isinstance(k_top, dict) and Label in k_top:
+            # --- k_top varies per sim / per iteration ---
+            sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
+            selection_sizes = k_top[Label][sim_cols].map(len)
+
+            interpolated = np.full((len(common_grid_pct), n_simulations), np.nan)
+
+            per_sim_x_abs = {}
+            per_sim_valid_len = {}
+            max_reach = 0
+            for col in sim_cols:
+                sizes = selection_sizes[col].values
+                finished_mask = sizes == 0
+
+                if finished_mask.any():
+                    last_active = int(np.argmax(finished_mask))  # first index sim stops
+                else:
+                    last_active = len(sizes)
+
+                cum = initial_train_size + np.cumsum(sizes[:last_active])
+                x_abs = np.concatenate(([initial_train_size], cum))
+                per_sim_x_abs[col] = x_abs
+                per_sim_valid_len[col] = last_active + 1  # +1 for initial point
+                max_reach = max(max_reach, x_abs[-1])
+
+            pool_size = total_pool_size if total_pool_size is not None else max_reach
+
+            for sim_idx, col in enumerate(sim_cols):
+                if sim_idx >= n_simulations:
+                    break
+                x_abs = per_sim_x_abs[col]
+                n_pts = per_sim_valid_len[col]
+                x_pct = x_abs / pool_size * 100
+
+                y_sim = Results[:n_pts, sim_idx]  # this sim's own errors, truncated
+                if len(y_sim) != len(x_pct):
+                    n_common = min(len(y_sim), len(x_pct))
+                    y_sim = y_sim[:n_common]
+                    x_pct = x_pct[:n_common]
+
+                if len(x_pct) < 2:
+                    continue  # not enough points to interpolate this sim
+
+                # never extrapolate beyond what this sim actually reached
+                valid_mask = (common_grid_pct >= x_pct[0]) & (common_grid_pct <= x_pct[-1])
+                interpolated[valid_mask, sim_idx] = np.interp(
+                    common_grid_pct[valid_mask], x_pct, y_sim
+                )
+
+        else:
+            # --- k_top scalaire (int) : meme axe x deterministe pour chaque sim ---
+            num_iterations = Results.shape[0]
+            iterations_array = np.arange(num_iterations)
+            pool_size = (
+                total_pool_size
+                if total_pool_size is not None
+                else initial_train_size + k_top * num_iterations
+            )
+            x_abs = initial_train_size + k_top * iterations_array
+            x_pct = x_abs / pool_size * 100
+
+            interpolated = np.full((len(common_grid_pct), n_simulations), np.nan)
+            valid_mask = (common_grid_pct >= x_pct[0]) & (common_grid_pct <= x_pct[-1])
+            for sim_idx in range(n_simulations):
+                interpolated[valid_mask, sim_idx] = np.interp(
+                    common_grid_pct[valid_mask], x_pct, Results[:, sim_idx]
+                )
+
+        InterpolatedMatrices[Label] = interpolated
+        ValidCounts[Label] = np.sum(~np.isnan(interpolated), axis=1)
+
+    # ------------------------------------------------------------------
+    # 1. Derive mean / variance / std-error from the interpolated matrices.
+    #    nanmean/nanvar ignore sims already finished at a given grid point,
+    #    instead of silently treating them as 0.
+    # ------------------------------------------------------------------
+    for Label, interpolated in InterpolatedMatrices.items():
+        valid_counts = ValidCounts[Label]
+        safe_counts = np.maximum(valid_counts, 1)
+
+        MeanVector[Label] = np.nanmean(interpolated, axis=1)
+        VarianceVector[Label] = np.nanvar(interpolated, axis=1)
+        StdErrorVector[Label] = np.nanstd(interpolated, axis=1) / np.sqrt(safe_counts)
+
+        df = np.maximum(valid_counts - 1, 1)
+        lower_chi2 = chi2.ppf(0.025, df=df)
+        upper_chi2 = chi2.ppf(0.975, df=df)
+        VarianceValues = VarianceVector[Label]
         StdErrorVarianceVector[Label] = {
-            "lower": (n_simulations - 1) * VarianceVector[Label] / upper_chi2,
-            "upper": (n_simulations - 1) * VarianceVector[Label] / lower_chi2,
+            "lower": (valid_counts - 1) * VarianceValues / upper_chi2,
+            "upper": (valid_counts - 1) * VarianceValues / lower_chi2,
         }
 
     ### Calculate Difference (Method - Baseline) if specified ###
     if RelativeError:
         if RelativeError in MeanVector:
             Y_Label = f"Error Difference (Method - {RelativeError})"
-
             BaselineMean = MeanVector[RelativeError].copy()
-            for Label in MeanVector:
-                MeanVector[Label] -= BaselineMean
 
-                # Manual Clamp for 100% Labeled
-                # At 100%, Method == Baseline, so Difference must be 0.0
-                if len(MeanVector[Label]) > 0:
-                    MeanVector[Label][-1] = 0.0
-                    StdErrorVector[Label][-1] = 0.0
+            for Label in MeanVector:
+                MeanVector[Label] = MeanVector[Label] - BaselineMean
+
+            # Manual Clamp for 100% Labeled
+            # At 100%, Method == Baseline, so Difference must be 0.0
+            last_idx = len(common_grid_pct) - 1
+            if common_grid_pct[last_idx] >= 100.0 - 1e-9:
+                for Label in MeanVector:
+                    MeanVector[Label][last_idx] = 0.0
+                    StdErrorVector[Label][last_idx] = 0.0
         else:
             print(f"  > Warning: Baseline '{RelativeError}' not found. Skipping normalization.")
 
     ### Mean Plot ###
     fig_mean, ax_mean = plt.subplots(figsize=FigSize)
+
     for Label, MeanValues in MeanVector.items():
+        valid_counts = ValidCounts[Label]
+        plot_mask = valid_counts > 0  # don't draw where no sim has data (yet/anymore)
 
-        if -1 in MeanValues.index:
-            MeanValues = MeanValues.drop(-1)
-
-        StdErrorValues = StdErrorVector[Label]
-
-        if -1 in StdErrorValues.index:
-            StdErrorValues = StdErrorValues.drop(-1)
-
-        num_iterations = len(MeanValues)
-
-        if isinstance(k_top, dict) and Label in k_top:
-            sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
-
-            # Nombre d'éléments nouvellement sélectionnés à chaque itération,
-            # moyenné sur toutes les simulations disponibles
-            selection_sizes = k_top[Label][sim_cols].map(len)
-            mean_selection_per_iter = selection_sizes.mean(axis=1)
-
-            if total_pool_size is None:
-                total_pool_size = initial_train_size + mean_selection_per_iter.sum()
-
-            num_labeled_at_step = initial_train_size
-            x = [num_labeled_at_step / total_pool_size * 100]
-
-            for added in mean_selection_per_iter:
-                num_labeled_at_step += added
-                x.append(num_labeled_at_step / total_pool_size * 100)
-
-        else:
-
-            if total_pool_size is None:
-                total_pool_size = initial_train_size + k_top * num_iterations
-            iterations_array = np.arange(num_iterations)
-
-            num_labeled_at_step = initial_train_size + k_top * iterations_array
-            x = (num_labeled_at_step / total_pool_size) * 100
+        x = common_grid_pct[plot_mask]
+        y = MeanValues[plot_mask]
+        StdErrorValues = StdErrorVector[Label][plot_mask]
 
         color = Colors.get(Label, None) if Colors else None
         linestyle = Linestyles.get(Label, ":") if Linestyles else ":"
         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
 
-        if len(x) > len(MeanValues):
-            x = x[1:]
-
-        ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
+        ax_mean.plot(x, y, label=legend_label, color=color, linestyle=linestyle)
         ax_mean.fill_between(
             x,
-            MeanValues - CriticalValue * StdErrorValues,
-            MeanValues + CriticalValue * StdErrorValues,
+            y - CriticalValue * StdErrorValues,
+            y + CriticalValue * StdErrorValues,
             alpha=TransparencyVal,
             color=color,
         )
@@ -146,7 +501,6 @@ def MeanVariancePlot(
     ax_mean.set_xlabel("Percent of Learning Pool Labeled")
     ax_mean.set_ylabel(Y_Label)
 
-    # 3. Reference Line is now at 0.0 (No Difference)
     if RelativeError:
         ax_mean.axhline(y=0.0, color="r", linestyle="-", linewidth=1, alpha=0.5)
 
@@ -160,25 +514,21 @@ def MeanVariancePlot(
     fig_var = None
     if VarInput:
         fig_var, ax_var = plt.subplots(figsize=FigSize)
+
         for Label, VarianceValues in VarianceVector.items():
-            num_iterations = len(VarianceValues)
+            valid_counts = ValidCounts[Label]
+            plot_mask = valid_counts > 0
 
-            if total_pool_size is None:
-                total_pool_size = initial_train_size + num_iterations
-
-            if num_iterations > 0:
-                iterations_array = np.arange(num_iterations)
-                num_labeled_at_step = initial_train_size + iterations_array
-                x = (num_labeled_at_step / total_pool_size) * 100
-            else:
-                x = []
+            x = common_grid_pct[plot_mask]
+            y = VarianceValues[plot_mask]
 
             color = Colors.get(Label, None) if Colors else None
             linestyle = Linestyles.get(Label, "-") if Linestyles else "-"
             legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
-            ax_var.plot(x, VarianceValues, label=legend_label, color=color, linestyle=linestyle)
-            lower_bound = StdErrorVarianceVector[Label]["lower"]
-            upper_bound = StdErrorVarianceVector[Label]["upper"]
+
+            ax_var.plot(x, y, label=legend_label, color=color, linestyle=linestyle)
+            lower_bound = StdErrorVarianceVector[Label]["lower"][plot_mask]
+            upper_bound = StdErrorVarianceVector[Label]["upper"][plot_mask]
             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
 
         ax_var.set_xlabel("Percent of Learning Pool Labeled")
@@ -188,212 +538,6 @@ def MeanVariancePlot(
             ax_var.set_xlim(xlim)
 
     return (fig_mean, fig_var)
-
-
-# ### Plotting Function ###
-# def MeanVariancePlot(
-#     Subtitle=None,
-#     TransparencyVal=0.2,
-#     CriticalValue=1.96,
-#     RelativeError=None,
-#     Colors=None,
-#     Linestyles=None,
-#     xlim=None,
-#     Y_Label=None,
-#     VarInput=False,
-#     initial_train_size: int = None,
-#     k_top: int = 1,
-#     FigSize=(9, 12),
-#     LegendMapping=None,
-#     show_legend=True,
-#     total_pool_size=None,
-#     sim_name=None,
-#     **SimulationErrorResults,
-# ):
-#     """
-#     Generates trace plots.
-#     If RelativeError is provided, plots the DIFFERENCE (Method - Baseline).
-#     """
-#     if initial_train_size is None:
-#         raise ValueError("MeanVariancePlot requires 'initial_train_size' to be provided.")
-
-#     MeanVector, VarianceVector, StdErrorVector, StdErrorVarianceVector, SimName = (
-#         {},
-#         {},
-#         {},
-#         {},
-#         {},
-#     )
-
-#     ### Extract ###
-#     XGrid = {}  # grille x (en % du pool) utilisée pour chaque Label, si calculée ici
-
-#     for Label, Results in SimulationErrorResults.items():
-#         n_simulations = Results.shape[1]
-
-#         if isinstance(k_top, dict) and Label in k_top:
-#             sim_cols = [c for c in k_top[Label].columns if c.startswith("Sim_")]
-#             selection_sizes = k_top[Label][sim_cols].map(len)
-
-#             # --- x cumulé par simulation, en excluant les points après la fin de la sim ---
-#             per_sim_x_pct = {}
-#             per_sim_valid_len = {}
-#             for sim_idx, col in enumerate(sim_cols):
-#                 sizes = selection_sizes[col].values
-#                 finished_mask = sizes == 0
-
-#                 if finished_mask.any():
-#                     last_active = np.argmax(finished_mask)  # 1er indice où la sim s'arrête
-#                 else:
-#                     last_active = len(sizes)
-
-#                 cum = initial_train_size + np.cumsum(sizes[:last_active])
-#                 x_sim = np.concatenate(([initial_train_size], cum))
-#                 per_sim_x_pct[col] = x_sim
-#                 per_sim_valid_len[col] = last_active + 1  # +1 pour le point initial
-
-#             pool_size = total_pool_size or max(x[-1] for x in per_sim_x_pct.values())
-
-#             # --- grille commune en % du pool labellisé ---
-#             common_grid_pct = np.linspace(initial_train_size / pool_size * 100, 100, num=200)
-
-#             interpolated = np.full((len(common_grid_pct), len(sim_cols)), np.nan)
-#             for sim_idx, col in enumerate(sim_cols):
-#                 x_sim_pct = per_sim_x_pct[col] / pool_size * 100
-#                 n_pts = per_sim_valid_len[col]
-#                 y_sim = Results[
-#                     :n_pts, sim_idx
-#                 ]  # erreurs de CETTE sim, tronquées à sa longueur réelle
-
-#                 # ne pas extrapoler au-delà de ce que cette sim a atteint
-#                 valid_mask = common_grid_pct <= x_sim_pct[-1]
-#                 interpolated[valid_mask, sim_idx] = np.interp(
-#                     common_grid_pct[valid_mask], x_sim_pct, y_sim
-#                 )
-
-#             valid_counts = np.sum(~np.isnan(interpolated), axis=1)
-#             MeanVector[Label] = np.nanmean(interpolated, axis=1)
-#             VarianceVector[Label] = np.nanvar(interpolated, axis=1)
-#             StdErrorVector[Label] = np.nanstd(interpolated, axis=1) / np.sqrt(
-#                 np.maximum(valid_counts, 1)
-#             )
-#             XGrid[Label] = common_grid_pct
-
-#             df = np.maximum(valid_counts - 1, 1)
-#             lower_chi2 = chi2.ppf(0.025, df=df)
-#             upper_chi2 = chi2.ppf(0.975, df=df)
-#             StdErrorVarianceVector[Label] = {
-#                 "lower": (valid_counts - 1) * VarianceVector[Label] / upper_chi2,
-#                 "upper": (valid_counts - 1) * VarianceVector[Label] / lower_chi2,
-#             }
-
-#         else:
-#             # cas k_top scalaire (int), inchangé
-#             MeanVector[Label] = np.mean(Results, axis=1)
-#             VarianceVector[Label] = np.var(Results, axis=1)
-#             StdErrorVector[Label] = np.std(Results, axis=1) / np.sqrt(n_simulations)
-
-#             lower_chi2 = chi2.ppf(0.025, df=n_simulations - 1)
-#             upper_chi2 = chi2.ppf(0.975, df=n_simulations - 1)
-#             StdErrorVarianceVector[Label] = {
-#                 "lower": (n_simulations - 1) * VarianceVector[Label] / upper_chi2,
-#                 "upper": (n_simulations - 1) * VarianceVector[Label] / lower_chi2,
-#             }
-#             XGrid[Label] = None  # calculé plus loin, comme dans la version originale
-
-#         ### Calculate Difference (Method - Baseline) if specified ###
-#         if RelativeError:
-#             if RelativeError in MeanVector:
-#                 Y_Label = f"Error Difference (Method - {RelativeError})"
-
-#                 BaselineMean = MeanVector[RelativeError].copy()
-#                 for Label in MeanVector:
-#                     MeanVector[Label] -= BaselineMean
-
-#                     # Manual Clamp for 100% Labeled
-#                     # At 100%, Method == Baseline, so Difference must be 0.0
-#                     if len(MeanVector[Label]) > 0:
-#                         MeanVector[Label][-1] = 0.0
-#                         StdErrorVector[Label][-1] = 0.0
-#             else:
-#                 print(
-#                     f"  > Warning: Baseline '{RelativeError}' not found. Skipping normalization."
-#                 )
-
-#     ### Mean Plot ###
-#     fig_mean, ax_mean = plt.subplots(figsize=FigSize)
-
-#     for Label, MeanValues in MeanVector.items():
-#         StdErrorValues = StdErrorVector[Label]
-
-#         if XGrid.get(Label) is not None:
-#             x = XGrid[Label]
-#         else:
-#             num_iterations = len(MeanValues)
-#             if total_pool_size is None:
-#                 total_pool_size = initial_train_size + k_top * num_iterations
-#             iterations_array = np.arange(num_iterations)
-#             num_labeled_at_step = initial_train_size + k_top * iterations_array
-#             x = (num_labeled_at_step / total_pool_size) * 100
-
-#         color = Colors.get(Label, None) if Colors else None
-#         linestyle = Linestyles.get(Label, ":") if Linestyles else ":"
-#         legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
-
-#         ax_mean.plot(x, MeanValues, label=legend_label, color=color, linestyle=linestyle)
-#         ax_mean.fill_between(
-#             x,
-#             MeanValues - CriticalValue * StdErrorValues,
-#             MeanValues + CriticalValue * StdErrorValues,
-#             alpha=TransparencyVal,
-#             color=color,
-#         )
-
-#     ax_mean.set_xlabel("Percent of Learning Pool Labeled")
-#     ax_mean.set_ylabel(Y_Label)
-
-#     # 3. Reference Line is now at 0.0 (No Difference)
-#     if RelativeError:
-#         ax_mean.axhline(y=0.0, color="r", linestyle="-", linewidth=1, alpha=0.5)
-
-#     if show_legend:
-#         ax_mean.legend(loc="upper left", bbox_to_anchor=(1.02, 1))
-
-#     if isinstance(xlim, list):
-#         ax_mean.set_xlim(xlim)
-
-#     ### Variance Plot ###
-#     fig_var = None
-#     if VarInput:
-#         fig_var, ax_var = plt.subplots(figsize=FigSize)
-#         for Label, VarianceValues in VarianceVector.items():
-#             num_iterations = len(VarianceValues)
-
-#             if total_pool_size is None:
-#                 total_pool_size = initial_train_size + num_iterations
-
-#             if num_iterations > 0:
-#                 iterations_array = np.arange(num_iterations)
-#                 num_labeled_at_step = initial_train_size + iterations_array
-#                 x = (num_labeled_at_step / total_pool_size) * 100
-#             else:
-#                 x = []
-
-#             color = Colors.get(Label, None) if Colors else None
-#             linestyle = Linestyles.get(Label, "-") if Linestyles else "-"
-#             legend_label = LegendMapping.get(Label, Label) if LegendMapping else Label
-#             ax_var.plot(x, VarianceValues, label=legend_label, color=color, linestyle=linestyle)
-#             lower_bound = StdErrorVarianceVector[Label]["lower"]
-#             upper_bound = StdErrorVarianceVector[Label]["upper"]
-#             ax_var.fill_between(x, lower_bound, upper_bound, alpha=TransparencyVal, color=color)
-
-#         ax_var.set_xlabel("Percent of Learning Pool Labeled")
-#         ax_var.set_ylabel("Variance of " + (Y_Label if Y_Label else "Error"))
-#         ax_var.legend(loc="upper right")
-#         if isinstance(xlim, list):
-#             ax_var.set_xlim(xlim)
-
-#     return (fig_mean, fig_var)
 
 
 ### Main Wrapper Function ###
@@ -544,6 +688,16 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                 except FileNotFoundError:
                     print(f"Error : File {simulation_parameters} not found.")
 
+                # read ErrorVecs_iteration.csv
+                try:
+                    error_vecs_path = os.path.join(dataset_path, "ErrorVecs_iteration.csv")
+                except FileNotFoundError:
+                    print(f"Error : File {error_vecs_path} not found.")
+                df = pd.read_csv(error_vecs_path, index_col=0)
+                error_vecs_iteration = {}
+                for col in df.columns:
+                    error_vecs_iteration[col] = df[col].apply(safe_literal_eval).tolist()
+
                 sim_name = {}
                 for strategy, df in results_for_metric.items():
                     sim_name[strategy] = {}
@@ -609,42 +763,37 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                     os.makedirs(os.path.join(base_plot_path, "trace"), exist_ok=True)
                     os.makedirs(os.path.join(base_plot_path, "variance"), exist_ok=True)
 
-                    if folder_name == "trace":
-                        # Initialisation du graphique
-                        plt.figure(figsize=(12, 6))
-                        # Itération sur chaque stratégie et son DataFrame associé
-                        for strategy, df in results_for_metric.items():
-                            # Détermination du style et de la couleur en fonction de la stratégie
-                            if strategy == "Passive Learning":
-                                linestyle = "--"
-                            else:
-                                linestyle = "-"
+                    try:
 
-                            # Tracé de chaque colonne (Sim_X) du DataFrame
-                            for column in df.columns:
-                                plt.plot(
-                                    df[column],
-                                    label=f"{strategy} - {sim_name[strategy][column]}",
-                                    linestyle=linestyle,
-                                    alpha=0.7,
-                                )
+                        sim_ids = {
+                            strategy: [p["Sim"] for p in params[strategy]]
+                            for strategy in results_for_metric
+                        }
 
-                        # Ajout des labels et de la légende
-                        plt.xlabel("Index")
-                        plt.ylabel("Valeur")
-                        plt.title("Comparaison des courbes par stratégie")
-                        plt.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
-                        plt.grid(True)
-
-                        # Sauvegarde du graphique
-                        plt.tight_layout()
-                        plt.savefig(
-                            os.path.join(base_plot_path, "all_trace.png"),
-                            dpi=300,
-                            bbox_inches="tight",
+                        indiv_plots = IndividualTracesPlot(
+                            RelativeError=baseline,
+                            # Colors=master_colors,
+                            LegendMapping=master_legend,
+                            Linestyles=master_linestyles,
+                            Y_Label=y_label,
+                            Subtitle=subtitle,
+                            TransparencyVal=1.0,
+                            VarInput=True,
+                            CriticalValue=1.96,
+                            initial_train_size=initial_train_size,
+                            k_top=k_top,
+                            show_legend=show_legend,
+                            total_pool_size=total_pool_size,
+                            sim_name=sim_name,
+                            sim_ids=sim_ids,
+                            **filtered_results,
                         )
 
-                    try:
+                        all_plot_path = os.path.join(
+                            base_plot_path, "trace", f"{data_name}_{metric}_allplot.png"
+                        )
+                        indiv_plots.savefig(all_plot_path, bbox_inches="tight", dpi=300)
+                        plt.close(indiv_plots)
 
                         TracePlotMean, TracePlotVariance = MeanVariancePlot(
                             RelativeError=baseline,

@@ -169,6 +169,7 @@ def OneIterationFunction(SimulationConfigInput):
         "SimulationParameters": SimulationParameters,
         "ElapsedTime": ElapsedTime,
         "k_top_candidate": SimulationConfigInput["add_useful_params"]["k_top_candidate"],
+        "ErrorVecs_iteration": LearningProcedureOutput["ErrorVecs_iteration"],
     }
 
     if "df_full" in SimulationConfigInput:
