@@ -76,8 +76,9 @@ def main():
         action="store_true",
         help="if --curriculum : model weights are conserved. This option impose --no_cv",
     )
-
     parser.add_argument("--hl_xp", type=str, default=None, help="Data type for this job array.")
+    parser.add_argument("--hl_worker", type=int, default=None, help="worker cpu for dataloader.")
+
     args = parser.parse_args()
 
     if len(args.strat) == 1:
@@ -147,6 +148,7 @@ def main():
             "k_top_candidate": args.k_top,
             "subset_rand_candidat": args.subset_rand_candidat,
             "hl_xp": args.hl_xp,
+            "hl_worker": args.hl_worker,
             "strat": args.strat,
             "no_cv": no_cv,
             "hl_max_epoch": args.hl_max_epoch,

@@ -55,6 +55,8 @@ def get_hl_cfg(config) -> DictConfig:
     strategy = config["add_useful_params"]["strategy_name"]
     hl_max_epoch = config["add_useful_params"]["hl_max_epoch"]
     hl_xp = config["add_useful_params"]["hl_xp"]
+    hl_worker = config["add_useful_params"]["hl_worker"]
+
     if hl_xp is None:
         hl_xp = "baseline_active_learning"
 
@@ -65,6 +67,10 @@ def get_hl_cfg(config) -> DictConfig:
     if hl_max_epoch is not None:
         overrides.append(f"max_epochs={hl_max_epoch}")
         overrides.append(f"check_val_every_n_epoch={hl_max_epoch*2}")
+
+    print("hl_worker", hl_worker)
+    if hl_worker is not None:
+        overrides.append(f"num_workers={hl_worker}")
 
     with initialize(
         version_base="1.3",
