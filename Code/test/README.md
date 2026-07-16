@@ -50,15 +50,21 @@ python test/07_bookkeeping.py
 Common flags (scripts `01`, `02`, `04`, `05`, `06`; `07` has its own subset,
 `03` sweeps `--sizes` instead):
 
-- `--hl-xp` - experiment config to build the datamodule/model from (default:
-  `baseline_active_learning_local_small`, needs `data/small_26000.csv` under
-  `henrihost-al/`).
+- `--hl-xp` - experiment config to build the datamodule/model from. Defaults
+  to `baseline_active_learning` - the real production case, full ~9M-row
+  `data/database_oct-24.csv` under `henrihost-al/`. This will not "go far" on
+  a laptop; pass `--hl-xp baseline_active_learning_local_small` (needs
+  `data/small_26000.csv`) to benchmark locally instead.
 - `--strategy` - selector strategy (`iGS`/`GSx`/`GSy`, default `iGS`).
 - `--n-train-0` / `--n-candidate-0` - starting sizes for the schedule.
-  Defaults are sized to fit the small local dataset (~25,927 usable rows) -
-  raise `--hl-xp` to a bigger dataset (or the real `baseline_active_learning`
-  config) to benchmark at production scale.
-- `--k-top` - candidates moved to train per simulated iteration.
+  Default to `10_000` / `8_990_000` (~10k initial train, the rest of the ~9M
+  pool as candidates) to match the real production case above. The candidate
+  figure is an estimate (10M raw rows minus dropna/k-fold losses) - if it's
+  off for the actual dataset, `slice_pool()` raises a clear "exceeds pool
+  size N" error rather than failing silently. Lower both when using
+  `--hl-xp baseline_active_learning_local_small`.
+- `--k-top` - candidates moved to train per simulated iteration (default
+  `2000`, matching the real case above).
 - `--n-iterations` - cap the schedule length (default: run until the
   candidate pool empties).
 - `--seed`

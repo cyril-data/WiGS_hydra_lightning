@@ -203,12 +203,20 @@ def write_csv(filename, rows, fieldnames):
     print(f"\nSaved {len(rows)} rows to {path}")
 
 
-def make_arg_parser(description, default_n_train_0=5000, default_n_candidate_0=15000):
-    """Common CLI shared by every benchmark script. Defaults are sized to fit
-    within the small local dataset (data/small_26000.csv, ~25927 usable rows)
-    - override --hl-xp plus these sizes to benchmark against a bigger dataset."""
+def make_arg_parser(description, default_n_train_0=10_000, default_n_candidate_0=8_990_000):
+    """Common CLI shared by every benchmark script. Defaults now target the
+    real production case: --hl-xp baseline_active_learning (the full ~9M-row
+    dataset, data/database_oct-24.csv), starting from a ~10k-row train set
+    with the rest (~8.99M) as candidates, k_top=2000. That candidate pool
+    figure is an estimate (10M raw rows minus dropna/k-fold losses) - if it's
+    off, slice_pool() raises a clear "exceeds pool size N" error rather than
+    failing silently, so it's safe to correct --n-candidate-0 from that
+    message on the machine that actually has the resources to run this.
+
+    Override --hl-xp plus these sizes to benchmark against a smaller dataset
+    (e.g. --hl-xp baseline_active_learning_local_small, ~25,927 usable rows)."""
     p = argparse.ArgumentParser(description=description)
-    p.add_argument("--hl-xp", default="baseline_active_learning_local_small")
+    p.add_argument("--hl-xp", default="baseline_active_learning")
     p.add_argument("--strategy", default="iGS")
     p.add_argument("--n-train-0", type=int, default=default_n_train_0)
     p.add_argument("--n-candidate-0", type=int, default=default_n_candidate_0)
