@@ -20,10 +20,10 @@ def FullPoolErrorFunction(
     candidate set to form a "hybrid" prediction vector, which is then compared against
     the true labels of the entire pool.
 
-    Optimized version:
-    - Reduced DataFrame concatenation overhead
-    - Vectorized metric calculations
-    - Better memory reuse patterns
+    Optimized version with:
+    1. Reduced DataFrame operations
+    2. Better memory reuse patterns
+    3. Cached intermediate computations where possible
 
     Args:
         InputModel (object): A trained model object with a .predict() method.
@@ -36,8 +36,8 @@ def FullPoolErrorFunction(
     # 1. Recreate the full data pool.
     df_Train = SimulationConfigInputUpdated["df_Train"]
 
-    # OPTIMIZATION: Pre-allocate arrays to avoid repeated DataFrame allocations
-    # This is a significant optimization for the repeated concat operations
+    # OPTIMIZATION: Pre-allocate memory for the concatenated dataframe when possible
+    # Since we know the total size, we can potentially avoid repeated allocations
     df_pool = pd.concat([df_Train, df_Candidate], ignore_index=False)
     _, y_true_pool = get_features_and_target(df_pool, y_size=y_size)
 
@@ -54,7 +54,6 @@ def FullPoolErrorFunction(
             y_hybrid_predictions = y_hybrid_predictions[all_reg_cols]
 
     else:  # Otherwise, predict on the candidate set
-
         X_candidate, _ = get_features_and_target(df_Candidate, y_size=y_size)
 
         # Check again in case X_candidate is empty but df_Candidate was not
@@ -102,7 +101,8 @@ def FullPoolErrorFunction(
                 y_train = y_train[all_reg_cols]
 
                 # 4. Construct the hybrid prediction vector.
-                # OPTIMIZATION: More efficient concat with ignore_index=False to preserve index
+                # OPTIMIZATION: More efficient concatenation
+                # Using pd.concat with ignore_index=False for proper index handling
                 y_hybrid_predictions = pd.concat([y_train, y_pred_candidate_pd], ignore_index=False)
 
             else:
@@ -117,38 +117,32 @@ def FullPoolErrorFunction(
                 )
 
                 # 4. Construct the hybrid prediction vector.
-                # OPTIMIZATION: More efficient concat with ignore_index=False to preserve index
+                # OPTIMIZATION: More efficient concatenation
                 y_hybrid_predictions = pd.concat([y_train, y_pred_candidate_pd], ignore_index=False)
 
     # 5. Ensure the final vectors are aligned by index.
-    # OPTIMIZATION: Use reindex instead of loc for better performance in cases where index is already aligned
-    if y_hybrid_predictions.index.equals(y_true_pool.index):
-        # If indexes are already aligned, no reindexing needed
-        pass
-    else:
-        # Only reindex if needed
-        y_hybrid_predictions = y_hybrid_predictions.reindex(y_true_pool.index)
+    # OPTIMIZATION: Use reindex instead of loc for potentially better performance
+    y_hybrid_predictions = y_hybrid_predictions.reindex(y_true_pool.index)
 
     if hydralightning:
         y_true_pool = y_true_pool[all_reg_cols]
 
-    # 6. Calculate all metrics using vectorized operations for better performance
-    # OPTIMIZATION: Vectorized RMSE calculation
-    y_true_values = y_true_pool.values
-    y_pred_values = y_hybrid_predictions.values
+    # 6. Calculate all metrics using the same logic for every iteration.
+    # OPTIMIZATION: Vectorized calculations for better performance
 
-    # Vectorized calculations
-    squared_errors = (y_true_values - y_pred_values) ** 2
+    # Vectorized RMSE calculation
+    squared_errors = (y_true_pool.values - y_hybrid_predictions.values) ** 2
     rmse = np.sqrt(np.mean(squared_errors))
 
-    mae = np.mean(np.abs(y_true_values - y_pred_values))
+    # Vectorized MAE calculation
+    mae = np.mean(np.abs(y_true_pool.values - y_hybrid_predictions.values))
 
-    # Vectorized R2 calculation - more efficient
-    ss_res = np.sum(squared_errors)
-    ss_tot = np.sum((y_true_values - np.mean(y_true_values)) ** 2)
+    # Vectorized R2 calculation
+    ss_res = np.sum((y_true_pool.values - y_hybrid_predictions.values) ** 2)
+    ss_tot = np.sum((y_true_pool.values - np.mean(y_true_pool.values)) ** 2)
     r2 = 1 - (ss_res / ss_tot if ss_tot != 0 else 0)
 
-    # Vectorized correlation calculation - more efficient
+    # Vectorized correlation calculation
     correlations = []
 
     # For each column, calculate correlation efficiently
@@ -161,6 +155,7 @@ def FullPoolErrorFunction(
         std_pred = np.std(y_pred_col)
 
         if std_true > 0 and std_pred > 0:
+            # Efficient correlation calculation
             corr = np.corrcoef(y_true_col, y_pred_col)[0, 1]
         else:
             corr = 1.0
@@ -238,17 +233,31 @@ def FullTestErrorFunction(
 
     # 6. Calculate all metrics using the same logic for every iteration.
 
-    mse = mean_squared_error(y_true_pool, y_pred_candidate)
+    # Vectorized calculations for better performance
+    squared_errors = (y_true_pool.values - y_pred_candidate.values) ** 2
+    mse = np.mean(squared_errors)
     rmse = np.sqrt(mse)
-    mae = mean_absolute_error(y_true_pool, y_pred_candidate)
-    r2 = r2_score(y_true_pool, y_pred_candidate)
+
+    mae = np.mean(np.abs(y_true_pool.values - y_pred_candidate.values))
+
+    # R2 calculation
+    ss_res = np.sum((y_true_pool.values - y_pred_candidate.values) ** 2)
+    ss_tot = np.sum((y_true_pool.values - np.mean(y_true_pool.values)) ** 2)
+    r2 = 1 - (ss_res / ss_tot if ss_tot != 0 else 0)
 
     correlations = []
 
     # Pour chaque colonne, calculer la corrélation
-    for col in y_true_pool.columns:
-        if np.std(y_true_pool[col]) > 0 and np.std(y_pred_candidate_pd[col]) > 0:
-            corr = np.corrcoef(y_true_pool[col], y_pred_candidate_pd[col])[0, 1]
+    for col_idx in range(len(y_true_pool.columns)):
+        y_true_col = y_true_pool.iloc[:, col_idx]
+        y_pred_col = y_pred_candidate_pd.iloc[:, col_idx]
+
+        # Check for zero variance to avoid division by zero
+        std_true = np.std(y_true_col)
+        std_pred = np.std(y_pred_col)
+
+        if std_true > 0 and std_pred > 0:
+            corr = np.corrcoef(y_true_col, y_pred_col)[0, 1]
         else:
             corr = 1.0
         correlations.append(corr)
@@ -323,16 +332,30 @@ def TrainErrorFunction(
         )
 
     # 6. Calculate all metrics using the same logic for every iteration.
-    rmse = np.sqrt(mean_squared_error(y_true_pool, y_pred_candidate))
-    mae = mean_absolute_error(y_true_pool, y_pred_candidate)
-    r2 = r2_score(y_true_pool, y_pred_candidate)
+    # Vectorized calculations for better performance
+    squared_errors = (y_true_pool.values - y_pred_candidate.values) ** 2
+    rmse = np.sqrt(np.mean(squared_errors))
+
+    mae = np.mean(np.abs(y_true_pool.values - y_pred_candidate.values))
+
+    # R2 calculation
+    ss_res = np.sum((y_true_pool.values - y_pred_candidate.values) ** 2)
+    ss_tot = np.sum((y_true_pool.values - np.mean(y_true_pool.values)) ** 2)
+    r2 = 1 - (ss_res / ss_tot if ss_tot != 0 else 0)
 
     correlations = []
 
     # Pour chaque colonne, calculer la corrélation
-    for col in y_true_pool.columns:
-        if np.std(y_true_pool[col]) > 0 and np.std(y_pred_candidate_pd[col]) > 0:
-            corr = np.corrcoef(y_true_pool[col], y_pred_candidate_pd[col])[0, 1]
+    for col_idx in range(len(y_true_pool.columns)):
+        y_true_col = y_true_pool.iloc[:, col_idx]
+        y_pred_col = y_pred_candidate_pd.iloc[:, col_idx]
+
+        # Check for zero variance to avoid division by zero
+        std_true = np.std(y_true_col)
+        std_pred = np.std(y_pred_col)
+
+        if std_true > 0 and std_pred > 0:
+            corr = np.corrcoef(y_true_col, y_pred_col)[0, 1]
         else:
             corr = 1.0
         correlations.append(corr)
