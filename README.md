@@ -139,3 +139,37 @@ The project is designed as an automated pipeline for a SLURM-based HPC cluster. 
 ```
 
 ```
+
+# Use with hydraligtning : 
+
+```
+bash Cluster/RunSimulations/script_h100_20h.sh \
+"python RunSimulation.py \
+    --Data 'hydralightning' \
+    --TaskID 0 \
+    --NReplications 25 \
+    --CandidateProportion 0.999 \
+    --hl_xp full_fold1_active_learning_h100 \
+    --strat 'iGS' \
+    --no_cv \
+    --k-top 10000 \
+    --hl_max_epoch 1 \
+    --curriculum \
+    --res_freq 10"
+
+
+bash Cluster/RunSimulations/script_h100_20h.sh \
+"python RunSimulation.py \
+    --Data 'hydralightning' \
+    --TaskID 0 \
+    --NReplications 25 \
+    --CandidateProportion 0.999 \
+    --hl_xp full_fold1_active_learning_h100 \
+    --strat 'Passive Learning' \
+    --no_cv \
+    --k-top 10000 \
+    --hl_max_epoch 1 \
+    --curriculum \
+    --res_freq 10"
+
+```

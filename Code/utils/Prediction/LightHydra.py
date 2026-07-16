@@ -64,7 +64,7 @@ def get_hl_cfg(config) -> DictConfig:
     ]
     if hl_max_epoch is not None:
         overrides.append(f"max_epochs={hl_max_epoch}")
-        overrides.append(f"check_val_every_n_epoch={hl_max_epoch}")
+        overrides.append(f"check_val_every_n_epoch={hl_max_epoch*2}")
 
     with initialize(
         version_base="1.3",
