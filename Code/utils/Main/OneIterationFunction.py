@@ -131,7 +131,10 @@ def OneIterationFunction(SimulationConfigInput):
     SimulationConfigInput["StartTime"] = StartTime
 
     ### Learning Process ###
-    LearningProcedureOutput = LearningProcedure(SimulationConfigInputUpdated=SimulationConfigInput)
+    max_iterations = SimulationConfigInput["add_useful_params"].get("max_iterations")
+    LearningProcedureOutput = LearningProcedure(
+        SimulationConfigInputUpdated=SimulationConfigInput, max_iterations=max_iterations
+    )
 
     ### Return Simulation Parameters ###
     SimulationParameters = {

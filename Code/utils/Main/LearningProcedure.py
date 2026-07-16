@@ -3,6 +3,7 @@ import inspect
 import numpy as np
 import pandas as pd
 import torch.nn as nn
+import psutil
 
 ### Functions ###
 from utils.Selector import *
@@ -17,6 +18,12 @@ from pytorch_lightning.trainer.states import TrainerState
 import time
 
 import pickle
+
+_process = psutil.Process()
+
+
+def print_rss_memory():
+    print(f"Mémoire RSS process : {_process.memory_info().rss / (1024**3):.2f} GiB")
 
 
 def compute_error(predictor_model, candidate_with_target, y_size, SimulationConfigInputUpdated_):
@@ -59,12 +66,17 @@ def compute_error(predictor_model, candidate_with_target, y_size, SimulationConf
 
 
 ### Function ###
-def LearningProcedure(SimulationConfigInputUpdated):
+def LearningProcedure(SimulationConfigInputUpdated, max_iterations=None):
     """
     Executes an iterative active learning or greedy sampling loop.
 
     Args:
         SimulationConfigInputUpdated (dict): A dictionary containing the configuration and state for the learning loop.
+        max_iterations (int, optional): Stop after this many iterations even if
+            the candidate pool isn't empty yet. None (default) preserves the
+            original behavior - run until the candidate pool empties. Intended
+            for benchmarking/smoke-testing at production scale without paying
+            for a full ~thousands-of-iterations replication.
 
     Returns:
         dict: A dictionary containing the results of the learning procedure with the following keys:
@@ -132,7 +144,14 @@ def LearningProcedure(SimulationConfigInputUpdated):
     while True:
         StartTime_iteration = time.time()
 
+        if max_iterations is not None and i >= max_iterations:
+            print(f"=== stopping: reached max_iterations={max_iterations} ===")
+            break
+
         print(f"=== iteration  {i} ===")
+        print_rss_memory()
+        if hydralightning:
+            print_gpu_memory()
 
         ## 1. Get features and target for the current training set ##
         X_train_df, y_train_series = get_features_and_target(
