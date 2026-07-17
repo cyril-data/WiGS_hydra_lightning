@@ -193,6 +193,8 @@ class GreedySamplingSelector:
         distance: str = "euclidean",
         Seed: int = None,
         k_top_candidate=1,
+        batch_size: int = 8192,
+        train_chunk_size: int = None,
         **kwargs,
     ):
         """
@@ -202,6 +204,15 @@ class GreedySamplingSelector:
             strategy (str): The greedy sampling strategy. Must be one of 'GSx', 'GSy', or 'iGS'.
             distance (str, optional): The distance metric to use, compatible with `scipy.spatial.distance.cdist`.
             Seed (int, optional): A random seed for reproducibility.
+            batch_size (int, optional): Candidate-axis chunk size for the GPU
+                distance computation. Was hardcoded to 512, which at
+                production-scale candidate pools (millions of rows) means
+                hundreds of thousands of tiny kernel launches per select()
+                call - launch overhead, not FLOPs, ends up dominating wall
+                time. Raise this (memory-permitting) to cut that overhead;
+                lower it back down if a chunk stops fitting in GPU memory.
+            train_chunk_size (int, optional): Train-axis chunk size. Defaults
+                to batch_size if not given.
             **kwargs: Accepts and ignores additional keyword arguments for consistency.
         """
         if strategy not in ["GSx", "GSy", "iGS"]:
@@ -212,6 +223,8 @@ class GreedySamplingSelector:
         self.distance = distance
         self.Seed = Seed
         self.k_top_candidate = k_top_candidate
+        self.batch_size = batch_size
+        self.train_chunk_size = train_chunk_size if train_chunk_size is not None else batch_size
 
         # Persists across select() calls within one AL run (a fresh selector is
         # created per replication/strategy in LearningProcedure, so this never
@@ -226,6 +239,62 @@ class GreedySamplingSelector:
         # bounded size; beyond this it falls back to the uncached, chunked
         # min-only computation to avoid GPU OOM.
         self._dx_cache_max_bytes = 2 * 1024**3
+
+        # GSx has no evolving second term (no model-dependent Y), so unlike
+        # iGS/GSy its score is a per-candidate running MINIMUM that can be
+        # cached exactly with O(1) memory per candidate - no dense matrix,
+        # no memory cap, no scale limit. See _get_gsx_min_dist.
+        self._gsx_cache = None
+
+    def _get_gsx_min_dist(self, candidate_index, train_index, X_candidate_np, X_train_np, batch_size):
+        """Incremental running-min X-distance for GSx. Unlike iGS/GSy, GSx's
+        score (min distance to the train set) has no second term that changes
+        across iterations, so a per-candidate running minimum can be cached
+        exactly: each call only needs distances to the newly-added train
+        points, merged into the previous minimum via elementwise min - the
+        classic incremental-cluster-growth trick. This is a true
+        O(n_candidate x k_top) per-call cost with O(n_candidate) memory,
+        unlike the dense dX matrix used for iGS which is memory-bounded and
+        effectively inert once candidate/train pools get large (see
+        _get_dx_matrix)."""
+        candidate_labels = candidate_index.tolist()
+        train_labels = train_index.tolist()
+
+        if self._gsx_cache is None:
+            min_dist = min_dist_per_row_gpu(
+                X_candidate_np, X_train_np, batch_size, self.train_chunk_size
+            )
+            self._gsx_cache = {
+                "candidate_labels": candidate_labels,
+                "train_labels": list(train_labels),
+                "min_dist": min_dist,
+            }
+            return min_dist
+
+        cache = self._gsx_cache
+
+        # Candidates only ever shrink, train only ever grows (same invariants
+        # as _get_dx_matrix - see that docstring).
+        old_pos = {lbl: i for i, lbl in enumerate(cache["candidate_labels"])}
+        keep_idx = [old_pos[lbl] for lbl in candidate_labels]
+        min_dist = cache["min_dist"][keep_idx]
+
+        old_train_set = set(cache["train_labels"])
+        new_positions = [i for i, lbl in enumerate(train_labels) if lbl not in old_train_set]
+
+        if new_positions:
+            X_train_new_np = X_train_np[new_positions]
+            delta = min_dist_per_row_gpu(
+                X_candidate_np, X_train_new_np, batch_size, self.train_chunk_size
+            )
+            min_dist = np.minimum(min_dist, delta)
+
+        self._gsx_cache = {
+            "candidate_labels": candidate_labels,
+            "train_labels": train_labels,
+            "min_dist": min_dist,
+        }
+        return min_dist
 
     def _get_dx_matrix(self, candidate_index, train_index, X_candidate_np, X_train_np, batch_size):
         """Returns the full (n_candidate, n_train) X-distance matrix, reusing cached
@@ -247,7 +316,7 @@ class GreedySamplingSelector:
             return None
 
         if self._dx_cache is None:
-            dX = pairwise_dist_gpu(X_candidate_np, X_train_np, batch_size)
+            dX = pairwise_dist_gpu(X_candidate_np, X_train_np, batch_size, self.train_chunk_size)
             self._dx_cache = {
                 "candidate_labels": candidate_labels,
                 "train_labels": list(train_labels),
@@ -271,7 +340,7 @@ class GreedySamplingSelector:
 
         if new_positions:
             X_train_new_np = X_train_np[new_positions]
-            new_cols = pairwise_dist_gpu(X_candidate_np, X_train_new_np, batch_size)
+            new_cols = pairwise_dist_gpu(X_candidate_np, X_train_new_np, batch_size, self.train_chunk_size)
             dX = torch.cat([dX, new_cols], dim=1)
 
         self._dx_cache = {
@@ -333,7 +402,7 @@ class GreedySamplingSelector:
 
         select_ytrain_cols = None
 
-        batch_size = 512
+        batch_size = self.batch_size
 
         # print(f"\t+++ GreedySampling #1 : {time.time() - StartTime} +++")
 
@@ -400,16 +469,12 @@ class GreedySamplingSelector:
         final_scores = None
 
         if self.strategy == "GSx":
-            dX_matrix = self._get_dx_matrix(
+            final_scores = self._get_gsx_min_dist(
                 df_Candidate.index, df_Train.index, X_Candidate_f32, X_Train_f32, batch_size
             )
-            if dX_matrix is None:
-                final_scores = min_dist_per_row_gpu(X_Candidate_f32, X_Train_f32, batch_size)
-            else:
-                final_scores = dX_matrix.min(dim=1).values.float().cpu().numpy()
 
         elif self.strategy == "GSy":
-            final_scores = min_dist_per_row_gpu(pred_vals, y_train_values, batch_size)
+            final_scores = min_dist_per_row_gpu(pred_vals, y_train_values, batch_size, self.train_chunk_size)
 
         elif self.strategy == "iGS":
             dX_matrix = self._get_dx_matrix(
@@ -417,13 +482,13 @@ class GreedySamplingSelector:
             )
             if dX_matrix is None:
                 final_scores = min_igs_per_row_gpu(
-                    X_Candidate_f32, X_Train_f32, pred_vals, y_train_values, batch_size
+                    X_Candidate_f32, X_Train_f32, pred_vals, y_train_values, batch_size, self.train_chunk_size
                 )
             else:
                 # Y depends on this iteration's freshly retrained model (candidate
                 # predictions change every call), so it's never cached - recomputed
                 # in full and combined with the cached/incremental X matrix above.
-                dY_matrix = pairwise_dist_gpu(pred_vals, y_train_values, batch_size)
+                dY_matrix = pairwise_dist_gpu(pred_vals, y_train_values, batch_size, self.train_chunk_size)
                 final_scores = (dX_matrix * dY_matrix).min(dim=1).values.float().cpu().numpy()
 
         # print(f"\t+++ GreedySampling final_scores : {time.time() - StartTime} +++")

@@ -203,7 +203,7 @@ def write_csv(filename, rows, fieldnames):
     print(f"\nSaved {len(rows)} rows to {path}")
 
 
-def make_arg_parser(description, default_n_train_0=10_000, default_n_candidate_0=8_980_000):
+def make_arg_parser(description, default_n_train_0=10_000, default_n_candidate_0=8_900_000):
     """Common CLI shared by every benchmark script. Defaults now target the
     real production case: --hl-xp baseline_active_learning (the full ~9M-row
     dataset, data/database_oct-24.csv), starting from a ~10k-row train set

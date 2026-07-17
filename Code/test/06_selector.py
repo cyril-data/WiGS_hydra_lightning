@@ -82,6 +82,12 @@ def run_schedule(ctx, schedule, selector):
 
 def main():
     parser = make_arg_parser("Benchmark: GreedySamplingSelector.select() cost, cached vs uncached")
+    parser.add_argument(
+        "--batch-size", type=int, default=8192, help="candidate-axis GPU chunk size (was hardcoded to 512)"
+    )
+    parser.add_argument(
+        "--train-chunk-size", type=int, default=None, help="train-axis GPU chunk size (defaults to --batch-size)"
+    )
     args = parser.parse_args()
 
     ctx = build_context(args.hl_xp, strategy_name=args.strategy, seed=args.seed)
@@ -94,14 +100,24 @@ def main():
     slice_pool(ctx, schedule[0][1], schedule[0][2])
     ctx["hl_trainer"].fit(model=ctx["hl_model"], datamodule=ctx["hl_data"], ckpt_path=None)
 
-    cached_selector = GreedySamplingSelector(strategy=args.strategy, k_top_candidate=args.k_top)
+    cached_selector = GreedySamplingSelector(
+        strategy=args.strategy,
+        k_top_candidate=args.k_top,
+        batch_size=args.batch_size,
+        train_chunk_size=args.train_chunk_size,
+    )
     print("--- cached (default) ---")
     cached_rows = run_schedule(ctx, schedule, cached_selector)
     for r in cached_rows:
         print(f"iter {r['iteration']}: train={r['train_size']} candidate={r['candidate_size']} "
               f"-> {r['elapsed_s']:.3f}s, GPU peak {r['gpu_peak_mb']:.1f}MB")
 
-    uncached_selector = GreedySamplingSelector(strategy=args.strategy, k_top_candidate=args.k_top)
+    uncached_selector = GreedySamplingSelector(
+        strategy=args.strategy,
+        k_top_candidate=args.k_top,
+        batch_size=args.batch_size,
+        train_chunk_size=args.train_chunk_size,
+    )
     uncached_selector._dx_cache_max_bytes = 0  # force every call through the fallback path
     print("\n--- uncached (fallback path, same as before the dX-caching change) ---")
     uncached_rows = run_schedule(ctx, schedule, uncached_selector)
