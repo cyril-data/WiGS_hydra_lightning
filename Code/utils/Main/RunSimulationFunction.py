@@ -33,6 +33,9 @@ def RunSimulationFunction(
     else:
         k_top_candidate = 1
 
+    igs_shortlist_size = (add_useful_params or {}).get("igs_shortlist_size")
+    igs_batch_size = (add_useful_params or {}).get("igs_batch_size")
+
     strategies_to_run = {
         "Passive Learning": {
             "SelectorType": "PassiveLearningSelector",
@@ -52,6 +55,8 @@ def RunSimulationFunction(
             "SelectorType": "GreedySamplingSelector",
             "strategy": "iGS",
             "k_top_candidate": k_top_candidate,
+            "igs_shortlist_size": igs_shortlist_size,
+            "igs_batch_size": igs_batch_size,
         },
         "WiGS (Static w_x=0.25)": {
             "SelectorType": "WeightedGreedySamplingSelector",

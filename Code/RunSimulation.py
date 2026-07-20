@@ -78,7 +78,21 @@ def main():
     )
     parser.add_argument("--hl_xp", type=str, default=None, help="Data type for this job array.")
     parser.add_argument("--hl_worker", type=int, default=None, help="worker cpu for dataloader.")
-
+    parser.add_argument(
+        "--igs_shortlist_size",
+        type=int,
+        default=None,
+        help="P: iGS approximate-scoring shortlist size. If set, iGS switches from exact "
+        "brute-force scoring to the bounded-cost P/B-bootstrap approximation (see "
+        "GreedySamplingSelector._select_igs_approx). Unset (default) keeps exact iGS.",
+    )
+    parser.add_argument(
+        "--igs_batch_size",
+        type=int,
+        default=None,
+        help="B: picks harvested per shortlist bootstrap, only used when --igs_shortlist_size "
+        "is set. Must be < igs_shortlist_size. Defaults to min(50, igs_shortlist_size).",
+    )
     args = parser.parse_args()
 
     if len(args.strat) == 1:
@@ -153,6 +167,8 @@ def main():
             "no_cv": no_cv,
             "hl_max_epoch": args.hl_max_epoch,
             "curriculum": args.curriculum,
+            "igs_shortlist_size": args.igs_shortlist_size,
+            "igs_batch_size": args.igs_batch_size,
         },
     )
 

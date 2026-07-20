@@ -32,6 +32,7 @@ from common import (
     iteration_schedule,
     make_arg_parser,
     Measure,
+    MEASURE_FIELDS,
     print_table,
     slice_pool,
     write_csv,
@@ -103,6 +104,18 @@ def main():
         help="extra Hydra overrides for the experiment config, e.g. --override num_workers=0 "
              "(tune a single value without a new YAML)",
     )
+    parser.add_argument(
+        "--igs-shortlist-size", type=int, default=None,
+        help="P: switch iGS from exact brute-force scoring to the bounded-cost P/B-bootstrap "
+             "approximation (GreedySamplingSelector._select_igs_approx). Runs a single pass "
+             "instead of the cached-vs-uncached comparison, since that dX-dense-cache toggle "
+             "doesn't apply to the approx path (it always uses the incremental GSx-style cache).",
+    )
+    parser.add_argument(
+        "--igs-batch-size", type=int, default=None,
+        help="B: picks harvested per shortlist bootstrap, only used with --igs-shortlist-size. "
+             "Must be < igs-shortlist-size. Defaults to min(50, igs-shortlist-size).",
+    )
     args = parser.parse_args()
     dtype = torch.float32 if args.fp32 else torch.float16
 
@@ -117,6 +130,27 @@ def main():
     # we only need it populated once since we're not re-benchmarking training.
     slice_pool(ctx, schedule[0][1], schedule[0][2])
     ctx["hl_trainer"].fit(model=ctx["hl_model"], datamodule=ctx["hl_data"], ckpt_path=None)
+
+    if args.igs_shortlist_size is not None:
+        approx_selector = GreedySamplingSelector(
+            strategy=args.strategy,
+            k_top_candidate=args.k_top,
+            batch_size=args.batch_size,
+            train_chunk_size=args.train_chunk_size,
+            dtype=dtype,
+            profile_xy=args.profile_xy,
+            igs_shortlist_size=args.igs_shortlist_size,
+            igs_batch_size=args.igs_batch_size,
+        )
+        print(f"--- approx iGS (P={args.igs_shortlist_size}, B={approx_selector.igs_batch_size}) ---")
+        approx_rows = run_schedule(ctx, schedule, approx_selector)
+        for r in approx_rows:
+            print(f"iter {r['iteration']}: train={r['train_size']} candidate={r['candidate_size']} "
+                  f"-> {r['elapsed_s']:.3f}s, GPU peak {r['gpu_peak_mb']:.1f}MB")
+        print()
+        print_table(approx_rows, ["iteration", "train_size", "candidate_size", *MEASURE_FIELDS])
+        write_csv("06_selector_approx.csv", approx_rows, ["iteration", "train_size", "candidate_size", *MEASURE_FIELDS])
+        return
 
     cached_selector = GreedySamplingSelector(
         strategy=args.strategy,
