@@ -71,16 +71,20 @@ def iteration_schedule(n_train_0, n_candidate_0, k_top, n_iterations=None):
     return schedule
 
 
-def build_context(hl_xp, strategy_name="iGS", seed=0):
+def build_context(hl_xp, strategy_name="iGS", seed=0, extra_overrides=None):
     """Builds the trainer/model/datamodule/df_full/df_test pool once. Does NOT
     perform the train/candidate split itself - each benchmark script slices
     its own (df_Train, df_Candidate) of the desired sizes out of df_full via
     slice_pool(), so the same pool can be reused across an entire schedule
-    without rebuilding the datamodule each time."""
+    without rebuilding the datamodule each time.
+
+    extra_overrides: optional list of Hydra override strings (e.g.
+    ["num_workers=0"]) to tune a single experiment-config value without
+    needing a new YAML - passed straight through to get_hl_cfg."""
     np.random.seed(seed)
 
     config = {"add_useful_params": {"strategy_name": strategy_name, "hl_xp": hl_xp}}
-    hl_cfg = get_hl_cfg(config)
+    hl_cfg = get_hl_cfg(config, extra_overrides=extra_overrides)
     project_root = os.environ.get("PROJECT_ROOT", os.path.join(os.getcwd(), ".."))
     hl_cfg["csv_path"] = os.path.join(f"{project_root}/../henrihost-al/", hl_cfg["csv_path"])
 

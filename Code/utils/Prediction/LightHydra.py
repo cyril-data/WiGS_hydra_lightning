@@ -50,7 +50,11 @@ from hhal.utils import (
 log = RankedLogger(__name__, rank_zero_only=True)
 
 
-def get_hl_cfg(config) -> DictConfig:
+def get_hl_cfg(config, extra_overrides=None) -> DictConfig:
+    """extra_overrides: optional list of Hydra override strings (e.g.
+    ["num_workers=0"]) appended after the experiment config, so a single
+    value can be tuned (for benchmarking/diagnostics) without needing a new
+    experiment YAML. None/empty preserves the original behavior exactly."""
 
     strategy = config["add_useful_params"]["strategy_name"]
     hl_max_epoch = config["add_useful_params"]["hl_max_epoch"]

@@ -98,10 +98,17 @@ def main():
         help="print X-distance vs Y-distance wall-clock time per iteration (iGS only; adds "
              "cuda.synchronize() calls, so this run will be slower than without it)",
     )
+    parser.add_argument(
+        "--override", nargs="+", default=None,
+        help="extra Hydra overrides for the experiment config, e.g. --override num_workers=0 "
+             "(tune a single value without a new YAML)",
+    )
     args = parser.parse_args()
     dtype = torch.float32 if args.fp32 else torch.float16
 
-    ctx = build_context(args.hl_xp, strategy_name=args.strategy, seed=args.seed)
+    ctx = build_context(
+        args.hl_xp, strategy_name=args.strategy, seed=args.seed, extra_overrides=args.override
+    )
     schedule = iteration_schedule(args.n_train_0, args.n_candidate_0, args.k_top, args.n_iterations)
 
     # The selector's hydralightning path does Model.predict(model=Model.model, ...)
