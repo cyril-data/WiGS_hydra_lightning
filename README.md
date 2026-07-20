@@ -170,118 +170,125 @@ bash Code/Cluster/4_local.sh
 
 # Optimisation and adaptation for deep learning
 
+Voici le texte avec les formules **correctement formatées en LaTeX** (les `$...$` sont conservés pour que tu puisses copier-coller directement le code LaTeX). J'ai supprimé tous les espaces superflus **à l'intérieur** des `$...$` comme demandé :
+
+---
+
+---
+
 ## Classical introduction & notation
 
 From https://arxiv.org/abs/2603.10435, greedy Sampling frames the exploration-investigation tradeoff using a “furthest nearest neighbor” logic: selecting candidates that are maximally distant from the nearest labeled point in either feature (input space) or output space (target space).
 
-Let the input space be $ \mathcal{X} $ and the output space be $ \mathcal{Y} $. At any iteration, we have a labeled training set $ D_{tr} = \{(x_i, y_i)\}_{i=1}^k $ and a large unlabeled candidate pool $ D_{cdd} = \{x_j\}_{j=k+1}^N $. A regression model $ f : \mathcal{X} \rightarrow \mathcal{Y} $ is trained on $ D_{tr} $. The goal is to select the sample $ x^* \in D_{cdd} $ that, when labeled, maximally improves the model’s predictive performance, defined practically as the reduction in generalization error across the entire domain.
+Let the input space be $\mathcal{X}$ and the output space be $\mathcal{Y}$. At any iteration, we have a labeled training set $D_{tr} = \{(x_i, y_i)\}_{i=1}^k$ and a large unlabeled candidate pool $D_{cdd} = \{x_j\}_{j=k+1}^N$. A regression model $f: \mathcal{X} \rightarrow \mathcal{Y}$ is trained on $D_{tr}$. The goal is to select the sample $x^* \in D_{cdd}$ that, when labeled, maximally improves the model’s predictive performance, defined practically as the reduction in generalization error across the entire domain.
 
 For any candidate $x_n \in D_{cdd}$ and labeled sample $(x_m, y_m) \in D_{tr}$, we define the pairwise distances:
 
-$$ 
-d_x^{nm} \equiv \|x_n - x_m\| \text{  and  }  d_y^{nm} \equiv |f(x_n) - y_m| 
+$$
+d_x^{nm} \equiv \|x_n - x_m\| \text{ and } d_y^{nm} \equiv |f(x_n) - y_m|
 $$
 
-- **Greedy Sampling on Features : GSx**, targets diversity in $ \mathcal{X} $ (exploration). GSx is model-agnostic, selecting the candidate with the maximum distance to its nearest labeled neighbor in the input space:
-$ x^*_{\text{GSx}} = \arg\max_{x_n \in D_{cdd}} d_x^n $, where $ d_x^n \equiv \min_m d_x^{nm} $.
+- **Greedy Sampling on Features: GSx**, targets diversity in $\mathcal{X}$ (exploration). GSx is model-agnostic, selecting the candidate with the maximum distance to its nearest labeled neighbor in the input space:
+$x^*_{\text{GSx}} = \arg\max_{x_n \in D_{cdd}} d_x^n$, where $d_x^n \equiv \min_m d_x^{nm}$.
 
-- **Greedy Sampling on the Output : GSy**,  targets diversity in $ \mathcal{Y} $ (investigation). GSy utilizes the current model $ f(\cdot) $ to select the candidate with the maximum prediction distance to the nearest known label:
-$ x^*_{\text{GSy}} = \arg\max_{x_n \in \mathcal{D}_{\text{cdd}}} d_y^n $, where $ d_y^n \equiv \min_m d_y^{nm} $.
+- **Greedy Sampling on the Output: GSy**, targets diversity in $\mathcal{Y}$ (investigation). GSy utilizes the current model $f(\cdot)$ to select the candidate with the maximum prediction distance to the nearest known label:
+$x^*_{\text{GSy}} = \arg\max_{x_n \in \mathcal{D}_{\text{cdd}}} d_y^n$, where $d_y^n \equiv \min_m d_y^{nm}$.
 
-- **The improved Greedy Sampling : iGS**, approach creates a balanced strategy by combining both. The final score for a candidate $ x_n $ is the minimum of the products of its pairwise distances to each labeled point, and the selection criterion is to maximize this value:
-$ x^*_{\text{iGS}} = \arg\max_{x_n \in D_{cdd}} s_{\text{iGS}}^n $, s.t. $ s_{\text{iGS}}^n = \min_m (d_x^{nm} \cdot d_y^{nm}) $.
+- **The improved Greedy Sampling: iGS**, approach creates a balanced strategy by combining both. The final score for a candidate $x_n$ is the minimum of the products of its pairwise distances to each labeled point, and the selection criterion is to maximize this value:
+$x^*_{\text{iGS}} = \arg\max_{x_n \in D_{cdd}} s_{\text{iGS}}^n$, s.t. $s_{\text{iGS}}^n = \min_m (d_x^{nm} \cdot d_y^{nm})$.
 
--  **The Weighted improved Greedy Sampling : WiGS**, framework recasts the selection criterion as a flexible, additive combination of scores. First, to ensure the input-space exploration $d_x^{nm}$ and output-space investigation $d_y^{nm}$ metrics are comparable, we apply a normalization function $\phi(\cdot)$ to ensure the raw distances have comparable magnitudes.
-  WiGS computes a weighted additive distance between each candidate and every point in the labeled set using a dynamic weight, $w(t)_x \in [0, 1]$. The final score for a candidate $x_n$ is the minimum of these combined scores taken over all labeled points:
-  $$
-  s_{\text{WiGS}}^n = \min_m \left[ w(t)_x \phi(d_x^{nm}) + (1 - w(t)_x) \phi(d_y^{nm}) \right] 
-  $$
-  The candidate observation with the highest score is selected for labeling:
-  $ x^*_{\text{WiGS}} = \arg\max_{x_n \in D_{cdd}} s_{\text{WiGS}}^n $.
-  For Reinforcement Learning (RL) $w(t)$ adaptation, RL can be Multi-Armed Bandits (WiGS-MAB) or Soft ActorCritic (WiGS-SAC). These methods impose a costly Cross Val computation on trainset $D_{tr}$.   
+- **The Weighted improved Greedy Sampling: WiGS**, framework recasts the selection criterion as a flexible, additive combination of scores. First, to ensure the input-space exploration $d_x^{nm}$ and output-space investigation $d_y^{nm}$ metrics are comparable, we apply a normalization function $\phi(\cdot)$ to ensure the raw distances have comparable magnitudes.
+WiGS computes a weighted additive distance between each candidate and every point in the labeled set using a dynamic weight, $w(t)_x \in [0, 1]$. The final score for a candidate $x_n$ is the minimum of these combined scores taken over all labeled points:
+$$
+s_{\text{WiGS}}^n = \min_m \left[ w(t)_x \phi(d_x^{nm}) + (1 - w(t)_x) \phi(d_y^{nm}) \right]
+$$
+The candidate observation with the highest score is selected for labeling:
+$x^*_{\text{WiGS}} = \arg\max_{x_n \in D_{cdd}} s_{\text{WiGS}}^n$.
+For Reinforcement Learning (RL) $w(t)$ adaptation, RL can be Multi-Armed Bandits (WiGS-MAB) or Soft ActorCritic (WiGS-SAC). These methods impose a costly Cross Val computation on trainset $D_{tr}$.
 
+---
 
-## Gready Sampling adaptation for big dataset 
+---
 
-For big dataset (ie several millions) with *multi dimensionnal* input space $ \mathcal{X} $ and output space $ \mathcal{Y} $, it is numerically very costly (or unfeaseable) to compute front-scratch pairwise distances from all candidates on all train samples (on input or output). 
+## Greedy Sampling adaptation for big dataset
 
-Even with memory optimisation to compute distances in GPU between **batch** candidates and **chunk** of train samples, the cost in GPU/CPU time is very high.
+For big dataset (i.e., several millions) with *multi-dimensional* input space $\mathcal{X}$ and output space $\mathcal{Y}$, it is numerically very costly (or unfeasible) to compute from-scratch pairwise distances from all candidates on all train samples (on input or output).
 
-We test several optimisation methods: 
-- **K-TOP** : Instead of select the best candidate, we select simply k-top candidates : for example in *GSx* : 
-  $$
-  \arg\max_{k} \left( d_n^x \right)_{x_n \in D_{cdd}}$$
-  => but this is not numerically sufficient, and may lead to select "clustered" candidates, which are not ideal to improve data dispersion. 
+Even with memory optimization to compute distances in GPU between **batch** candidates and **chunk** of train samples, the cost in GPU/CPU time is very high.
 
-- **NO-CV** : We avoid all methods with Cross Val computation on trainset $D_{tr}$ (like WiGS-MAB or WiGS-SAC)
+We test several optimization methods:
+- **K-TOP**: Instead of selecting the best candidate, we simply select k-top candidates: for example in *GSx*:
+$$
+\arg\max_{k} \left( d_n^x \right)_{x_n \in D_{cdd}}
+$$
+=> but this is not numerically sufficient, and may lead to selecting "clustered" candidates, which are not ideal to improve data dispersion.
 
-- *RandPreSelect* : We try to randomly pre-select candidates (for instance take 10000 random samples in Candidates pool and compute *GSx* on them) before the computations of min distance and argmax, but we never get improvement in comparision to pure random selection.
+- **NO-CV**: We avoid all methods with Cross Val computation on trainset $D_{tr}$ (like WiGS-MAB or WiGS-SAC).
 
-- **CURRICULUM** : For each candidate selection, instead of reaching a full convergence with models where weights (paramters) are initialized for each select iteration, we choose a curiculum way : only 1 training epoch and we keep the model weights through candidate selection.
+- *RandPreSelect*: We try to randomly pre-select candidates (for instance take 10000 random samples in Candidates pool and compute *GSx* on them) before the computations of min distance and argmax, but we never get improvement in comparison to pure random selection.
 
-At this stage K-TOP + NO-CV (GSx-y or iGS) + CURRICULUM are not numericaly sufficient to get acceptable computation times. 
+- **CURRICULUM**: For each candidate selection, instead of reaching a full convergence with models where weights (parameters) are initialized for each select iteration, we choose a curriculum way: only 1 training epoch and we keep the model weights through candidate selection.
 
-The bottle neck is the distance computation. We must as far as possible limit the number of distance calculation.  
+At this stage K-TOP + NO-CV (GSx-y or iGS) + CURRICULUM are not numerically sufficient to get acceptable computation times.
 
+The bottleneck is the distance computation. We must as far as possible limit the number of distance calculations.
+
+---
 ### Memory management for distance calculations
 
-One way to do that is to keep in memory for each candidate his minimum distance to the current train set. It is at most a vector of size equal to the dataset.
+One way to do that is to keep in memory for each candidate its minimum distance to the current train set. It is at most a vector of size equal to the dataset.
 
-
-To keep it simple, we start with GSx : 
+To keep it simple, we start with GSx:
 $$
-d_x^n(t) \text{ with } x_n \in D_{cdd} \text{=>  stored in memory} 
-$$
-
-For each new candidates selection $x'_n(t+1)$ such as $x_n(t+1) = x'_n(t+1) + x_n(t)$, the only distances to compute are those from these new candidates $x'_n(t+1)$, and the rest of candidates $D_{cdd} - x'_n(t+1)$  : 
-
-$$
-||x'_n(t+1), x_n||_{x_n \in D_{cdd}  - x'_n(t+1)} 
+d_x^n(t) \text{ with } x_n \in D_{cdd} \Rightarrow \text{ stored in memory}
 $$
 
-So, at the $t+1$ candidate select iteration, if we select $k$ new candidates (len($ [x'_n(t+1)] $) = $k$ ), the number of distance calculations by select iteration is : 
+For each new candidates selection $x'_n(t+1)$ such as $x_n(t+1) = x'_n(t+1) + x_n(t)$, the only distances to compute are those from these new candidates $x'_n(t+1)$, and the rest of candidates $D_{cdd} - x'_n(t+1)$:
 $$
-Cost_{distance} = [k * N_{tr}] \text{ instead of } [N_{cdd} * N_{tr}]$$
-with $N_{cdd}, N_{tr}$ the current length of candidate $D_{cdd}$ and train set $D_{tr}$ (at the candidate select iteration $t+1$). 
-
-For instance in the worst case where $N_{cdd} = N_{tr} = (\text{size} \mathcal{X}) / 2 $, we compute with memory management $k * (\text{size} \mathcal{X}) / 2$ distances instead of  $(\text{size} \mathcal{X})^2 / 4$.  
-
-
-### Improve K-TOP selection 
-
-As we said, straight k-top selection could lead to select "clustered" candidates, which are not ideal to improve data dispersion. 
-
-As we reduce square complexity into linear (in terms of distance calculations), we can improve the k-top GSx selection by spliting into $p$ batch the k-top GSx candidate selection, and update the train set within the candidate select iteration (ie without any update of the model). 
-
-The distance cost is still linear : 
-
-$$
-Cost_{distance} = [k * p * N_{tr}] 
+\|x'_n(t+1), x_n\|_{x_n \in D_{cdd} - x'_n(t+1)}
 $$
 
-This improvement limits the case of selecting clusters of k-top candidates. 
+So, at the $t+1$ candidate select iteration, if we select $k$ new candidates ($\text{len}([x'_n(t+1)]) = k$), the number of distance calculations by select iteration is:
+$$
+\text{Cost}_{\text{distance}} = [k \cdot N_{tr}] \text{ instead of } [N_{cdd} \cdot N_{tr}]
+$$
+with $N_{cdd}, N_{tr}$ the current length of candidate $D_{cdd}$ and train set $D_{tr}$ (at the candidate select iteration $t+1$).
 
-### Adapt optimisation for IGs
+For instance in the worst case where $N_{cdd} = N_{tr} = (\text{size } \mathcal{X}) / 2$, we compute with memory management $k \cdot (\text{size } \mathcal{X}) / 2$ distances instead of $(\text{size } \mathcal{X})^2 / 4$.
 
-In terms of distance calculations in output space, we can't keep $d_y^n$ because the model prediction on candidates $f(x_n)$ change through candidate select iterations. The memory management to reduce distance cost can not be directly applied.
+---
+### Improve K-TOP selection
 
-But to keep the benefit of ouput space diversity in candidate selection (GSy or IGs), we propose to calculate $d_y^n$ only on the k-top GSx batch. 
+As we said, straight k-top selection could lead to select "clustered" candidates, which are not ideal to improve data dispersion.
 
-In other words, we first select $x_p$ candidates on input distance  
+As we reduce square complexity into linear (in terms of distance calculations), we can improve the k-top GSx selection by splitting into $p$ batches the k-top GSx candidate selection, and update the train set within the candidate select iteration (i.e., without any update of the model).
+
+The distance cost is still linear:
+$$
+\text{Cost}_{\text{distance}} = [k \cdot p \cdot N_{tr}]
+$$
+
+This improvement limits the case of selecting clusters of k-top candidates.
+
+---
+### Adapt optimization for IGs
+
+In terms of distance calculations in output space, we can't keep $d_y^n$ because the model prediction on candidates $f(x_n)$ changes through candidate select iterations. The memory management to reduce distance cost cannot be directly applied.
+
+But to keep the benefit of output space diversity in candidate selection (GSy or IGs), we propose to calculate $d_y^n$ only on the k-top GSx batch.
+
+In other words, we first select $x_p$ candidates on input distance:
 $$
 x_p = \arg\max_{p} \left( d_n^x \right)_{x_n \in D_{cdd}}
 $$
 
-On these $p$ candidates, we compute the output distance  and select $b$ with IGS distance : 
+On these $p$ candidates, we compute the output distance and select $b$ with IGS distance:
 $$
-\arg\max_{b} \left( d_n^y . d_n^y \right)_{x_p}
+\arg\max_{b} \left( d_n^y \cdot d_n^y \right)_{x_p}
 $$
 
-
-The cost distance is still linear 
+The cost distance is still linear:
 $$
-Cost_{distance} = [k * p * b * N_{tr}] 
+\text{Cost}_{\text{distance}} = [k \cdot p \cdot b \cdot N_{tr}]
 $$
-The cost of prediction $f(x)$ on $p$ candidates is negligable. 
-
-
+The cost of prediction $f(x)$ on $p$ candidates is negligible.
