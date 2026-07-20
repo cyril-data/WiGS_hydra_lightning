@@ -242,7 +242,6 @@ def data_fit_from_ALdata_and_hl_data(al_dataframe, hl_dataset):
         corresponding_labels_for_df_x = hl_dataset.index[positions_in_hl_dataset]
 
         # i = 0 est la position DANS LE SUBSET, celle qui correspond à label_0.
-        # C'est cette position qu'il faut passer à __getitem__, pas un résultat de get_loc.
         subset_position = 0
 
         label_0 = corresponding_labels_for_df_x[subset_position]
@@ -252,9 +251,15 @@ def data_fit_from_ALdata_and_hl_data(al_dataframe, hl_dataset):
             al_dataframe.loc[label_0, "_SF2_TemperatureEquilibriumMax"],
         )
 
+        # hl_dataset[i] now expects a REAL position into data_x directly, not
+        # a subset position - HHALSubsetDataset.__getitem__ no longer does
+        # that translation itself (DynamicIndexSampler does it once in the
+        # main process instead, for DataLoader use - see hhal_dataset.py).
+        # Translate explicitly here since this call bypasses the DataLoader.
+        real_position = hl_dataset.indices[subset_position]
         hl_data_y_reg_0, hl_data_y_reg_12 = (
-            hl_dataset[subset_position]["y_reg"][0],
-            hl_dataset[subset_position]["y_reg"][12],
+            hl_dataset[real_position]["y_reg"][0],
+            hl_dataset[real_position]["y_reg"][12],
         )
     except Exception as e:
         print(f"""

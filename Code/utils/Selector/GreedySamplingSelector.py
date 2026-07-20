@@ -239,6 +239,8 @@ class GreedySamplingSelector:
         train_chunk_size: int = None,
         dtype: torch.dtype = torch.float16,
         profile_xy: bool = False,
+        igs_shortlist_size: int = None,
+        igs_batch_size: int = None,
         **kwargs,
     ):
         """
@@ -268,6 +270,25 @@ class GreedySamplingSelector:
                 that block CUDA's ability to overlap work, so this makes
                 select() itself slower - only turn it on for benchmarking,
                 never for production runs.
+            igs_shortlist_size (int, optional): P. If set, iGS switches from
+                the exact O(n_candidate x n_train) algorithm to an
+                approximate one: only the top-P candidates by dX (cheap,
+                exact, incremental - same cache GSx uses) ever get a
+                prediction or an exact dX*dY score. Exact iGS is
+                fundamentally too expensive at multi-million-row candidate
+                pools; this bounds the cost to P candidates per bootstrap
+                regardless of how large the candidate pool is. None (default)
+                preserves the exact algorithm unchanged.
+            igs_batch_size (int, optional): B, only used when
+                igs_shortlist_size is set. Number of picks harvested from
+                each P-shortlist (via the existing O(1)-per-round incremental
+                pick loop) before a fresh P-shortlist is drawn. Must be < P
+                for the exact dX*dY scoring to actually matter - if B == P
+                the whole shortlist gets picked regardless of score order,
+                which silently degenerates iGS into GSx (X-diversity only).
+                Smaller B stays closer to scoring every single pick (like
+                the exact algorithm) at the cost of more bootstraps; defaults
+                to min(50, igs_shortlist_size).
             **kwargs: Accepts and ignores additional keyword arguments for consistency.
         """
         if strategy not in ["GSx", "GSy", "iGS"]:
@@ -282,6 +303,18 @@ class GreedySamplingSelector:
         self.train_chunk_size = train_chunk_size if train_chunk_size is not None else batch_size
         self.dtype = dtype
         self.profile_xy = profile_xy
+        self.igs_shortlist_size = igs_shortlist_size
+        self.igs_batch_size = (
+            igs_batch_size
+            if igs_batch_size is not None
+            else (min(50, igs_shortlist_size) if igs_shortlist_size is not None else None)
+        )
+        if self.igs_shortlist_size is not None and self.igs_batch_size >= self.igs_shortlist_size:
+            raise ValueError(
+                f"igs_batch_size ({self.igs_batch_size}) must be < igs_shortlist_size "
+                f"({self.igs_shortlist_size}) - otherwise every shortlisted candidate gets "
+                f"picked regardless of score, which degenerates iGS into plain GSx."
+            )
 
         # Persists across select() calls within one AL run (a fresh selector is
         # created per replication/strategy in LearningProcedure, so this never
@@ -411,6 +444,194 @@ class GreedySamplingSelector:
         }
         return dX
 
+    def _raw_forward_predict(self, Model, X_np):
+        """Raw model forward pass, bypassing Trainer.predict()'s DataLoader/worker
+        machinery entirely. Verified equivalent for this pipeline:
+        HHALLitModule.predict_step just calls self.net(x) under
+        model.eval()+no_grad, with no denormalization or dict transform -
+        Trainer.predict() does nothing else on top. Only worth it because the
+        approximate iGS path below calls this many times per select() call on
+        small (P-row) batches - the DataLoader construction/collation/worker
+        dispatch cost that's negligible once per select() call would dominate
+        if paid once per bootstrap instead.
+        """
+        model = Model.model
+        was_training = model.training
+        model.eval()
+        try:
+            with torch.no_grad():
+                x = torch.from_numpy(X_np).to(model.device, dtype=torch.float32)
+                out = model.net(x)
+        finally:
+            if was_training:
+                model.train()
+        return out["y_reg"].float().cpu().numpy()
+
+    def _select_igs_approx(
+        self, df_Candidate, df_Train, Model, X_Candidate_f32, X_Train_f32, y_Train, batch_size
+    ):
+        """Approximate iGS for candidate pools too large to score exactly.
+
+        Exact iGS scores every candidate against the full train set each
+        select() call - O(n_candidate x n_train), the actual bottleneck at
+        multi-million-row scale. Here, only the top-P candidates by dX (cheap,
+        exact, incremental - the same running-min cache GSx uses) ever get a
+        prediction or an exact dX*dY score; that score computation itself
+        stays exact for whichever candidates make the cut. The approximation
+        is entirely in which N-P candidates never get a chance to be scored,
+        not in how the scored ones are ranked.
+
+        Picks are harvested in batches of B (< P) from each P-shortlist via
+        the same O(1)-per-round incremental delta trick the exact algorithm's
+        sequential selection already uses, before a fresh P-shortlist is
+        drawn - so the expensive P-vs-train pass runs ceil(k_top/B) times per
+        select() call, not once per pick and not once over the full pool.
+        Predictions are cached per candidate for the lifetime of this call
+        (the model is fixed across all bootstraps within one select() call),
+        so candidates that stay shortlisted across consecutive bootstraps -
+        the common case, since each bootstrap only removes B candidates from
+        the whole pool - don't pay the forward-pass cost twice.
+        """
+        P = self.igs_shortlist_size
+        B = self.igs_batch_size
+
+        N = len(X_Candidate_f32)
+        top_k_number = min(self.k_top_candidate, N)
+        if top_k_number == 0:
+            return []
+
+        StartTime = time.time()
+        dX_min_np = self._get_gsx_min_dist(
+            df_Candidate.index, df_Train.index, X_Candidate_f32, X_Train_f32, batch_size
+        )
+        print(f"\t+++ GreedySampling approx-iGS dX_min bootstrap : {time.time() - StartTime} +++")
+
+        remaining_iloc = torch.arange(N, device=DEVICE)
+        dX_min_t = torch.from_numpy(dX_min_np).to(DEVICE)
+        X_remaining = torch.from_numpy(X_Candidate_f32).to(DEVICE)
+        X_sq_remaining = (X_remaining**2).sum(dim=1)
+
+        pred_cache = {}
+        y_train_cols = None
+        y_train_values = None
+
+        selected_iloc = []
+        n_picked = 0
+        n_bootstraps = 0
+        t_predict = 0.0
+        t_score = 0.0
+        t_pick = 0.0
+
+        while n_picked < top_k_number:
+            n_bootstraps += 1
+            n_remaining = remaining_iloc.shape[0]
+            p = min(P, n_remaining)
+            b = min(B, top_k_number - n_picked, p)
+
+            topp_pos = torch.topk(dX_min_t, p).indices
+            topp_iloc = remaining_iloc[topp_pos]
+            topp_iloc_cpu = topp_iloc.cpu().tolist()
+
+            _t0 = time.time()
+            miss_iloc = [i for i in topp_iloc_cpu if i not in pred_cache]
+            if miss_iloc:
+                miss_X = X_Candidate_f32[miss_iloc]
+                y_reg_np = self._raw_forward_predict(Model, miss_X)
+                if y_train_cols is None:
+                    num_reg = y_reg_np.shape[1]
+                    y_train_cols = y_Train.columns.to_list()[:num_reg]
+                    y_train_values = y_Train[y_train_cols].values.astype(np.float32)
+                for k, i in enumerate(miss_iloc):
+                    pred_cache[i] = y_reg_np[k]
+            t_predict += time.time() - _t0
+
+            pred_P_np = np.stack([pred_cache[i] for i in topp_iloc_cpu])
+            X_P_np = X_Candidate_f32[topp_iloc_cpu]
+
+            _t0 = time.time()
+            scores_P = min_igs_per_row_gpu(
+                X_P_np, X_Train_f32, pred_P_np, y_train_values,
+                batch_size, self.train_chunk_size, self.dtype,
+            )
+            t_score += time.time() - _t0
+
+            _t0 = time.time()
+            running_scores = torch.from_numpy(scores_P).to(DEVICE)
+            X_p_t = torch.from_numpy(X_P_np).to(DEVICE)
+            X_p_sq = (X_p_t**2).sum(dim=1)
+            y_p_t = torch.from_numpy(pred_P_np).to(DEVICE)
+            y_p_sq = (y_p_t**2).sum(dim=1)
+            local_remaining = torch.arange(p, device=DEVICE)
+
+            picked_local = []
+            for r in range(b):
+                pick_pos = int(torch.argmax(running_scores))
+                picked_local.append(int(local_remaining[pick_pos]))
+
+                if r == b - 1:
+                    break
+
+                new_ref_X = X_p_t[pick_pos].clone()
+                new_ref_X_sq = X_p_sq[pick_pos].clone()
+                new_ref_Y = y_p_t[pick_pos].clone()
+                new_ref_Y_sq = y_p_sq[pick_pos].clone()
+
+                last = local_remaining.shape[0] - 1
+                if pick_pos != last:
+                    local_remaining[pick_pos] = local_remaining[last]
+                    running_scores[pick_pos] = running_scores[last]
+                    X_p_t[pick_pos] = X_p_t[last]
+                    X_p_sq[pick_pos] = X_p_sq[last]
+                    y_p_t[pick_pos] = y_p_t[last]
+                    y_p_sq[pick_pos] = y_p_sq[last]
+                local_remaining = local_remaining[:last]
+                running_scores = running_scores[:last]
+                X_p_t = X_p_t[:last]
+                X_p_sq = X_p_sq[:last]
+                y_p_t = y_p_t[:last]
+                y_p_sq = y_p_sq[:last]
+
+                dX = (X_p_sq + new_ref_X_sq - 2.0 * (X_p_t @ new_ref_X)).clamp_(min=0).sqrt_()
+                dY = (y_p_sq + new_ref_Y_sq - 2.0 * (y_p_t @ new_ref_Y)).clamp_(min=0).sqrt_()
+                running_scores = torch.minimum(running_scores, dX * dY)
+
+            picked_topp_positions = topp_pos[torch.tensor(picked_local, device=DEVICE)]
+            picked_global_iloc = remaining_iloc[picked_topp_positions]
+            selected_iloc.extend(picked_global_iloc.cpu().tolist())
+            n_picked += len(picked_local)
+
+            # Drop the picked candidates from the outer remaining pool, then
+            # fold their X in as new dX reference points for everyone still
+            # left - keeps later bootstraps diverse relative to THIS call's
+            # own picks, not just the real train set (same property the
+            # exact algorithm has via its per-pick reference-set growth).
+            keep_mask = torch.ones(remaining_iloc.shape[0], dtype=torch.bool, device=DEVICE)
+            keep_mask[picked_topp_positions] = False
+            remaining_iloc = remaining_iloc[keep_mask]
+            dX_min_t = dX_min_t[keep_mask]
+            X_remaining = X_remaining[keep_mask]
+            X_sq_remaining = X_sq_remaining[keep_mask]
+
+            if remaining_iloc.shape[0] > 0:
+                picked_X_np = X_Candidate_f32[picked_global_iloc.cpu().numpy()]
+                picked_X_t = torch.from_numpy(picked_X_np).to(DEVICE)
+                picked_X_sq = (picked_X_t**2).sum(dim=1)
+                cross = X_remaining @ picked_X_t.T
+                dist_sq = (
+                    X_sq_remaining.unsqueeze(1) + picked_X_sq.unsqueeze(0) - 2.0 * cross
+                ).clamp_(min=0)
+                dX_min_t = torch.minimum(dX_min_t, dist_sq.sqrt_().min(dim=1).values)
+
+            t_pick += time.time() - _t0
+
+        print(
+            f"\t+++ GreedySampling approx-iGS : {n_bootstraps} bootstraps, "
+            f"predict={t_predict:.3f}s score={t_score:.3f}s pick={t_pick:.3f}s "
+            f"({len(pred_cache)} unique predictions for {top_k_number} picks) +++"
+        )
+
+        return selected_iloc
+
     ### Select Observation(s) ###
     def select(
         self,
@@ -461,9 +682,26 @@ class GreedySamplingSelector:
         X_Candidate_f32 = X_Candidate.values.astype(np.float32)
         X_Train_f32 = X_Train.values.astype(np.float32)
 
-        select_ytrain_cols = None
-
         batch_size = self.batch_size
+
+        if self.strategy == "iGS" and self.igs_shortlist_size is not None:
+            if (
+                SimulationConfigInputUpdated is None
+                or SimulationConfigInputUpdated.get("hl_trainer") is None
+            ):
+                raise NotImplementedError(
+                    "Approximate iGS (igs_shortlist_size set) only supports the LightHydra "
+                    "(hl_trainer) prediction path - it needs direct access to the underlying "
+                    "LightningModule for a raw forward pass, which the plain Model.predict() "
+                    "fallback doesn't provide."
+                )
+            best_candidate_iloc = self._select_igs_approx(
+                df_Candidate, df_Train, Model, X_Candidate_f32, X_Train_f32, y_Train, batch_size
+            )
+            IndexRecommendation = df_Candidate.iloc[best_candidate_iloc].index.to_list()
+            return {"IndexRecommendation": IndexRecommendation}
+
+        select_ytrain_cols = None
 
         # print(f"\t+++ GreedySampling #1 : {time.time() - StartTime} +++")
 
