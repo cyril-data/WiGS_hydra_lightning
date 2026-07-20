@@ -492,14 +492,21 @@ class GreedySamplingSelector:
                 else:
                     hl_data = SimulationConfigInputUpdated["hl_data"]
 
+                    _t_sub = time.time()
                     candidate_labels = X_Candidate.index.tolist()
                     hl_data.pred_data.update_indices(candidate_labels)
+                    print(f"\t\t--- update_indices: {time.time() - _t_sub:.3f}s ---")
 
+                    _t_sub = time.time()
                     y_pred = Model.predict(model=Model.model, dataloaders=hl_data)
+                    print(f"\t\t--- Model.predict(): {time.time() - _t_sub:.3f}s ---")
 
+                    _t_sub = time.time()
                     y_pred, select_ytrain_cols = hl_y_pred_pd_to_tensor(
                         y_pred, y_Train.columns.to_list(), X_Candidate.index
                     )
+                    print(f"\t\t--- hl_y_pred_pd_to_tensor: {time.time() - _t_sub:.3f}s ---")
+
                     # restrain only on regression
                     Predictions = y_pred[select_ytrain_cols].values
             else:
@@ -642,21 +649,37 @@ class GreedySamplingSelector:
                     break  # last pick - no further round needs an updated reference set
 
                 if self.strategy in ("GSx", "iGS"):
-                    new_ref_X = X_remaining[pick_pos]
-                    new_ref_X_sq = X_sq[pick_pos]
+                    new_ref_X = X_remaining[pick_pos].clone()
+                    new_ref_X_sq = X_sq[pick_pos].clone()
                 if self.strategy in ("GSy", "iGS"):
-                    new_ref_Y = y_pred_remaining[pick_pos]
-                    new_ref_Y_sq = y_sq[pick_pos]
+                    new_ref_Y = y_pred_remaining[pick_pos].clone()
+                    new_ref_Y_sq = y_sq[pick_pos].clone()
 
-                keep = torch.ones(remaining_iloc.shape[0], dtype=torch.bool, device=DEVICE)
-                keep[pick_pos] = False
-                remaining_iloc = remaining_iloc[keep]
-                running_scores = running_scores[keep]
-                X_remaining = X_remaining[keep]
-                X_sq = X_sq[keep]
+                # Remove the picked row in O(1) instead of O(N_remaining): swap it
+                # with the last row, then truncate with a plain slice. Order among
+                # the remaining candidates doesn't matter to this algorithm, and
+                # tensor[:-1] is a zero-copy view for basic (non-boolean) slicing,
+                # unlike tensor[keep] which materializes a full new array every
+                # round - at k_top rounds over an N-row candidate pool that
+                # boolean-mask version was O(k_top x N) just for bookkeeping, on
+                # top of the O(k_top x N) that's actually unavoidable for the
+                # delta-distance computation below.
+                last = remaining_iloc.shape[0] - 1
+                if pick_pos != last:
+                    remaining_iloc[pick_pos] = remaining_iloc[last]
+                    running_scores[pick_pos] = running_scores[last]
+                    X_remaining[pick_pos] = X_remaining[last]
+                    X_sq[pick_pos] = X_sq[last]
+                    if pred_vals is not None:
+                        y_pred_remaining[pick_pos] = y_pred_remaining[last]
+                        y_sq[pick_pos] = y_sq[last]
+                remaining_iloc = remaining_iloc[:last]
+                running_scores = running_scores[:last]
+                X_remaining = X_remaining[:last]
+                X_sq = X_sq[:last]
                 if pred_vals is not None:
-                    y_pred_remaining = y_pred_remaining[keep]
-                    y_sq = y_sq[keep]
+                    y_pred_remaining = y_pred_remaining[:last]
+                    y_sq = y_sq[:last]
 
                 if self.strategy == "GSx":
                     delta = (
