@@ -505,7 +505,7 @@ class GreedySamplingSelector:
             else:
                 Predictions = Model.predict(X_Candidate)
 
-        # print(f"\t+++ GreedySampling Prediction on candidates : {time.time() - StartTime} +++")
+        print(f"\t+++ GreedySampling Prediction on candidates : {time.time() - StartTime} +++")
 
         if select_ytrain_cols is not None:
             y_Train = y_Train[select_ytrain_cols]
@@ -586,7 +586,7 @@ class GreedySamplingSelector:
                     )
                 final_scores = (dX_matrix * dY_matrix).min(dim=1).values.float().cpu().numpy()
 
-        # print(f"\t+++ GreedySampling final_scores : {time.time() - StartTime} +++")
+        print(f"\t+++ GreedySampling final_scores : {time.time() - StartTime} +++")
 
         ## 4. Sequential (greedy) top-k selection with incremental score updates ##
         # True greedy sampling (Wu, Lin & Huang 2018) picks one candidate at a time and
@@ -687,7 +687,7 @@ class GreedySamplingSelector:
 
             best_candidate_iloc = np.array(selected_iloc)
 
-        # print(f"\t+++ GreedySampling sequential selection : {time.time() - StartTime} +++")
+        print(f"\t+++ GreedySampling sequential selection : {time.time() - StartTime} +++")
 
         ## Output ##
         IndexRecommendation = df_Candidate.iloc[best_candidate_iloc].index.to_list()
