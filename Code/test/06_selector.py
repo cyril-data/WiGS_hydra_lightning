@@ -25,6 +25,8 @@ Usage (run from Code/):
     python test/06_selector.py --hl-xp baseline_active_learning_local_small
 """
 
+import torch
+
 from common import (
     build_context,
     iteration_schedule,
@@ -88,7 +90,16 @@ def main():
     parser.add_argument(
         "--train-chunk-size", type=int, default=None, help="train-axis GPU chunk size (defaults to --batch-size)"
     )
+    parser.add_argument(
+        "--fp32", action="store_true", help="disable fp16 for the distance matmuls (default: fp16 on)"
+    )
+    parser.add_argument(
+        "--profile-xy", action="store_true",
+        help="print X-distance vs Y-distance wall-clock time per iteration (iGS only; adds "
+             "cuda.synchronize() calls, so this run will be slower than without it)",
+    )
     args = parser.parse_args()
+    dtype = torch.float32 if args.fp32 else torch.float16
 
     ctx = build_context(args.hl_xp, strategy_name=args.strategy, seed=args.seed)
     schedule = iteration_schedule(args.n_train_0, args.n_candidate_0, args.k_top, args.n_iterations)
@@ -105,6 +116,8 @@ def main():
         k_top_candidate=args.k_top,
         batch_size=args.batch_size,
         train_chunk_size=args.train_chunk_size,
+        dtype=dtype,
+        profile_xy=args.profile_xy,
     )
     print("--- cached (default) ---")
     cached_rows = run_schedule(ctx, schedule, cached_selector)
@@ -117,6 +130,8 @@ def main():
         k_top_candidate=args.k_top,
         batch_size=args.batch_size,
         train_chunk_size=args.train_chunk_size,
+        dtype=dtype,
+        profile_xy=args.profile_xy,
     )
     uncached_selector._dx_cache_max_bytes = 0  # force every call through the fallback path
     print("\n--- uncached (fallback path, same as before the dX-caching change) ---")

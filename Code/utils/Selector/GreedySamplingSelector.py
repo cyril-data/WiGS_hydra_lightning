@@ -16,17 +16,23 @@ import torch
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def min_dist_per_row_gpu(candidates_np, ref_np, batch_size, train_chunk_size=None):
+def min_dist_per_row_gpu(candidates_np, ref_np, batch_size, train_chunk_size=None, dtype=torch.float16):
     """
     Pour chaque ligne de `candidates_np`, calcule la distance euclidienne minimale
     par rapport à toutes les lignes de `ref_np`, en GPU et par batchs (memory-efficient).
     Utilisé pour GSx (features) et GSy (target/predictions).
+
+    dtype controls the precision of the bulk matmul only (the expensive part,
+    where fp16 gets much higher tensor-core throughput) - squared norms and the
+    post-matmul add/clamp/sqrt arithmetic are always done in fp32 to avoid
+    compounding precision loss in the cheap elementwise ops. Pass dtype=torch.float32
+    to disable the fp16 path entirely.
     """
     if train_chunk_size is None:
         train_chunk_size = batch_size
 
-    ref_t = torch.from_numpy(ref_np).to(DEVICE).float()
-    ref_sq = (ref_t**2).sum(dim=1)
+    ref_t = torch.from_numpy(ref_np).to(DEVICE).to(dtype)
+    ref_sq = (ref_t.float() ** 2).sum(dim=1)
     n_ref = ref_t.shape[0]
 
     n = len(candidates_np)
@@ -37,19 +43,20 @@ def min_dist_per_row_gpu(candidates_np, ref_np, batch_size, train_chunk_size=Non
             b = (
                 torch.from_numpy(candidates_np[i : i + batch_size])
                 .to(DEVICE, non_blocking=True)
-                .float()
+                .to(dtype)
             )
-            b_sq = (b**2).sum(dim=1, keepdim=True)
+            b_sq = (b.float() ** 2).sum(dim=1, keepdim=True)
 
             running_min = torch.full(
-                (b.shape[0],), float("inf"), device=DEVICE, dtype=torch.float16
+                (b.shape[0],), float("inf"), device=DEVICE, dtype=torch.float32
             )
 
             for j in range(0, n_ref, train_chunk_size):
                 ref_chunk = ref_t[j : j + train_chunk_size]
                 ref_sq_chunk = ref_sq[j : j + train_chunk_size]
 
-                dist_sq = b_sq + ref_sq_chunk.unsqueeze(0) - 2.0 * (b @ ref_chunk.T)
+                cross = (b @ ref_chunk.T).float()
+                dist_sq = b_sq + ref_sq_chunk.unsqueeze(0) - 2.0 * cross
                 dist_sq.clamp_(min=0)
                 dist = dist_sq.sqrt_()
 
@@ -64,19 +71,22 @@ def min_dist_per_row_gpu(candidates_np, ref_np, batch_size, train_chunk_size=Non
     return min_dist
 
 
-def pairwise_dist_gpu(a_np, b_np, batch_size, ref_chunk_size=None):
+def pairwise_dist_gpu(a_np, b_np, batch_size, ref_chunk_size=None, dtype=torch.float16):
     """
     Full (len(a_np), len(b_np)) euclidean distance matrix on GPU, chunked over `a_np`
     to bound peak memory. Unlike min_dist_per_row_gpu/min_igs_per_row_gpu this does NOT
     reduce over the reference axis - callers that need the per-pair values (e.g. to
     cache X-distances across AL iterations and combine them with a freshly computed
     Y-distance matrix each iteration) need the full matrix.
+
+    dtype controls the matmul precision only, same fp16-in/fp32-out rationale
+    as min_dist_per_row_gpu; the returned matrix is always float32.
     """
     if ref_chunk_size is None:
         ref_chunk_size = batch_size
 
-    b_t = torch.from_numpy(b_np).to(DEVICE).float()
-    b_sq = (b_t**2).sum(dim=1)
+    b_t = torch.from_numpy(b_np).to(DEVICE).to(dtype)
+    b_sq = (b_t.float() ** 2).sum(dim=1)
     n_b = b_t.shape[0]
     n_a = len(a_np)
 
@@ -85,14 +95,15 @@ def pairwise_dist_gpu(a_np, b_np, batch_size, ref_chunk_size=None):
     with torch.no_grad():
         for i in range(0, n_a, batch_size):
             a_chunk = (
-                torch.from_numpy(a_np[i : i + batch_size]).to(DEVICE, non_blocking=True).float()
+                torch.from_numpy(a_np[i : i + batch_size]).to(DEVICE, non_blocking=True).to(dtype)
             )
-            a_sq = (a_chunk**2).sum(dim=1, keepdim=True)
+            a_sq = (a_chunk.float() ** 2).sum(dim=1, keepdim=True)
 
             for j in range(0, n_b, ref_chunk_size):
                 b_chunk = b_t[j : j + ref_chunk_size]
                 b_sq_chunk = b_sq[j : j + ref_chunk_size]
-                dist_sq = a_sq + b_sq_chunk.unsqueeze(0) - 2.0 * (a_chunk @ b_chunk.T)
+                cross = (a_chunk @ b_chunk.T).float()
+                dist_sq = a_sq + b_sq_chunk.unsqueeze(0) - 2.0 * cross
                 dist_sq.clamp_(min=0)
                 out[i : i + a_chunk.shape[0], j : j + b_chunk.shape[0]] = dist_sq.sqrt_()
 
@@ -106,20 +117,34 @@ def min_igs_per_row_gpu(
     Y_train_np,
     batch_size,
     train_chunk_size=None,
+    dtype=torch.float16,
+    profile=False,
 ):
     """
     Pour chaque ligne candidate, calcule min_m( d_X(n,m) * d_Y(n,m) ) sur les points
     d'entraînement m, en GPU et par batchs. Utilisé pour la stratégie iGS.
+
+    dtype controls the matmul precision only (see min_dist_per_row_gpu's
+    docstring for the fp16-in/fp32-out rationale); pass torch.float32 to
+    disable it.
+
+    If profile=True, also returns a dict {"t_x": seconds, "t_y": seconds}
+    breaking down time spent on the X-distance vs Y-distance chunk
+    computations specifically (torch.cuda.synchronize()-guarded for
+    accuracy). This adds sync points that prevent CUDA from overlapping
+    work across iterations, so only enable it for benchmarking/diagnostics,
+    not production runs - it will make the call slower than an unprofiled
+    one, not just report on it.
     """
     if train_chunk_size is None:
         train_chunk_size = batch_size
 
-    X_train_t = torch.from_numpy(X_train_np).to(DEVICE).float()
-    X_train_sq = (X_train_t**2).sum(dim=1)
+    X_train_t = torch.from_numpy(X_train_np).to(DEVICE).to(dtype)
+    X_train_sq = (X_train_t.float() ** 2).sum(dim=1)
     n_train_x = X_train_t.shape[0]
 
-    Y_train_t = torch.from_numpy(Y_train_np).to(DEVICE).float()
-    Y_train_sq = (Y_train_t**2).sum(dim=1)
+    Y_train_t = torch.from_numpy(Y_train_np).to(DEVICE).to(dtype)
+    Y_train_sq = (Y_train_t.float() ** 2).sum(dim=1)
     n_train_y = Y_train_t.shape[0]
 
     assert (
@@ -129,24 +154,27 @@ def min_igs_per_row_gpu(
     n = len(X_candidate_np)
     min_dxy = np.empty(n, dtype=np.float32)
 
+    t_x_total = 0.0
+    t_y_total = 0.0
+
     with torch.no_grad():
         for i in range(0, n, batch_size):
             bX = (
                 torch.from_numpy(X_candidate_np[i : i + batch_size])
                 .to(DEVICE, non_blocking=True)
-                .float()
+                .to(dtype)
             )
-            bX_sq = (bX**2).sum(dim=1, keepdim=True)
+            bX_sq = (bX.float() ** 2).sum(dim=1, keepdim=True)
 
             bY = (
                 torch.from_numpy(Y_candidate_np[i : i + batch_size])
                 .to(DEVICE, non_blocking=True)
-                .float()
+                .to(dtype)
             )
-            bY_sq = (bY**2).sum(dim=1, keepdim=True)
+            bY_sq = (bY.float() ** 2).sum(dim=1, keepdim=True)
 
             running_min = torch.full(
-                (bX.shape[0],), float("inf"), device=DEVICE, dtype=torch.float16
+                (bX.shape[0],), float("inf"), device=DEVICE, dtype=torch.float32
             )
 
             for j in range(0, n_train_x, train_chunk_size):
@@ -155,12 +183,24 @@ def min_igs_per_row_gpu(
                 Yt_chunk = Y_train_t[j : j + train_chunk_size]
                 Ysq_chunk = Y_train_sq[j : j + train_chunk_size]
 
-                dX_chunk = (
-                    (bX_sq + Xsq_chunk.unsqueeze(0) - 2.0 * (bX @ Xt_chunk.T)).clamp_(min=0).sqrt_()
-                )
-                dY_chunk = (
-                    (bY_sq + Ysq_chunk.unsqueeze(0) - 2.0 * (bY @ Yt_chunk.T)).clamp_(min=0).sqrt_()
-                )
+                if profile:
+                    torch.cuda.synchronize()
+                    _t0 = time.time()
+
+                cross_x = (bX @ Xt_chunk.T).float()
+                dX_chunk = (bX_sq + Xsq_chunk.unsqueeze(0) - 2.0 * cross_x).clamp_(min=0).sqrt_()
+
+                if profile:
+                    torch.cuda.synchronize()
+                    t_x_total += time.time() - _t0
+                    _t0 = time.time()
+
+                cross_y = (bY @ Yt_chunk.T).float()
+                dY_chunk = (bY_sq + Ysq_chunk.unsqueeze(0) - 2.0 * cross_y).clamp_(min=0).sqrt_()
+
+                if profile:
+                    torch.cuda.synchronize()
+                    t_y_total += time.time() - _t0
 
                 dxy_chunk = dX_chunk * dY_chunk
 
@@ -172,6 +212,8 @@ def min_igs_per_row_gpu(
 
             del bX, bY, bX_sq, bY_sq, running_min
 
+    if profile:
+        return min_dxy, {"t_x": t_x_total, "t_y": t_y_total}
     return min_dxy
 
 
@@ -195,6 +237,8 @@ class GreedySamplingSelector:
         k_top_candidate=1,
         batch_size: int = 8192,
         train_chunk_size: int = None,
+        dtype: torch.dtype = torch.float16,
+        profile_xy: bool = False,
         **kwargs,
     ):
         """
@@ -213,6 +257,17 @@ class GreedySamplingSelector:
                 lower it back down if a chunk stops fitting in GPU memory.
             train_chunk_size (int, optional): Train-axis chunk size. Defaults
                 to batch_size if not given.
+            dtype (torch.dtype, optional): Precision for the bulk distance
+                matmuls (fp16 by default - much higher tensor-core throughput;
+                the post-matmul add/clamp/sqrt arithmetic always happens in
+                fp32 regardless, so this only affects the expensive part).
+                Pass torch.float32 to disable.
+            profile_xy (bool, optional): For iGS, report wall-clock time spent
+                on the X-distance vs Y-distance computation separately
+                (printed by select()). Adds torch.cuda.synchronize() calls
+                that block CUDA's ability to overlap work, so this makes
+                select() itself slower - only turn it on for benchmarking,
+                never for production runs.
             **kwargs: Accepts and ignores additional keyword arguments for consistency.
         """
         if strategy not in ["GSx", "GSy", "iGS"]:
@@ -225,6 +280,8 @@ class GreedySamplingSelector:
         self.k_top_candidate = k_top_candidate
         self.batch_size = batch_size
         self.train_chunk_size = train_chunk_size if train_chunk_size is not None else batch_size
+        self.dtype = dtype
+        self.profile_xy = profile_xy
 
         # Persists across select() calls within one AL run (a fresh selector is
         # created per replication/strategy in LearningProcedure, so this never
@@ -262,7 +319,7 @@ class GreedySamplingSelector:
 
         if self._gsx_cache is None:
             min_dist = min_dist_per_row_gpu(
-                X_candidate_np, X_train_np, batch_size, self.train_chunk_size
+                X_candidate_np, X_train_np, batch_size, self.train_chunk_size, self.dtype
             )
             self._gsx_cache = {
                 "candidate_labels": candidate_labels,
@@ -285,7 +342,7 @@ class GreedySamplingSelector:
         if new_positions:
             X_train_new_np = X_train_np[new_positions]
             delta = min_dist_per_row_gpu(
-                X_candidate_np, X_train_new_np, batch_size, self.train_chunk_size
+                X_candidate_np, X_train_new_np, batch_size, self.train_chunk_size, self.dtype
             )
             min_dist = np.minimum(min_dist, delta)
 
@@ -316,7 +373,9 @@ class GreedySamplingSelector:
             return None
 
         if self._dx_cache is None:
-            dX = pairwise_dist_gpu(X_candidate_np, X_train_np, batch_size, self.train_chunk_size)
+            dX = pairwise_dist_gpu(
+                X_candidate_np, X_train_np, batch_size, self.train_chunk_size, self.dtype
+            )
             self._dx_cache = {
                 "candidate_labels": candidate_labels,
                 "train_labels": list(train_labels),
@@ -340,7 +399,9 @@ class GreedySamplingSelector:
 
         if new_positions:
             X_train_new_np = X_train_np[new_positions]
-            new_cols = pairwise_dist_gpu(X_candidate_np, X_train_new_np, batch_size, self.train_chunk_size)
+            new_cols = pairwise_dist_gpu(
+                X_candidate_np, X_train_new_np, batch_size, self.train_chunk_size, self.dtype
+            )
             dX = torch.cat([dX, new_cols], dim=1)
 
         self._dx_cache = {
@@ -474,21 +535,55 @@ class GreedySamplingSelector:
             )
 
         elif self.strategy == "GSy":
-            final_scores = min_dist_per_row_gpu(pred_vals, y_train_values, batch_size, self.train_chunk_size)
+            final_scores = min_dist_per_row_gpu(
+                pred_vals, y_train_values, batch_size, self.train_chunk_size, self.dtype
+            )
 
         elif self.strategy == "iGS":
+            if self.profile_xy:
+                torch.cuda.synchronize()
+                _t0 = time.time()
             dX_matrix = self._get_dx_matrix(
                 df_Candidate.index, df_Train.index, X_Candidate_f32, X_Train_f32, batch_size
             )
+            if self.profile_xy:
+                torch.cuda.synchronize()
+                t_x = time.time() - _t0  # cache lookup/prune + any new columns, or a quick None
+
             if dX_matrix is None:
-                final_scores = min_igs_per_row_gpu(
-                    X_Candidate_f32, X_Train_f32, pred_vals, y_train_values, batch_size, self.train_chunk_size
-                )
+                # No cache benefit at this size - X and Y are computed together,
+                # chunk by chunk, inside this one call (see min_igs_per_row_gpu).
+                if self.profile_xy:
+                    final_scores, xy_timing = min_igs_per_row_gpu(
+                        X_Candidate_f32, X_Train_f32, pred_vals, y_train_values,
+                        batch_size, self.train_chunk_size, self.dtype, profile=True,
+                    )
+                    print(
+                        f"\t+++ GreedySampling X/Y split (uncached, dX_matrix lookup {t_x:.3f}s): "
+                        f"X={xy_timing['t_x']:.3f}s  Y={xy_timing['t_y']:.3f}s +++"
+                    )
+                else:
+                    final_scores = min_igs_per_row_gpu(
+                        X_Candidate_f32, X_Train_f32, pred_vals, y_train_values,
+                        batch_size, self.train_chunk_size, self.dtype,
+                    )
             else:
                 # Y depends on this iteration's freshly retrained model (candidate
                 # predictions change every call), so it's never cached - recomputed
                 # in full and combined with the cached/incremental X matrix above.
-                dY_matrix = pairwise_dist_gpu(pred_vals, y_train_values, batch_size, self.train_chunk_size)
+                if self.profile_xy:
+                    torch.cuda.synchronize()
+                    _t0 = time.time()
+                dY_matrix = pairwise_dist_gpu(
+                    pred_vals, y_train_values, batch_size, self.train_chunk_size, self.dtype
+                )
+                if self.profile_xy:
+                    torch.cuda.synchronize()
+                    t_y = time.time() - _t0
+                    print(
+                        f"\t+++ GreedySampling X/Y split (cached): "
+                        f"X={t_x:.3f}s (cache hit)  Y={t_y:.3f}s (always recomputed) +++"
+                    )
                 final_scores = (dX_matrix * dY_matrix).min(dim=1).values.float().cpu().numpy()
 
         # print(f"\t+++ GreedySampling final_scores : {time.time() - StartTime} +++")
