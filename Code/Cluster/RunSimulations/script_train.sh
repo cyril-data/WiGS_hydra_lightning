@@ -130,7 +130,7 @@ base_name=$(echo "$CMD" | sed -n 's/.*--k_top //p')
 base_name=$(echo "$base_name" | tr -d ' ' | tr -cd '[:alnum:]_.-')
 
 # Ajouter un timestamp pour éviter les conflits
-job_name="${MACHINE}_$HL_XP_${base_name}_$(date +%Y%m%d_%H%M%S)"
+job_name="${MACHINE}_${TIME}_${HL_XP}_${base_name}_${STRAT}_$(date +%Y%m%d_%H%M%S)"
 
 # ======================
 # 6. Génération du fichier .slurm

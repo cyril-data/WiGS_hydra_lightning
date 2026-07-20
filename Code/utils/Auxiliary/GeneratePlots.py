@@ -125,7 +125,12 @@ def IndividualTracesPlot(
                 per_sim_valid_len[col] = last_active + 1
                 max_reach = max(max_reach, x_abs[-1])
 
-            pool_size = total_pool_size if total_pool_size is not None else max_reach
+            # pool_size = total_pool_size if total_pool_size is not None else max_reach
+
+            if isinstance(total_pool_size, dict):
+                pool_size = total_pool_size.get(Label, max_reach)
+            else:
+                pool_size = total_pool_size if total_pool_size is not None else max_reach
 
             for sim_idx, col in enumerate(sim_cols):
                 if sim_idx >= n_simulations:
@@ -143,11 +148,11 @@ def IndividualTracesPlot(
         else:
             k_top_scalar = k_top if isinstance(k_top, (int, float)) else 1
             num_iterations = Results.shape[0]
-            pool_size = (
-                total_pool_size
-                if total_pool_size is not None
-                else initial_train_size + k_top_scalar * num_iterations
-            )
+            default_pool = initial_train_size + k_top_scalar * num_iterations
+            if isinstance(total_pool_size, dict):
+                pool_size = total_pool_size.get(Label, default_pool)
+            else:
+                pool_size = total_pool_size if total_pool_size is not None else default_pool
             iterations_array = np.arange(num_iterations)
             x_abs = initial_train_size + k_top_scalar * iterations_array
             x_pct = x_abs / pool_size * 100
@@ -387,7 +392,10 @@ def MeanVariancePlot(
                 per_sim_valid_len[col] = last_active + 1  # +1 for initial point
                 max_reach = max(max_reach, x_abs[-1])
 
-            pool_size = total_pool_size if total_pool_size is not None else max_reach
+            if isinstance(total_pool_size, dict):
+                pool_size = total_pool_size.get(Label, max_reach)
+            else:
+                pool_size = total_pool_size if total_pool_size is not None else max_reach
 
             for sim_idx, col in enumerate(sim_cols):
                 if sim_idx >= n_simulations:
@@ -415,11 +423,11 @@ def MeanVariancePlot(
             # --- k_top scalaire (int) : meme axe x deterministe pour chaque sim ---
             num_iterations = Results.shape[0]
             iterations_array = np.arange(num_iterations)
-            pool_size = (
-                total_pool_size
-                if total_pool_size is not None
-                else initial_train_size + k_top * num_iterations
-            )
+            default_pool = initial_train_size + k_top * num_iterations
+            if isinstance(total_pool_size, dict):
+                pool_size = total_pool_size.get(Label, default_pool)
+            else:
+                pool_size = total_pool_size if total_pool_size is not None else default_pool
             x_abs = initial_train_size + k_top * iterations_array
             x_pct = x_abs / pool_size * 100
 
@@ -674,11 +682,29 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                 total_pool_size_path = os.path.join(dataset_path, "TotalPoolSize.csv")
 
                 if os.path.exists(total_pool_size_path):
-
-                    for strategy, df in results_for_metric.items():
-
-                        total_pool_size_df = pd.read_csv(total_pool_size_path)
-                        total_pool_size = total_pool_size_df[strategy][0]
+                    total_pool_size_df = pd.read_csv(total_pool_size_path, index_col="Simulation")
+                    # The CSV has one row per sim and one column per strategy
+                    # (NaN-padded for strategies with fewer sims). We only need
+                    # ONE pool size per strategy for the % axis, so take the
+                    # first non-NaN value per column -- but warn if the sims of
+                    # a strategy actually disagree, since that would mean the
+                    # single-value-per-Label assumption downstream is wrong.
+                    total_pool_size = {}
+                    for strategy in results_for_metric:
+                        if strategy not in total_pool_size_df.columns:
+                            continue
+                        values = total_pool_size_df[strategy].dropna().tolist()
+                        if not values:
+                            continue
+                        if len(set(values)) > 1:
+                            print(
+                                f"  > Warning: TotalPoolSize differs across sims for "
+                                f"'{strategy}' ({set(values)}); using the first value "
+                                f"({values[0]})."
+                            )
+                        total_pool_size[strategy] = values[0]
+                else:
+                    total_pool_size = None
 
                 # SimulationParameters #
                 simulation_parameters = os.path.join(dataset_path, "SimulationParameters.yaml")

@@ -4,6 +4,7 @@ import pickle
 import glob
 import pandas as pd
 import yaml
+import numpy as np
 
 
 ### Function ###
@@ -105,8 +106,6 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     # Store #
                     aggregated_data[strategy]["ElapsedTime"].append(results["ElapsedTime"])
 
-                    print(f"ElapsedTime", results["ElapsedTime"])
-
                     if "TotalPoolSize" in results:
                         aggregated_data[strategy]["TotalPoolSize"].append(results["TotalPoolSize"])
 
@@ -170,7 +169,6 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
             time_data = {
                 strategy: data["ElapsedTime"] for strategy, data in aggregated_data.items()
             }
-            print("time_data", time_data)
             time_df = pd.DataFrame(time_data)
             time_df.to_csv(
                 os.path.join(dataset_output_dir, "ElapsedTime.csv"), index_label="Simulation"
@@ -182,14 +180,9 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
 
         # ErrorVecs_iteration
         try:
-            for strategy, data in aggregated_data.items():
-
-                print("strategy", strategy)
-                print("data", type(data), data.keys())
             ErrorVecs_iteration = {
                 strategy: data["ErrorVecs_iteration"] for strategy, data in aggregated_data.items()
             }
-            print("ErrorVecs_iteration", ErrorVecs_iteration)
 
             # Détermine le nombre maximal d'itérations
             max_iterations = max(len(v) for v in ErrorVecs_iteration.values())
@@ -204,28 +197,7 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
                     },
                 }
             )
-            # df.to_csv(os.path.join(dataset_output_dir, "ErrorVecs_iteration.csv"), index=False)
 
-            # df = pd.DataFrame(
-            #     {
-            #         "Simulation": list(range(len(ErrorVecs_iteration["iGS"]))),
-            #         "iGS": ErrorVecs_iteration["iGS"],
-            #         "Passive Learning": ErrorVecs_iteration["Passive Learning"],
-            #     }
-            # )
-
-            # rows = []
-            # for method, iterations in ErrorVecs_iteration.items():
-            #     print("method", method)
-            #     print("iterations", iterations)
-            #     for i, iteration in enumerate(iterations):
-            #         for value in iteration:
-            #             rows.append({"Method": method, "Iteration": i, "Value": value})
-
-            # df = pd.DataFrame(rows)
-            # df.to_csv('ErrorVecs_iteration_flat.csv', index=False)
-
-            # ErrorVecs_iteration_df = pd.DataFrame(ErrorVecs_iteration)
             df.to_csv(
                 os.path.join(dataset_output_dir, "ErrorVecs_iteration.csv"),
             )
@@ -237,7 +209,14 @@ def AggregateResults(raw_results_dir, aggregated_results_dir):
             total_pool_size = {
                 strategy: data["TotalPoolSize"] for strategy, data in aggregated_data.items()
             }
-            total_pool_size_df = pd.DataFrame(total_pool_size)
+            print("total_pool_size NEW", total_pool_size)
+
+            # Ragged across strategies (different nb of sims per strategy) -> build via
+            # pd.Series so pandas aligns by position and NaN-pads the shorter columns,
+            # instead of pd.DataFrame(dict-of-lists) which requires equal lengths.
+            total_pool_size_df = pd.DataFrame(
+                {strategy: pd.Series(sizes) for strategy, sizes in total_pool_size.items()}
+            )
             total_pool_size_df.to_csv(
                 os.path.join(dataset_output_dir, "TotalPoolSize.csv"), index_label="Simulation"
             )
