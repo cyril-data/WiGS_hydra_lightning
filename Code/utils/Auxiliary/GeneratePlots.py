@@ -18,6 +18,15 @@ def safe_literal_eval(x):
     return ast.literal_eval(x)
 
 
+def flag_to_int(value):
+    """Coerce a SimulationParameters.yaml flag to 0/1 - values are stringified
+    Python bools (e.g. "True"/"False") since SimulationParameters is built via
+    str(...) upstream, but handle real bools too in case that ever changes."""
+    if isinstance(value, bool):
+        return int(value)
+    return int(str(value).strip().lower() == "true")
+
+
 def IndividualTracesPlot(
     Subtitle=None,
     TransparencyVal=0.85,
@@ -731,11 +740,11 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                         sim_name[strategy][param["Sim"]] = (
                             f"sim{param['Sim'][4:]}."
                             f"s{param['Seed']}."
-                            f"ncv{1 if param['no_cv']=='True' else 0}"
+                            f"ncv{flag_to_int(param.get('no_cv', False))}"
                             f".ep{param['hl_max_epoch']}."
                             f"kt{param['k_top_candidate']}"
                             f".prs{param['subset_rand_candidat']}."
-                            f"cur{1 if param['curriculum']=='True' else 0}"
+                            f"cur{flag_to_int(param.get('curriculum', False))}"
                         )
 
                 try:
@@ -760,9 +769,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                             df = df.map(ast.literal_eval)
                             k_top[strategy] = df
 
-                            print(
-                                f"  > Using k_top = {list(k_top.keys())} for dataset {data_name}"
-                            )
+                            print(f"  > Using k_top = {list(k_top.keys())} for dataset {data_name}")
                         else:
                             k_top = 1  # Value by default (ex: beer)
                             print(
