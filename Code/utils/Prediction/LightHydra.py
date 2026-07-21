@@ -32,6 +32,38 @@ logging.getLogger("lightning.pytorch").setLevel(logging.WARNING)
 os.environ["PROJECT_ROOT"] = f"{os.getcwd()}/.."
 
 
+def _patch_dataloader_worker_fd_leak():
+    """PyTorch's _MultiProcessingDataLoaderIter._shutdown_workers() joins each
+    worker Process but never calls Process.close(), which is what actually
+    releases the worker's sentinel pipe fd - join() alone does not. Since
+    every fit()/test()/predict() call tears down and respawns DataLoader
+    workers regardless of persistent_workers (Lightning's _DataFetcher.
+    teardown() unconditionally calls combined_loader.reset(), which shuts
+    workers down every time), this leaks ~2 fds/worker per AL iteration and
+    eventually hits the process's open-file limit on long runs (confirmed via
+    a standalone repro: fd count grew linearly forever without this patch,
+    stayed flat with it). PyTorch registers a redundant atexit safety-net
+    cleanup per worker that will raise a harmless "process object is closed"
+    at final process exit as a result - cosmetic only, not during the run."""
+    from torch.utils.data.dataloader import _MultiProcessingDataLoaderIter
+
+    original_shutdown_workers = _MultiProcessingDataLoaderIter._shutdown_workers
+
+    def _shutdown_workers_and_close(self):
+        workers = list(getattr(self, "_workers", ()))
+        original_shutdown_workers(self)
+        for w in workers:
+            try:
+                w.close()
+            except ValueError:
+                pass
+
+    _MultiProcessingDataLoaderIter._shutdown_workers = _shutdown_workers_and_close
+
+
+_patch_dataloader_worker_fd_leak()
+
+
 # Remonte jusqu'à ukz42ac/IAlefeu/, puis va dans henrihost-al
 HHAL_PATH = Path(__file__).resolve().parents[4] / "henrihost-al"
 
