@@ -83,7 +83,16 @@ def build_context(hl_xp, strategy_name="iGS", seed=0, extra_overrides=None):
     needing a new YAML - passed straight through to get_hl_cfg."""
     np.random.seed(seed)
 
-    config = {"add_useful_params": {"strategy_name": strategy_name, "hl_xp": hl_xp}}
+    config = {
+        "add_useful_params": {
+            "strategy_name": strategy_name,
+            "hl_xp": hl_xp,
+            "hl_max_epoch": None,
+            "hl_worker": None,
+            "subset_rand_candidat": None,
+            "curriculum": False,
+        }
+    }
     hl_cfg = get_hl_cfg(config, extra_overrides=extra_overrides)
     project_root = os.environ.get("PROJECT_ROOT", os.path.join(os.getcwd(), ".."))
     hl_cfg["csv_path"] = os.path.join(f"{project_root}/../henrihost-al/", hl_cfg["csv_path"])
@@ -111,6 +120,7 @@ def build_context(hl_xp, strategy_name="iGS", seed=0, extra_overrides=None):
         "y_size": y_size,
         "df_full": df_full,
         "df_test": df_test,
+        "add_useful_params": config["add_useful_params"],
     }
 
 

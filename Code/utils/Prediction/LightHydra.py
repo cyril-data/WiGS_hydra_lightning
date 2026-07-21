@@ -76,6 +76,9 @@ def get_hl_cfg(config, extra_overrides=None) -> DictConfig:
     if hl_worker is not None:
         overrides.append(f"num_workers={hl_worker}")
 
+    if extra_overrides:
+        overrides.extend(extra_overrides)
+
     with initialize(
         version_base="1.3",
         config_path="../../../../henrihost-al/configs",
