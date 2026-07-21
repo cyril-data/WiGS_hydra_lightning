@@ -742,7 +742,7 @@ def generate_all_plots(aggregated_results_dir, image_dir, show_legend=True, sing
                             f"s{param['Seed']}."
                             f"ncv{flag_to_int(param.get('no_cv', False))}"
                             f".ep{param.get('hl_max_epoch')}."
-                            f"kt{param['k_top_candidate']}"
+                            f"kt{param.get('k_top_candidate')}"
                             f".prs{param.get('subset_rand_candidat')}."
                             f"cur{flag_to_int(param.get('curriculum', False))}"
                         )
